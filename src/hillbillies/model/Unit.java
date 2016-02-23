@@ -53,7 +53,7 @@ public class Unit {
 	
 	private static int NAMELENGTH_MIN = 2;
 	
-	private static Set<String> VALIDCHARS = new HashSet<String>(Arrays.asList(" ", "\"", "\'", "m"));
+	private static Set<String> VALIDCHARS = new HashSet<String>(Arrays.asList(" ", "\"", "\'"));
 	
 	
 }

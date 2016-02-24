@@ -11,8 +11,9 @@ public class sandbox {
 		System.out.println(Character.isUpperCase(name.charAt(0)));
 		Set<String> set = new HashSet<String>(Arrays.asList(" ", "\"", "\'"));
 		System.out.println(set);
-		String[] fruit = {"APPLE", "ORANGES", "GRAPES"};
-		fruit.contains("APPLE");
-		System.out.println();
+		HashSet<String> set2 = new HashSet<String>(set);
+		set2.add("hallo");
+		System.out.println(set);
+		System.out.println(set2);
 	}
 }

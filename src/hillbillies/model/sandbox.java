@@ -15,5 +15,8 @@ public class sandbox {
 		set2.add("hallo");
 		System.out.println(set);
 		System.out.println(set2);
+		Unit billie = new Unit ("Billie", 0, 0, 0, 0, 100, 100, 50, 20);
+		System.out.println(billie.getName());
+		System.out.println(billie.getPrimStats());
 	}
 }

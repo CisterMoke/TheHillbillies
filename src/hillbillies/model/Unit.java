@@ -20,9 +20,9 @@ public class Unit {
 		
 		this.setName(name);
 		this.setPrimStats(firstStats);
-		//this.setPos(x, y, z);
-		//this.setAngle(theta);
-		
+		Position pos = new Position(x, y, z);
+		this.pos=pos;
+		this.setTheta(theta);
 	}
 
 	
@@ -72,11 +72,28 @@ public class Unit {
 		return checker;
 	}
 	
+	public Double getTheta(){
+		return this.theta;
+	}
+	
+	public void setTheta (Double angle){
+		this.theta = angle;
+	}
+	
+	public void moveToAdjecent(double dx, double dy, double dz){
+		this.setTheta(Math.atan2(dx,dy));
+		this.pos.setPosition(this.pos.getPosition(1), this.pos.getPosition(2), this.pos.getPosition(3));
+	}
+	
 	private Map<String, Integer> primStats;
 	
-	private ArrayList<Double> pos;
+	private Position target;
+	
+	private Position pos;
 	
 	private String name;
+	
+	private Double theta;
 	
 	private static int NAMELENGTH_MIN = 2;
 	

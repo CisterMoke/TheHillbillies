@@ -26,33 +26,75 @@ public class Unit {
 		this.setTheta(0.0);
 		this.setTarget(this.getPosition());
 		this.setBaseVelocity(1.5*((double)(str+agl))/(2*wgt));
+		this.setState(State.IDLE);
 		
 	}
 
 	public void advanceTime(double dt){
 		ArrayList<Double> nextPos = new ArrayList<Double>(this.getPosition());
-		if (this.isInCombat()){
+		if (this.getState() == State.COMBAT){
 			for (int i = 0; i<this.getCombatants().size(); i++){
 				this.attack(this.getCombatants().get(i));
 			}
+			return;
 		}
-		else{
-			if (!this.getTarget().equals(this.getPosition())){
-				for (int i = 0; i<3; i++){
-					nextPos.set(i, nextPos.get(i) + this.v_vector.get(i)*dt);
+		if (this.getState() == State.RESTING){
+			if (this.getHp()<this.getMaxHp())
+				this.setHp(this.getHp() + (double)(this.getPrimStats().get("tgh"))*dt/(200*0.2));
+			else{
+				if (this.getStam()<this.getMaxStam())
+					this.setStam(this.getStam() + (double)(this.getPrimStats().get("tgh"))*dt/(200*0.2));
+				else{
+					this.setState(State.IDLE);
 				}
-				boolean moved = false;
-				int idx = 0;
-				while (!moved && idx<3){
-					if(Math.signum(nextPos.get(idx)-this.getTarget().get(idx)) == Math.signum(this.v_vector.get(idx)) && (Math.signum(this.v_vector.get(idx)) != 0)){
-						this.setPosition(this.target.get(0), this.target.get(1), this.target.get(2));
-						if (!this.getFinTarget().isEmpty())
-							moveTo(this.getFinTarget().get(0), this.getFinTarget().get(1), this.getFinTarget().get(2));
-						moved = true;
-					}
-					idx += 1;
-				}
+			}
+			return;
+		}
+		if (this.getState() == State.WORKING){
+			if(this.getWorkTime() > 0){
+				this.work();
+				this.setWorkTime(this.getWorkTime() - dt);
+				return;
+			}
+			else{
+				this.setState(State.IDLE);
+			}
 				
+			
+		}
+		if (this.getState() == State.IDLE && !this.getTarget().equals(this.getPosition())){
+			this.setState(State.WALKING);
+		}
+		if (this.getTarget().equals(this.getPosition()) && this.getFinTarget().isEmpty() && this.getState() != State.IDLE){
+			this.setState(State.IDLE);
+			return;
+		}
+		
+		//if (!this.getTarget().equals(this.getPosition())){
+		if (this.getState() == State.WALKING || this.getState() == State.SPRINTING){
+			if (this.getState() == State.SPRINTING){
+				if (this.getStam()  <= 0)
+					this.setState(State.WALKING);
+				else{
+					this.setStam(this.getStam() - dt/0.1);
+					
+				}
+			}
+			for (int i = 0; i<3; i++){
+				nextPos.set(i, nextPos.get(i) + this.v_vector.get(i)*dt);
+			}
+			boolean moved = false;
+			int idx = 0;
+			while (!moved && idx<3){
+				if(Math.signum(nextPos.get(idx)-this.getTarget().get(idx)) == Math.signum(this.v_vector.get(idx)) && (Math.signum(this.v_vector.get(idx)) != 0)){
+					this.setPosition(this.target.get(0), this.target.get(1), this.target.get(2));
+					if (!this.getFinTarget().isEmpty())
+						moveTo(this.getFinTarget().get(0), this.getFinTarget().get(1), this.getFinTarget().get(2));
+					moved = true;
+				}
+				idx += 1;
+			}
+			
 //				if (Math.signum(nextPos.get(0)-this.getTarget().get(0)) == Math.signum(this.v_vector.get(0)) && (Math.signum(this.v_vector.get(0)) != 0)){
 //					this.setPosition(this.target.get(0), this.target.get(1), this.target.get(2));
 //					//moved = true;
@@ -68,13 +110,13 @@ public class Unit {
 //					//moved = true;
 //					//moveTo(this.getFinTarget().get(0), this.getFinTarget().get(1), this.getFinTarget().get(2));
 //				}
-				if (!moved){
-					this.setPosition(nextPos.get(0), nextPos.get(1), nextPos.get(2));
-					moved = true;
-				}
+			if (!moved){
+				this.setPosition(nextPos.get(0), nextPos.get(1), nextPos.get(2));
+				moved = true;
 			}
 		}
 	}
+	
 	
 	public String getName(){
 		return this.name;
@@ -165,13 +207,17 @@ public class Unit {
 	}
 	
 	public void moveToAdjacent(int dx, int dy, int dz){
+		if (this.getState() == State.COMBAT)
+			return;
+		if(this.getState() != State.SPRINTING)
+			this.setState(State.WALKING);
 		this.v = this.v_base;
 		if (dz == -1)
 			this.v = this.v_base*1.2;
 		if (dz == 1)
 			this.v = this.v_base*0.5;
-		if (isSprinting())
-			this.v = this.v*2;		
+//		if (this.getState() == State.SPRINTING)
+//			this.v = this.v*2;		
 		
 		ArrayList<Double> target = new ArrayList<Double>(this.getBlockPosition());
 		target.set(0, target.get(0) + dx);
@@ -222,7 +268,7 @@ public class Unit {
 		if(!this.getTarget().equals(this.getPosition()))
 			distance = Math.sqrt(Math.pow(this.pos.get(0)-this.target.get(0), 2) + Math.pow(this.pos.get(1)-this.target.get(1), 2) + Math.pow(this.pos.get(2)-this.target.get(2), 2));
 			for (int i = 0; i<3; i++){
-				this.v_vector.set(i, this.v*(this.target.get(i)-this.pos.get(i))/distance);
+				this.v_vector.set(i, this.getVelocity()*(this.target.get(i)-this.pos.get(i))/distance);
 			}
 	}
 	
@@ -296,30 +342,30 @@ public class Unit {
 		this.setHp(this.getHp() - (int)(damage));
 	}
 	
-	public int getHp(){
+	public double getHp(){
 		return this.hp;
 	}
 	
-	public void setHp(int hp){
+	public void setHp(double hp){
 		assert isValidHp(hp);
 		this.hp = hp;
 	}
 	
 	
-	public int getStam(){
+	public double getStam(){
 		return this.stam;
 	}
 	
-	public void setStam(int stam){
+	public void setStam(double stam){
 		assert isValidStam(stam);
 		this.stam = stam;
 	}
 	
-	public boolean isValidHp(int hp){
+	public boolean isValidHp(double hp){
 		return (hp>0 && hp<=this.maxHp);
 	}
 	
-	public boolean isValidStam(int stam){
+	public boolean isValidStam(double stam){
 		return (stam>0 && stam<=this.maxStam);
 	}
 	
@@ -381,7 +427,39 @@ public class Unit {
 	}
 	
 	public double getVelocity(){
-		return this.v;
+		if (this.getState() == State.WALKING)
+			return this.v;
+		if (this.getState() == State.SPRINTING)
+			return this.v * 2;
+		return 0;
+	}
+	
+	public enum State{
+		IDLE, COMBAT,WALKING, WORKING, RESTING, SPRINTING		
+	}
+	
+	public void setState(State state){
+		this.state = state;
+		this.setV_Vector();
+	}
+	
+	public State getState(){
+		return this.state;
+	}
+	
+	public double getWorkTime() {
+		return this.workTime;
+	}
+	
+	public void setWorkTime(double newTime){
+		this.workTime = newTime;
+	}
+	
+	public void work(){
+		if (this.getState() != State.WORKING){
+			this.setState(State.WORKING);
+			this.workTime = 500/this.getPrimStats().get("str");
+		}
 	}
 	
 	private boolean sprinting = false;
@@ -412,13 +490,17 @@ public class Unit {
 	
 	private int attcooldown = 1;
 	
-	private int hp;
+	private double hp;
 	
-	private int stam;
+	private double stam;
 	
 	private int maxHp;
 	
 	private int maxStam;
+	
+	private State state;
+	
+	private double workTime = 0;
 	
 	private ArrayList<Unit> combatants = new ArrayList<Unit>();
 	

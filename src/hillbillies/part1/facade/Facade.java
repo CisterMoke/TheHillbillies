@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Map;
 
 import hillbillies.model.Unit;
+import hillbillies.model.Unit.State;
 import ogp.framework.util.ModelException;
 
 public class Facade implements IFacade {
@@ -110,7 +111,7 @@ public class Facade implements IFacade {
 	@Override
 	public int getCurrentHitPoints(Unit unit) throws ModelException {
 		// TODO Auto-generated method stub
-		return unit.getHp();
+		return (int)(unit.getHp());
 	}
 
 	@Override
@@ -122,7 +123,7 @@ public class Facade implements IFacade {
 	@Override
 	public int getCurrentStaminaPoints(Unit unit) throws ModelException {
 		// TODO Auto-generated method stub
-		return unit.getStam();
+		return (int)(unit.getStam());
 	}
 
 	@Override
@@ -153,22 +154,22 @@ public class Facade implements IFacade {
 	@Override
 	public void startSprinting(Unit unit) throws ModelException {
 		// TODO Auto-generated method stub
-		if (!unit.isSprinting())
-			unit.toggleSpringting();
+		if (unit.getState() == State.WALKING)
+			unit.setState(State.SPRINTING);
 	}
 
 	@Override
 	public void stopSprinting(Unit unit) throws ModelException {
 		// TODO Auto-generated method stub
-		if(unit.isSprinting())
-			unit.toggleSpringting();
+		if(unit.getState() == State.SPRINTING)
+			unit.setState(State.IDLE);
 		
 	}
 
 	@Override
 	public boolean isSprinting(Unit unit) throws ModelException {
 		// TODO Auto-generated method stub
-		return unit.isSprinting();
+		return (unit.getState() == State.SPRINTING);
 	}
 
 	@Override
@@ -186,37 +187,39 @@ public class Facade implements IFacade {
 	@Override
 	public void work(Unit unit) throws ModelException {
 		// TODO Auto-generated method stub
+		unit.work();
 		
 	}
 
 	@Override
 	public boolean isWorking(Unit unit) throws ModelException {
 		// TODO Auto-generated method stub
-		return false;
+		return (unit.getState() == State.WORKING);
 	}
 
 	@Override
 	public void fight(Unit attacker, Unit defender) throws ModelException {
 		// TODO Auto-generated method stub
+		attacker.attack(defender);
 		
 	}
 
 	@Override
 	public boolean isAttacking(Unit unit) throws ModelException {
 		// TODO Auto-generated method stub
-		return false;
+		return (unit.getState() == State.COMBAT);
 	}
 
 	@Override
 	public void rest(Unit unit) throws ModelException {
 		// TODO Auto-generated method stub
-		
+		unit.setState(State.RESTING);
 	}
 
 	@Override
 	public boolean isResting(Unit unit) throws ModelException {
 		// TODO Auto-generated method stub
-		return false;
+		return (unit.getState() == State.RESTING);
 	}
 
 	@Override

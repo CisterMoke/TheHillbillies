@@ -5,6 +5,8 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
+import hillbillies.model.Unit.State;
+
 
 public class sandbox {
 	public static void main(String[] args){
@@ -41,9 +43,16 @@ public class sandbox {
 //		System.out.println(billie.getBlockPosition());
 //		System.out.println(dummie.getPosition());
 //		System.out.println(dummie.getHp());
-		ArrayList<Double> list = new ArrayList<Double>();
-		list.add(1.0+5);
+		Unit Dollie = new Unit("Dollie", 0, 0, 0, 100, 100, 50, 30);
+		System.out.println(Dollie.getState() == State.COMBAT);
+		ArrayList<Double> list = new ArrayList<Double>(Arrays.asList(2.5, 3.5, 4.5));
+		for(int i = 0 ; i < list.size(); i++){
+			list.set(i, list.get(i)*2);
+		}
 		System.out.println(list);
+		double k = 5;
+		k /= 2;
+		System.out.println(k);
 	}
 
 }

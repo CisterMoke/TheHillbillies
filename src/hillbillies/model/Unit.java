@@ -1,29 +1,29 @@
 package hillbillies.model;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import be.kuleuven.cs.som.*;
 
 public class Unit {
 	
-	public Unit(String name,double x,double y,double z,double theta,int str,int wgt,int agl,int tgh){ //throws IllegalArgumentException{
+	public Unit(String name,double x,double y,double z,int str,int wgt,int agl,int tgh) throws IllegalArgumentException{
 		HashMap<String, Integer> firstStats = new HashMap<String, Integer>();
 		firstStats.put("str", str);
 		firstStats.put("wgt", wgt);
 		firstStats.put("agl", agl);
 		firstStats.put("tgh", tgh);
+		for(String key : firstStats.keySet()){
+			if (firstStats.get(key)<25 || firstStats.get(key)>100)
+				throw new IllegalArgumentException();
+		}
 			
 		this.setName(name);
 		this.setPrimStats(firstStats);
+		this.setMaxHp((int)(Math.ceil(200*((double)(str*wgt))/10000)));
+		this.setMaxStam((int)(Math.ceil(200*((double)(str*wgt))/10000)));
 		this.setHp((int)(Math.ceil(200*((double)(str*wgt))/10000)));	
 		this.setStam((int)(Math.ceil(200*((double)(str*wgt))/10000)));
 		this.setPosition(x, y, z);
-		this.setTheta(theta);
+		this.setTheta(0.0);
 		this.setTarget(this.getPosition());
 		this.setBaseVelocity(1.5*((double)(str+agl))/(2*wgt));
 		
@@ -37,21 +37,40 @@ public class Unit {
 			}
 		}
 		else{
-			if (this.target != this.pos){
+			if (!this.getTarget().equals(this.getPosition())){
 				for (int i = 0; i<3; i++){
 					nextPos.set(i, nextPos.get(i) + this.v_vector.get(i)*dt);
 				}
-				if (Math.signum(nextPos.get(0)-this.getTarget().get(0)) == Math.signum(this.v_vector.get(0))){
-					this.setPosition(this.target.get(0), this.target.get(1), this.target.get(2));
+				boolean moved = false;
+				int idx = 0;
+				while (!moved && idx<3){
+					if(Math.signum(nextPos.get(idx)-this.getTarget().get(idx)) == Math.signum(this.v_vector.get(idx)) && (Math.signum(this.v_vector.get(idx)) != 0)){
+						this.setPosition(this.target.get(0), this.target.get(1), this.target.get(2));
+						if (!this.getFinTarget().isEmpty())
+							moveTo(this.getFinTarget().get(0), this.getFinTarget().get(1), this.getFinTarget().get(2));
+						moved = true;
+					}
+					idx += 1;
 				}
-				if (Math.signum(nextPos.get(1)-this.getTarget().get(1)) == Math.signum(this.v_vector.get(1))){
-					this.setPosition(this.target.get(0), this.target.get(1), this.target.get(2));
-				}
-				if (Math.signum(nextPos.get(2)-this.getTarget().get(2)) == Math.signum(this.v_vector.get(2))){
-					this.setPosition(this.target.get(0), this.target.get(1), this.target.get(2));
-				}
-				else{
+				
+//				if (Math.signum(nextPos.get(0)-this.getTarget().get(0)) == Math.signum(this.v_vector.get(0)) && (Math.signum(this.v_vector.get(0)) != 0)){
+//					this.setPosition(this.target.get(0), this.target.get(1), this.target.get(2));
+//					//moved = true;
+//					//moveTo(this.getFinTarget().get(0), this.getFinTarget().get(1), this.getFinTarget().get(2));
+//				}
+//				if (Math.signum(nextPos.get(1)-this.getTarget().get(1)) == Math.signum(this.v_vector.get(1)) && (Math.signum(this.v_vector.get(1)) != 0)){
+//					this.setPosition(this.target.get(0), this.target.get(1), this.target.get(2));
+//					//moved = true;
+//					//moveTo(this.getFinTarget().get(0), this.getFinTarget().get(1), this.getFinTarget().get(2));
+//				}
+//				if (Math.signum(nextPos.get(2)-this.getTarget().get(2)) == Math.signum(this.v_vector.get(2)) && (Math.signum(this.v_vector.get(2)) != 0)){
+//					this.setPosition(this.target.get(0), this.target.get(1), this.target.get(2));
+//					//moved = true;
+//					//moveTo(this.getFinTarget().get(0), this.getFinTarget().get(1), this.getFinTarget().get(2));
+//				}
+				if (!moved){
 					this.setPosition(nextPos.get(0), nextPos.get(1), nextPos.get(2));
+					moved = true;
 				}
 			}
 		}
@@ -147,9 +166,9 @@ public class Unit {
 	
 	public void moveToAdjacent(int dx, int dy, int dz){
 		this.v = this.v_base;
-		if (dz == 1)
-			this.v = this.v_base*1.2;
 		if (dz == -1)
+			this.v = this.v_base*1.2;
+		if (dz == 1)
 			this.v = this.v_base*0.5;
 		if (isSprinting())
 			this.v = this.v*2;		
@@ -163,9 +182,44 @@ public class Unit {
 		this.setTheta(Math.atan2(v_vector.get(1),v_vector.get(0)));
 	}
 	
+	public void moveTo(double x, double y, double z){
+		if (this.target.equals(this.finTarget)){
+			this.finTarget.clear();
+			return;
+		}
+		ArrayList<Double> newBlockPos = new ArrayList<Double>();
+		newBlockPos.add(Math.floor(x)+0.5);
+		newBlockPos.add(Math.floor(y)+0.5);
+		newBlockPos.add(Math.floor(z)+0.5);
+		if (!newBlockPos.equals(this.getFinTarget()))
+			this.setFinTarget(newBlockPos);
+		if (this.getBlockPosition().get(0) > newBlockPos.get(0))
+			x = -1;
+		else{
+			if (this.getBlockPosition().get(0) < newBlockPos.get(0))
+				x = 1;
+			else x = 0;
+		}
+		if (this.getBlockPosition().get(1) > newBlockPos.get(1))
+			y = -1;
+		else{
+			if (this.getBlockPosition().get(1) < newBlockPos.get(1))
+				y = 1;
+			else y = 0;
+		}
+		if (this.getBlockPosition().get(2) > newBlockPos.get(2))
+			z = -1;
+		else{
+			if (this.getBlockPosition().get(2) < newBlockPos.get(2))
+				z = 1;
+			else z = 0;
+		}
+		this.moveToAdjacent((int)(x),(int) (y),(int) (z));
+	}
+	
 	public void setV_Vector(){
 		double distance = 0;
-		if(this.getTarget() != this.getPosition())
+		if(!this.getTarget().equals(this.getPosition()))
 			distance = Math.sqrt(Math.pow(this.pos.get(0)-this.target.get(0), 2) + Math.pow(this.pos.get(1)-this.target.get(1), 2) + Math.pow(this.pos.get(2)-this.target.get(2), 2));
 			for (int i = 0; i<3; i++){
 				this.v_vector.set(i, this.v*(this.target.get(i)-this.pos.get(i))/distance);
@@ -190,15 +244,12 @@ public class Unit {
 	
 	public void attack(Unit defender){
 		if (defender == this){
-			System.out.println("test1");
 			return;
 		}
 		if (this.attcooldown < 1){
-			System.out.println("test2");
 			return;
 		}
-		if (defender.getBlockPosition() != this.getBlockPosition()){
-			System.out.println("test3");
+		if (!defender.getBlockPosition().equals(this.getBlockPosition())){
 			return;
 		}
 		this.addCombatants(defender);
@@ -250,7 +301,7 @@ public class Unit {
 	}
 	
 	public void setHp(int hp){
-		assert isValidSecondaryStat(hp);
+		assert isValidHp(hp);
 		this.hp = hp;
 	}
 	
@@ -260,12 +311,16 @@ public class Unit {
 	}
 	
 	public void setStam(int stam){
-		assert isValidSecondaryStat(stam);
+		assert isValidStam(stam);
 		this.stam = stam;
 	}
 	
-	public boolean isValidSecondaryStat(int stat){
-		return (stat>0 && stat<=(int)(Math.ceil(200*((double)(this.getPrimStats().get("str")*this.getPrimStats().get("wgt")))/10000)));
+	public boolean isValidHp(int hp){
+		return (hp>0 && hp<=this.maxHp);
+	}
+	
+	public boolean isValidStam(int stam){
+		return (stam>0 && stam<=this.maxStam);
 	}
 	
 	public ArrayList<Double> getTarget(){
@@ -274,6 +329,14 @@ public class Unit {
 	
 	public void setTarget(ArrayList<Double> target){
 		this.target = new ArrayList<Double>(target);
+	}
+	
+	public ArrayList<Double> getFinTarget(){
+		return this.finTarget;
+	}
+	
+	public void setFinTarget(ArrayList<Double> target){
+		this.finTarget = new ArrayList<Double>(target);
 	}
 	
 	public double getBaseVelocity(){
@@ -301,6 +364,26 @@ public class Unit {
 		this.combatants.add(unit);
 	}
 	
+	public int getMaxHp(){
+		return this.maxHp;
+	}
+	
+	public void setMaxHp(int maxHp){
+		this.maxHp = maxHp;
+	}
+	
+	public int getMaxStam(){
+		return this.maxStam;
+	}
+	
+	public void setMaxStam(int maxStam){
+		this.maxStam = maxStam;
+	}
+	
+	public double getVelocity(){
+		return this.v;
+	}
+	
 	private boolean sprinting = false;
 	
 	private boolean combat = false;
@@ -310,6 +393,8 @@ public class Unit {
 	private ArrayList<Double> pos;
 	
 	private ArrayList<Double> target;
+	
+	private ArrayList<Double> finTarget = new ArrayList<Double>();
 	
 	private String name;
 	
@@ -331,6 +416,12 @@ public class Unit {
 	
 	private int stam;
 	
-	private ArrayList<Unit> combatants;
+	private int maxHp;
+	
+	private int maxStam;
+	
+	private ArrayList<Unit> combatants = new ArrayList<Unit>();
+	
+	
 	
 }

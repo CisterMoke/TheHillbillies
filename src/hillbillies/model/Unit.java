@@ -145,7 +145,7 @@ public class Unit {
 		return blockpos;
 	}
 	
-	public void moveToAdjecent(int dx, int dy, int dz){
+	public void moveToAdjacent(int dx, int dy, int dz){
 		this.v = this.v_base;
 		if (dz == 1)
 			this.v = this.v_base*1.2;

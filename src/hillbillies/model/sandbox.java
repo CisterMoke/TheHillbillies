@@ -21,7 +21,7 @@ public class sandbox {
 		System.out.println(billie.getName());
 		System.out.println(billie.getPrimStats());
 //		billie.toggleSpringting();
-		billie.moveToAdjecent(1, 1, 0);
+		billie.moveToAdjacent(1, 1, 0);
 		for (int i=1; i<=10; i++){
 			System.out.println(i==5);
 			if (i == 5){

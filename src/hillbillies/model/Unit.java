@@ -23,7 +23,7 @@ public class Unit {
 		this.setHp((int)(Math.ceil(200*((double)(str*wgt))/10000)));	
 		this.setStam((int)(Math.ceil(200*((double)(str*wgt))/10000)));
 		this.setPosition(x, y, z);
-		this.setTheta(0.0);
+		this.setTheta(Math.PI/2);
 		this.setTarget(this.getPosition());
 		this.setBaseVelocity(1.5*((double)(str+agl))/(2*wgt));
 		this.setState(State.IDLE);
@@ -31,19 +31,65 @@ public class Unit {
 	}
 
 	public void advanceTime(double dt){
-		ArrayList<Double> nextPos = new ArrayList<Double>(this.getPosition());
-		if (this.getState() == State.COMBAT){
-			for (int i = 0; i<this.getCombatants().size(); i++){
-				this.attack(this.getCombatants().get(i));
-			}
-			return;
+		if (this.getAttackCooldown() < 1){
+			this.setAttackCooldown(this.getAttackCooldown() + dt);
 		}
-		if (this.getState() == State.RESTING){
-			if (this.getHp()<this.getMaxHp())
-				this.setHp(this.getHp() + (double)(this.getPrimStats().get("tgh"))*dt/(200*0.2));
+		if (this.getState() == State.COMBAT){
+			if (this.getCombatants().isEmpty()){
+				this.setState(State.IDLE);
+			}
 			else{
-				if (this.getStam()<this.getMaxStam())
-					this.setStam(this.getStam() + (double)(this.getPrimStats().get("tgh"))*dt/(200*0.2));
+				for (Unit unit : this.combatants){
+					this.attack(unit);
+				}
+				return;
+			}
+		}
+		
+		if (this.getState() == State.IDLE && this.DefaultOn()){
+			int idx = this.randInt()+1;
+			this.setState(this.stateList.get(idx));
+			if (this.getState() == State.WALKING){
+				this.moveTo(Math.random()*50, Math.random()*50, Math.random()*50);
+			}
+			if (this.getState()== State.WORKING){
+				this.setWorkTime(500/this.getPrimStats().get("str"));
+			}
+		}
+		
+		if (this.DefaultOn() && this.getState() == State.WALKING){
+			double sprintRoll = Math.random();
+			double sprintChance = 0.001;
+			if (sprintRoll < sprintChance){
+				this.setState(State.SPRINTING);
+			}
+		}
+			
+		if (this.restTime >= 180){
+			this.setState(State.RESTING);
+		}
+		else {
+			if (this.getState()!=State.RESTING)
+				this.setRestTime(this.getRestTime()+dt);
+		}
+		
+		if (this.getState() == State.RESTING){
+			this.setRestTime(0);
+			if (this.getHp()<this.getMaxHp()){
+				double newHp = this.getHp() + (double)(this.getPrimStats().get("tgh"))*dt/(200*0.2);
+				if(!this.isValidHp(newHp)){
+					newHp = this.maxHp;
+				}
+				this.setHp(newHp);
+			}
+			else{
+				if (this.getStam()<this.getMaxStam()){
+					double newStam = this.getStam() + (double)(this.getPrimStats().get("tgh"))*dt/(200*0.2);
+					if(!this.isValidHp(newStam)){
+						newStam = this.maxStam;	
+					}
+					this.setStam(newStam);
+				}
 				else{
 					this.setState(State.IDLE);
 				}
@@ -70,23 +116,27 @@ public class Unit {
 			return;
 		}
 		
-		//if (!this.getTarget().equals(this.getPosition())){
 		if (this.getState() == State.WALKING || this.getState() == State.SPRINTING){
+			ArrayList<Double> nextPos = new ArrayList<Double>(this.getPosition());
 			if (this.getState() == State.SPRINTING){
 				if (this.getStam()  <= 0)
 					this.setState(State.WALKING);
 				else{
-					this.setStam(this.getStam() - dt/0.1);
-					
+					double newStam = this.getStam() - dt/0.1;
+					if (!this.isValidStam(newStam)){
+						newStam = 0;
+					}
+					this.setStam(newStam);
+				
 				}
 			}
 			for (int i = 0; i<3; i++){
-				nextPos.set(i, nextPos.get(i) + this.v_vector.get(i)*dt);
+				nextPos.set(i, nextPos.get(i) + this.getV_Vector().get(i)*dt);
 			}
 			boolean moved = false;
 			int idx = 0;
 			while (!moved && idx<3){
-				if(Math.signum(nextPos.get(idx)-this.getTarget().get(idx)) == Math.signum(this.v_vector.get(idx)) && (Math.signum(this.v_vector.get(idx)) != 0)){
+				if(Math.signum(nextPos.get(idx)-this.getTarget().get(idx)) == Math.signum(this.getV_Vector().get(idx)) && (Math.signum(this.getV_Vector().get(idx)) != 0)){
 					this.setPosition(this.target.get(0), this.target.get(1), this.target.get(2));
 					if (!this.getFinTarget().isEmpty())
 						moveTo(this.getFinTarget().get(0), this.getFinTarget().get(1), this.getFinTarget().get(2));
@@ -94,22 +144,6 @@ public class Unit {
 				}
 				idx += 1;
 			}
-			
-//				if (Math.signum(nextPos.get(0)-this.getTarget().get(0)) == Math.signum(this.v_vector.get(0)) && (Math.signum(this.v_vector.get(0)) != 0)){
-//					this.setPosition(this.target.get(0), this.target.get(1), this.target.get(2));
-//					//moved = true;
-//					//moveTo(this.getFinTarget().get(0), this.getFinTarget().get(1), this.getFinTarget().get(2));
-//				}
-//				if (Math.signum(nextPos.get(1)-this.getTarget().get(1)) == Math.signum(this.v_vector.get(1)) && (Math.signum(this.v_vector.get(1)) != 0)){
-//					this.setPosition(this.target.get(0), this.target.get(1), this.target.get(2));
-//					//moved = true;
-//					//moveTo(this.getFinTarget().get(0), this.getFinTarget().get(1), this.getFinTarget().get(2));
-//				}
-//				if (Math.signum(nextPos.get(2)-this.getTarget().get(2)) == Math.signum(this.v_vector.get(2)) && (Math.signum(this.v_vector.get(2)) != 0)){
-//					this.setPosition(this.target.get(0), this.target.get(1), this.target.get(2));
-//					//moved = true;
-//					//moveTo(this.getFinTarget().get(0), this.getFinTarget().get(1), this.getFinTarget().get(2));
-//				}
 			if (!moved){
 				this.setPosition(nextPos.get(0), nextPos.get(1), nextPos.get(2));
 				moved = true;
@@ -216,8 +250,6 @@ public class Unit {
 			this.v = this.v_base*1.2;
 		if (dz == 1)
 			this.v = this.v_base*0.5;
-//		if (this.getState() == State.SPRINTING)
-//			this.v = this.v*2;		
 		
 		ArrayList<Double> target = new ArrayList<Double>(this.getBlockPosition());
 		target.set(0, target.get(0) + dx);
@@ -229,7 +261,7 @@ public class Unit {
 	}
 	
 	public void moveTo(double x, double y, double z){
-		if (this.target.equals(this.finTarget)){
+		if (this.getPosition().equals(this.finTarget)){
 			this.finTarget.clear();
 			return;
 		}
@@ -271,31 +303,20 @@ public class Unit {
 				this.v_vector.set(i, this.getVelocity()*(this.target.get(i)-this.pos.get(i))/distance);
 			}
 	}
-	
-	public boolean isSprinting(){
-		return this.sprinting;
-	}
-	
-	public void toggleSpringting(){
-		this.sprinting = !this.sprinting;
-	}
-	
-	public boolean isInCombat(){
-		return this.combat;
-	}
-	
-	public void toggleCombat(){
-		this.combat = !this.combat;
+	public ArrayList<Double> getV_Vector(){
+		return new ArrayList<Double>(this.v_vector);
 	}
 	
 	public void attack(Unit defender){
 		if (defender == this){
 			return;
 		}
-		if (this.attcooldown < 1){
+		if (this.getAttackCooldown() < 1){
 			return;
 		}
-		if (!defender.getBlockPosition().equals(this.getBlockPosition())){
+		if (!this.inRange(defender)){
+			this.removeCombatant(defender);
+			defender.removeCombatant(this);
 			return;
 		}
 		this.addCombatants(defender);
@@ -304,21 +325,21 @@ public class Unit {
 		double dx = defender.getPosition().get(0)-this.getPosition().get(0);
 		this.setTheta(Math.atan2(dy, dx));
 		defender.setTheta(Math.atan2(-dy, -dx));
-		if (! this.isInCombat()){
-			this.toggleCombat();
+		if (this.getState() != State.COMBAT){
+			this.setState(State.COMBAT);
 		}
 			
-		if (! defender.isInCombat()){
-			defender.toggleCombat();
+		if (defender.getState() != State.COMBAT){
+			defender.setState(State.COMBAT);
 		}
 			
 		defender.defend(this);
-		this.attcooldown = 0;
+		this.setAttackCooldown(0);
 	}
 
 	public void defend(Unit attacker){
 		double damage = ((double)(attacker.getPrimStats().get("str")))/10;
-		double dodgeprob = ((double)(0.20*this.getPrimStats().get("agl")))/attacker.getPrimStats().get("agl");
+		double dodgeprob = ((double)(0.2*this.getPrimStats().get("agl")))/attacker.getPrimStats().get("agl");
 		double defprob = ((double)(0.25*(this.getPrimStats().get("str")+this.getPrimStats().get("agl"))))/(attacker.getPrimStats().get("str")+attacker.getPrimStats().get("agl"));
 		double dodgeroll = Math.random();
 		double defroll = Math.random();
@@ -332,14 +353,37 @@ public class Unit {
 				dz = this.randInt();
 			}
 			this.setPosition(this.getPosition().get(0)+dx,this.getPosition().get(1)+dy , this.getPosition().get(2)+dz);
-			this.toggleCombat();
-			attacker.toggleCombat();
-			return;
+			this.setTarget(this.getPosition());
+			if (! this.inRange(attacker)){
+				this.removeCombatant(attacker);
+				attacker.removeCombatant(this);
+				if (!this.getFinTarget().isEmpty())
+					this.moveTo(this.getFinTarget().get(0), this.getFinTarget().get(1), this.getFinTarget().get(2));
+				return;
+			}
 		}
 		if (defroll <= defprob){
 			return;
 		}
-		this.setHp(this.getHp() - (int)(damage));
+		if (!this.isValidHp(this.getHp() - damage)){
+			this.setHp(0);
+		}
+		else{
+			this.setHp(this.getHp() - damage);
+		}
+		
+	}
+	
+	public void startDefault(){
+		this.Default = true;
+	}
+	
+	public void stopDefault(){
+		this.Default = false;
+	}
+	
+	public boolean DefaultOn(){
+		return this.Default;
 	}
 	
 	public double getHp(){
@@ -362,11 +406,11 @@ public class Unit {
 	}
 	
 	public boolean isValidHp(double hp){
-		return (hp>0 && hp<=this.maxHp);
+		return (hp>=0 && hp<=this.maxHp);
 	}
 	
 	public boolean isValidStam(double stam){
-		return (stam>0 && stam<=this.maxStam);
+		return (stam>=0 && stam<=this.maxStam);
 	}
 	
 	public ArrayList<Double> getTarget(){
@@ -402,12 +446,17 @@ public class Unit {
 		}
 		return (int)(Math.ceil(random*3)-2);
 	}
-	public ArrayList<Unit> getCombatants(){
+	
+	public Set<Unit> getCombatants(){
 		return this.combatants;
 	}
 	
 	public void addCombatants(Unit unit) {
 		this.combatants.add(unit);
+	}
+	
+	public void removeCombatant(Unit unit){
+		this.combatants.remove(unit);
 	}
 	
 	public int getMaxHp(){
@@ -435,7 +484,7 @@ public class Unit {
 	}
 	
 	public enum State{
-		IDLE, COMBAT,WALKING, WORKING, RESTING, SPRINTING		
+		IDLE, COMBAT, WALKING, WORKING, RESTING, SPRINTING		
 	}
 	
 	public void setState(State state){
@@ -462,9 +511,35 @@ public class Unit {
 		}
 	}
 	
-	private boolean sprinting = false;
+	public boolean inRange(Unit unit){
+		boolean inRange = true;
+		int idx = 0;
+		while (idx <3 && inRange){
+			if(Math.abs(unit.getBlockPosition().get(idx) - this.getBlockPosition().get(idx)) > 1.1){
+				inRange = false;
+			}
+			idx += 1;
+		}
+		return inRange;
+	}
 	
-	private boolean combat = false;
+	public double getRestTime(){
+		return this.restTime;
+	}
+	
+	public void setRestTime(double newTime){
+		this.restTime = newTime;
+	}
+	
+	public double getAttackCooldown(){
+		return this.attcooldown;
+	}
+	
+	public void setAttackCooldown(double newTime){
+		this.attcooldown = newTime;
+	}
+	
+	private double theta;
 	
 	private Map<String, Integer> primStats;
 	
@@ -475,9 +550,7 @@ public class Unit {
 	private ArrayList<Double> finTarget = new ArrayList<Double>();
 	
 	private String name;
-	
-	private Double theta;
-	
+		
 	private double v_base;
 	
 	private double v;
@@ -488,7 +561,7 @@ public class Unit {
 	
 	private static final Set<String> VALIDCHARS = new HashSet<String>(Arrays.asList(" ", "\"", "\'"));
 	
-	private int attcooldown = 1;
+	private double attcooldown = 1;
 	
 	private double hp;
 	
@@ -502,8 +575,17 @@ public class Unit {
 	
 	private double workTime = 0;
 	
-	private ArrayList<Unit> combatants = new ArrayList<Unit>();
+	private Set<Unit> combatants = new HashSet<Unit>();
 	
+	private double restTime = 0;
 	
+	private boolean Default = true;
+	
+	private final ArrayList<State> stateList;{
+		this.stateList = new ArrayList<State>();
+		this.stateList.add(State.WALKING);
+		this.stateList.add(State.RESTING);
+		this.stateList.add(State.WORKING);
+	}
 	
 }

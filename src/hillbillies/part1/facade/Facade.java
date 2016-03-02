@@ -1,6 +1,5 @@
 package hillbillies.part1.facade;
 
-import java.util.ArrayList;
 import java.util.Map;
 
 import hillbillies.model.Unit;
@@ -148,7 +147,7 @@ public class Facade implements IFacade {
 	@Override
 	public boolean isMoving(Unit unit) throws ModelException {
 		// TODO Auto-generated method stub
-		return false;
+		return (unit.getState() == State.WALKING || unit.getState() == State.SPRINTING);
 	}
 
 	@Override
@@ -225,13 +224,19 @@ public class Facade implements IFacade {
 	@Override
 	public void setDefaultBehaviorEnabled(Unit unit, boolean value) throws ModelException {
 		// TODO Auto-generated method stub
+		if (value){
+			unit.startDefault();
+		}
+		else{
+			unit.stopDefault();
+		}
 		
 	}
 
 	@Override
 	public boolean isDefaultBehaviorEnabled(Unit unit) throws ModelException {
 		// TODO Auto-generated method stub
-		return false;
+		return unit.DefaultOn();
 	}
 
 }

@@ -141,7 +141,7 @@ public class Facade implements IFacade {
 	@Override
 	public double getCurrentSpeed(Unit unit) throws ModelException {
 		// TODO Auto-generated method stub
-		return unit.getVelocity();
+		return unit.getSpeed();
 	}
 
 	@Override
@@ -212,7 +212,7 @@ public class Facade implements IFacade {
 	@Override
 	public void rest(Unit unit) throws ModelException {
 		// TODO Auto-generated method stub
-		unit.setState(State.RESTING);
+		unit.rest();
 	}
 
 	@Override

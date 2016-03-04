@@ -10,11 +10,11 @@ import hillbillies.model.Unit.State;
 
 public class sandbox {
 	public static void main(String[] args){
-		Unit billie = new Unit("Billie", 0, 0, 0, 100, 100, 50, 100);
-		double dubbel = 0.0;
-		int ient = 5;
-		dubbel = ient;
-		System.out.println(dubbel);
+		Unit billie = new Unit("Billie", 0, 0, 0, 80, 20, 100, 20);
+		billie.attack(billie);
+		System.out.println(billie.getCombatants());
+		System.out.println(billie.getState());
+		billie.setState(State.lk);
 	}
 }
 

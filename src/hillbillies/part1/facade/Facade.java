@@ -12,7 +12,7 @@ public class Facade implements IFacade {
 	public Unit createUnit(String name, int[] initialPosition, int weight, int agility, int strength, int toughness,
 			boolean enableDefaultBehavior) throws ModelException {
 		// TODO Auto-generated method stub
-		Unit unit = new Unit(name, (double)(initialPosition[0]),(double) (initialPosition[1]),(double) (initialPosition[2]), strength, weight, agility, toughness );
+		Unit unit = new Unit(name, (double)(initialPosition[0])+0.5 ,(double) (initialPosition[1]) + 0.5,(double) (initialPosition[2]) + 0.5, strength, weight, agility, toughness );
 		return unit;
 	}
 
@@ -40,7 +40,12 @@ public class Facade implements IFacade {
 	@Override
 	public void setName(Unit unit, String newName) throws ModelException {
 		// TODO Auto-generated method stub
-		unit.setName(newName);
+		try{
+			unit.setName(newName);
+		}
+		catch (IllegalArgumentException exc){
+			throw new ModelException();
+		}
 	}
 
 	@Override
@@ -147,7 +152,7 @@ public class Facade implements IFacade {
 	@Override
 	public boolean isMoving(Unit unit) throws ModelException {
 		// TODO Auto-generated method stub
-		return (unit.getState() == State.WALKING || unit.getState() == State.SPRINTING);
+		return (unit.isMoving());
 	}
 
 	@Override

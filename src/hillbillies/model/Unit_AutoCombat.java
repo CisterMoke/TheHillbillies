@@ -9,9 +9,9 @@ import be.kuleuven.cs.som.taglet.*;
  * @author Ruben
  *
  */
-public class Unit {
+public class Unit_AutoCombat {
 	
-	public Unit(String name,double x,double y,double z,int str,int wgt,int agl,int tgh) throws IllegalArgumentException{
+	public Unit_AutoCombat(String name,double x,double y,double z,int str,int wgt,int agl,int tgh) throws IllegalArgumentException{
 		HashMap<String, Integer> firstStats = new HashMap<String, Integer>();
 		firstStats.put("str", str);
 		firstStats.put("wgt", wgt);
@@ -38,15 +38,20 @@ public class Unit {
 		if (this.getMinRestTime() > 0){
 			this.setMinRestTime(this.getMinRestTime()- dt);
 		}
-		if (this.getAttackCooldown() > 0){
-			this.setAttackCooldown(this.getAttackCooldown() - dt);
+		if (this.getAttackCooldown() < 1){
+			this.setAttackCooldown(this.getAttackCooldown() + dt);
 		}
-		if(this.getState() == State.COMBAT){
-			Set<Unit> combatantsCopy = new HashSet<Unit>(this.combatants);
-			for (Unit unit : combatantsCopy){
-				this.attack(unit);
+		if (this.getState() == State.COMBAT){
+			if (this.getCombatants().isEmpty()){
+				this.setState(State.IDLE);
 			}
-			return;
+			else{
+				Set<Unit_AutoCombat> combatantsCopy = new HashSet<Unit_AutoCombat>(this.combatants);
+				for (Unit_AutoCombat unit : combatantsCopy){
+					this.attack(unit);
+				}
+				return;
+			}
 		}
 		
 		if (this.getState() == State.IDLE && this.DefaultOn()){
@@ -113,7 +118,6 @@ public class Unit {
 		}
 		if (this.getState() == State.IDLE && !this.getTarget().equals(this.getPosition())){
 			this.setState(State.WALKING);
-			this.setTheta(Math.atan2(v_vector.get(1),v_vector.get(0)));
 		}
 		if (this.getTarget().equals(this.getPosition()) && this.getFinTarget().isEmpty() && this.getState() != State.IDLE){
 			this.setState(State.IDLE);
@@ -577,38 +581,63 @@ public class Unit {
 	public ArrayList<Double> getV_Vector(){
 		return new ArrayList<Double>(this.v_vector);
 	}
-	
 	/**
-	 * 	
+	 * 
 	 * @param defender
-	 * @post	Nothing happens if the unit hasn't rested long enough,
-	 * 			is moving or if the defender is out of range.
-	 * 			| if(this.getMinRestTime() > 0 || !this.inRange(defender) || this.isMoving())
+	 * @post	Nothing happens if the unit is moving
+	 * 			|if (this.isMoving())
+	 * 			|	return
+	 * @post	Nothing happens if the unit hasn't rested the required minimum resting time
+	 * 			and isn't in combat.
+	 * 			| if(this.getMinRestTime() > 0 && this.getState() != State.COMBAT)
 	 *			|	return
-	 * @effect	Tries to add the defender to the unit's set of combatants.
-	 * 			If an IllegalArgumentException is caught, nothing happens
+	 * @post	Nothing happens if the unit has already performed an attack less than one second ago.
+	 * 			| if(this.getAttackCooldown() < 1)
+	 * 			|	return
+	 * @effect	If the defender is out of range, both units are removed from each other's
+	 * 			set of combatants and no attack is performed.
+	 * 			| if (!this.inRange(defender))
+	 *			|	this.removeCombatant(defender)
+	 *			|	defender.removeCombatant(this)
+	 *			|	return
+	 * @effect	Tries to add the unit to the set of combatants of the defender,
+	 * 			if the unit performs an attack. If an IllegalArgumentException is caught,
+	 * 			nothing will happen. If no exception is caught, the attacker will be added
+	 * 			to the set of combatants of the defender and this unit.
 	 * 			| try{
-	 *			| this.addCombatant(defender)
+	 *			|	this.addCombatant(defender)
 	 *			| }
 	 *			| catch(IllegalArgumentException exc){
 	 *			|	return
 	 *			| }
-	 * @effect	The orientation of this unit and the defender are set so that they
-	 * 			face each other.
-	 * 			| this.new.getTheta() ==
-	 * 			|	Math.atan2(defender.getPosition().get(1)-this.getPosition().get(1),
-	 * 			|				defender.getPosition().get(0)-this.getPosition().get(0)) &&
-	 * 			| 	defender.new.getTheta() == this.getTheta() + Math.PI
-	 * @post	The attack cooldown is set to 1 second.
-	 * 			| new.getAttackCooldown == 1
-	 * @post	The states of both units are set to COMBAT.
-	 * 			| this.new.getState() == State.COMBAT &&
+	 *			|defender.addCombatant(this)
+	 * @post	If the unit performs an attack, the orientation of the attacker
+	 * 			and the defender will be set so that they face each other.
+	 * 			| this.new.getTheta() 
+	 * 			|	== arctan((defender.getPosition.get(1)-this.getPosition().get(1))
+	 * 			|		/(defender.getPosition().get(0) - this.getPosition().get(0)))
+	 * 			| defender.new.getTheta() = this.getTheta() + Math.PI
+	 * @post	If the unit performs an attack its state and the defender's is set to combat.
+	 * 			| this.new.getState() == State.COMBAT
 	 * 			| defender.new.getState() == State.COMBAT
-	 * @post	The attack on the defender is initiated.
-	 * 			| new.isAttackInitiated() == true
-	 */ 
-	private void initiateAttack(Unit defender){
-		if(this.getMinRestTime() > 0 || !this.inRange(defender) || this.isMoving()){
+	 * @effect	If the unit performs an attack, the defender will try to defend the attack.	
+	 * 			| defender.defend(this)
+	 * 			
+	 * 
+	 */
+	public void attack(Unit_AutoCombat defender){
+		if (this.isMoving()){
+			return;
+		}
+		if(this.getMinRestTime() > 0 && this.getState() != State.COMBAT){
+			return;
+		}
+		if (this.getAttackCooldown() < 1){
+			return;
+		}
+		if (!this.inRange(defender)){
+			this.removeCombatant(defender);
+			defender.removeCombatant(this);
 			return;
 		}
 		try{
@@ -617,75 +646,21 @@ public class Unit {
 		catch(IllegalArgumentException exc){
 			return;
 		}
+		defender.addCombatant(this);
 		double dy = defender.getPosition().get(1)-this.getPosition().get(1);
 		double dx = defender.getPosition().get(0)-this.getPosition().get(0);
 		this.setTheta(Math.atan2(dy, dx));
-		//defender.setTheta(Math.atan2(-dy, -dx));
-		defender.setTheta(this.getTheta() + Math.PI);
-		this.setAttackCooldown(1);
-		this.setState(State.COMBAT);
-		defender.setState(State.COMBAT);
-		if(!this.isAttackInitiated()){ 
-			this.toggleAttackInitiated();
+		defender.setTheta(Math.atan2(-dy, -dx));
+		if (this.getState() != State.COMBAT){
+			this.setState(State.COMBAT);
 		}
-	}
-	/**
-	 * 
-	 * Returns true if the attack is initiated.
-	 */
-	@Basic
-	public boolean isAttackInitiated(){
-		return this.attackInitiated;
-	}
-	/**
-	 * @post	The value of isAttackInitiated() is set to its opposite.
-	 * 			| new.isAttackInititiated() == !this.isAttackInitiated()
-	 */
-	public void toggleAttackInitiated(){
-		this.attackInitiated = !this.isAttackInitiated();
-	}
-	/**
-	 * 
-	 * @param defender
-	 * @effect	The attack get's initiated if it hasn't been initiated yet.
-	 * 			|if(!this.isAttackInitiated())
-	 *			|	this.initiateAttack(defender) &&
-	 *			|		return
-	 * @post	Nothing happens if the unit hasn't finished its attack yet.
-	 * 			| if(this.getAttackCooldown() > 0)
-	 * 			|	return
-	 * @effect	If the defender is out of range, the defender is removed from
-	 * 			the set of combatants, this unit's state is set to IDLE
-	 * 			and the value of isAttackInitiated is set to false.
-	 * 			| if (!this.inRange(defender))
-	 *			|	this.removeCombatant(defender) &&
-	 *			|		this.setState(State.IDLE) &&
-	 *			|		new.isAttackInitiated() == false &&
-	 *			|		return
-	 * @effect	If the unit performs an attack, the defender will try to defend the attack.	
-	 * 			| defender.defend(this)
-	 * 			
-	 * 
-	 */
-	public void attack(Unit defender){
-		if(!this.isAttackInitiated()){
-			this.initiateAttack(defender);
-			return;
+			
+		if (defender.getState() != State.COMBAT){
+			defender.setState(State.COMBAT);
 		}
-		
-		if (this.getAttackCooldown() > 0){
-			return;
-		}
-		
-		if (!this.inRange(defender)){
-			this.removeCombatant(defender);
-			this.setState(State.IDLE);
-			this.toggleAttackInitiated();
-			return;
-		}
-		this.toggleAttackInitiated();
-		this.removeCombatant(defender);
+			
 		defender.defend(this);
+		this.setAttackCooldown(0);
 	}
 	/**
 	 * 
@@ -694,7 +669,7 @@ public class Unit {
 	 * 			0.2 times the ratio of the units agility to the attacker's agility.
 	 * 			|result == 0.2*this.getPrimStats().get("agl")/attacker.getPrimStats().get("agl")
 	 */
-	public double getDodgeProb(Unit attacker){
+	public double getDodgeProb(Unit_AutoCombat attacker){
 		return ((double)(0.2*this.getPrimStats().get("agl")))/attacker.getPrimStats().get("agl");
 	}
 	/**
@@ -704,7 +679,7 @@ public class Unit {
 	 *			the probability to dodge.
 	 *			|result == (Math.random() <= this.getDodgeProb(attacker))
 	 */
-	public boolean hasDodged(Unit attacker){
+	public boolean hasDodged(Unit_AutoCombat attacker){
 		return (Math.random() <= this.getDodgeProb(attacker));
 	}
 	/**
@@ -713,18 +688,18 @@ public class Unit {
 	 * @effect	If the unit successfully dodged the attack, it will randomly select an adjacent block. 
 	 * 			It try to set the position of the unit in that block. If it fails, it will
 	 * 			randomly select an adjacent block until it succeeds to move the unit.
-	 * 			| dx == 0 &&
-	 *			| dy == 0 &&
-	 *			| dz == 0 &&
+	 * 			| dx == 0
+	 *			| dy == 0
+	 *			| dz == 0
 	 *			| checker == true
 	 *			| while (dx == 0 && dy == 0 && dz == 0 && checker){
-	 *			|	dx == this.randInt() &&
-	 *			|	dy == this.randInt() &&
-	 *			|	dz == this.randInt() &&
+	 *			|	dx == this.randInt()
+	 *			|	dy == this.randInt()
+	 *			|	dz == this.randInt()
 	 *			|	try{
-	 *			|		this.setPosition(this.getPosition() + <dx, dy, dz>) &&
+	 *			|		this.setPosition(this.getPosition() + <dx, dy, dz>)
 	 *			|		checker == false
-	 *			|	} &&
+	 *			|	}
 	 *			|	catch (IllegalArgumentException exc){
 	 *			|		checker == true
 	 *			|	}
@@ -733,15 +708,12 @@ public class Unit {
 	 * 			the unit is removed from the set of combatants of the attacker
 	 * 			and vice versa.
 	 * 			| if (! this.inRange(attacker))
-	 *			| 	this.removeCombatant(attacker) &&
+	 *			| 	this.removeCombatant(attacker)
 	 *			| 	attacker.removeCombatant(this)
 	 * @post	If the unit dodged the attack, the target of the unit is set to its position.
 	 * 			| new.getTarget() == this.getPosition()
-	 * @effect The unit will move to its final target if the unit hasn't reached it yet.
-	 * 			| if (!this.getFinTarget().isEmpty())
-	 *			|	this.moveTo(this.getFinTarget().get(0), this.getFinTarget().get(1), this.getFinTarget().get(2))
 	 */
-	public void dodge(Unit attacker){
+	public void dodge(Unit_AutoCombat attacker){
 		if (hasDodged(attacker)){
 			int dx = 0;
 			int dy = 0;
@@ -761,8 +733,13 @@ public class Unit {
 			}
 			
 			this.setTarget(this.getPosition());
-			if (!this.getFinTarget().isEmpty())
-			this.moveTo(this.getFinTarget().get(0), this.getFinTarget().get(1), this.getFinTarget().get(2));
+			if (! this.inRange(attacker)){
+				this.removeCombatant(attacker);
+				attacker.removeCombatant(this);
+				if (!this.getFinTarget().isEmpty())
+					this.moveTo(this.getFinTarget().get(0), this.getFinTarget().get(1), this.getFinTarget().get(2));
+				return;
+			}
 		}
 	}
 	
@@ -775,7 +752,7 @@ public class Unit {
 	 * 			|result == 0.25*(this.getPrimStats().get("agl")+this.getPrimStats("str"))
 	 * 			|			/ (attacker.getPrimStats().get("agl") + this.getPrimStats("str"))
 	 */
-	public double getBlockProb(Unit attacker){
+	public double getBlockProb(Unit_AutoCombat attacker){
 		return ((double)(0.25*(this.getPrimStats().get("agl")+ this.getPrimStats().get("str"))))
 				/(attacker.getPrimStats().get("agl") + attacker.getPrimStats().get("str"));
 	}
@@ -787,7 +764,7 @@ public class Unit {
 	 *			the probability to block.
 	 *			|result == (Math.random() <= this.getBlockProb(attacker))
 	 */
-	public boolean hasBlocked(Unit attacker){
+	public boolean hasBlocked(Unit_AutoCombat attacker){
 		return(Math.random() <= this.getBlockProb(attacker));
 	}
 	
@@ -817,9 +794,10 @@ public class Unit {
 	 *			| else
 	 *			|	this.setHp(this.getHp() - damage)
 	 */
-	public void defend(Unit attacker){
-		this.setState(State.IDLE);
-		attacker.setState(State.IDLE);
+	public void defend(Unit_AutoCombat attacker){
+		if(!this.getCombatants().contains(attacker)){
+			return;
+		}
 		double damage = ((double)(attacker.getPrimStats().get("str")))/10;
 		//INSERT HERE
 		if(this.hasDodged(attacker)){
@@ -874,7 +852,7 @@ public class Unit {
 //	}
 	/**
 	 * 
-	 * Returns true the unit is set to the default behaviour.
+	 * Returns whether the unit is set to the default behaviour.
 	 */
 	@Basic
 	public boolean DefaultOn(){
@@ -1091,7 +1069,7 @@ public class Unit {
 	 * Returns the set containing the units this unit is currently in combat with.
 	 */
 	@Basic
-	public Set<Unit> getCombatants(){
+	public Set<Unit_AutoCombat> getCombatants(){
 		return this.combatants;
 	}
 	
@@ -1103,7 +1081,7 @@ public class Unit {
 	 * @throws	IllegalArgumentException
 	 * 			|unit == this
 	 */
-	public void addCombatant(Unit unit) throws IllegalArgumentException{
+	public void addCombatant(Unit_AutoCombat unit) throws IllegalArgumentException{
 		if (unit == this){
 			throw new IllegalArgumentException("You are not allowed to fight with yourself!");
 		}
@@ -1116,7 +1094,7 @@ public class Unit {
 	 * @post	Unit is removed from the set of combatants.
 	 * 			|!new.getCombatants().contains(unit)
 	 */
-	public void removeCombatant(Unit unit){
+	public void removeCombatant(Unit_AutoCombat unit){
 		this.combatants.remove(unit);
 	}
 	/**
@@ -1191,11 +1169,6 @@ public class Unit {
 	 *			|this.setV_Vector()
 	 */
 	public void setState(State state){
-		if (state == State.COMBAT){
-			this.setMinRestTime(0);
-			this.setWorkTime(0);
-			
-		}
 		if(this.getMinRestTime() > 0 && state != State.COMBAT){
 			return;
 		}
@@ -1246,7 +1219,7 @@ public class Unit {
 	 * 
 	 */
 	public void work(){
-		if (this.isMoving() || this.getState() == State.COMBAT)
+		if (this.isMoving())
 			return;
 		if (this.getState() != State.WORKING){
 			this.setState(State.WORKING);
@@ -1262,7 +1235,7 @@ public class Unit {
 	 * 			|dz = this.getBlockPosition().get(2) - unit.getBlockPosition().get(2)
 	 * 			|result == (|dx|<= 1) && (|dy| <=1) && (|dz| <= 1)
 	 */
-	public boolean inRange(Unit unit){
+	public boolean inRange(Unit_AutoCombat unit){
 		boolean inRange = true;
 		int idx = 0;
 		while (idx <3 && inRange){
@@ -1335,7 +1308,7 @@ public class Unit {
 	 * 			|	this.setMinRestTime(40.0/this.getPrimStats().get("tgh"))
 	 */
 	public void rest(){
-		if (this.isMoving() || this.getState() == State.COMBAT)
+		if (this.isMoving())
 			return;
 		if(this.getState() != State.RESTING){
 			this.setState(State.RESTING);
@@ -1366,7 +1339,7 @@ public class Unit {
 	
 	private static final Set<String> VALIDCHARS = new HashSet<String>(Arrays.asList(" ", "\"", "\'"));
 	
-	private double attcooldown = 0;
+	private double attcooldown = 1;
 	
 	private double hp;
 	
@@ -1380,15 +1353,13 @@ public class Unit {
 	
 	private double workTime = 0;
 	
-	private Set<Unit> combatants = new HashSet<Unit>();
+	private Set<Unit_AutoCombat> combatants = new HashSet<Unit_AutoCombat>();
 	
 	private double restTime = 0;
 	
-	private boolean Default = false;
+	private boolean Default = true;
 	
 	private double minRestTime = 0;
-	
-	private boolean attackInitiated = false;
 	
 	private final ArrayList<State> stateList;{
 		this.stateList = new ArrayList<State>();

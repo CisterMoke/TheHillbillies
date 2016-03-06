@@ -3,7 +3,6 @@ package hillbillies.model;
 import java.util.*;
 
 import be.kuleuven.cs.som.annotate.*;
-import be.kuleuven.cs.som.taglet.*;
 /**
  * Class respresenting a Hillbilly unit of the game.
  * @author Joost Croonen & Ruben Dedoncker

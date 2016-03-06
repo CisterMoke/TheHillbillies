@@ -137,13 +137,13 @@ public class Facade implements IFacade {
 	@Override
 	public void startSprinting(Unit unit) throws ModelException {
 		if (unit.getState() == State.WALKING)
-			unit.setState(State.SPRINTING);
+			unit.sprint();
 	}
 
 	@Override
 	public void stopSprinting(Unit unit) throws ModelException {
 		if(unit.getState() == State.SPRINTING)
-			unit.setState(State.IDLE);
+			unit.idle();
 		
 	}
 

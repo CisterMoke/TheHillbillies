@@ -740,7 +740,7 @@ public class Unit {
 	 * @post	The value of isAttackInitiated() is set to its opposite.
 	 * 			| new.isAttackInititiated() == !this.isAttackInitiated()
 	 */
-	public void toggleAttackInitiated(){
+	private void toggleAttackInitiated(){
 		this.attackInitiated = !this.isAttackInitiated();
 	}
 	/**
@@ -1253,7 +1253,7 @@ public class Unit {
 	 *@effect	The velocity vector is updated
 	 *			|this.setV_Vector()
 	 */
-	public void setState(State state){
+	private void setState(State state){
 		if (state == State.COMBAT){
 			this.setMinRestTime(0);
 			this.setWorkTime(0);
@@ -1406,13 +1406,25 @@ public class Unit {
 	 * 			|	setMinRestTime(40.0/getPrimStats().get("tgh"))
 	 */
 	public void rest(){
-		if ((this.isMoving() || this.getState() == State.COMBAT) && (this.restTime >= 180) )
+		if ((this.isMoving() || this.getState() == State.COMBAT) && (this.restTime < 180) )
 			return;
 		if(this.getState() != State.RESTING){
 			this.setState(State.RESTING);
 			this.setMinRestTime(40.0/this.getPrimStats().get("tgh"));
 		return;
 		}
+	}
+	/**
+	 * The unit starts sprinting.
+	 */
+	public void sprint(){
+		this.setState(State.SPRINTING);
+	}
+	/**
+	 * The unit's state is set to IDLE.
+	 */
+	public void idle(){
+		this.setState(State.IDLE);
 	}
 	private double theta;
 	
@@ -1454,7 +1466,7 @@ public class Unit {
 	
 	private double restTime = 0;
 	
-	private boolean Default = false;
+	private boolean Default = true;
 	
 	private double minRestTime = 0;
 	

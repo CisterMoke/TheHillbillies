@@ -1,4 +1,4 @@
-package hillbillies.tests.unit;
+package tests.model;
 
 import static org.junit.Assert.*;
 
@@ -201,7 +201,7 @@ public class UnitTest {
 	@Test
 	public void testAutoRest(){
 		test.moveTo(10.0, 10.0, 10.0);
-		test.setState(State.SPRINTING);
+		test.sprint();
 		for (int idx = 1; idx<181 ; idx++){
 			test.advanceTime(0.2);
 			test.advanceTime(0.2);
@@ -283,14 +283,14 @@ public class UnitTest {
 	@Test
 	public void testIsSprinting(){
 		test.moveTo(1, 1, 0);
-		test.setState(State.SPRINTING);
+		test.sprint();
 		assertEquals(State.SPRINTING, test.getState());
 		
 	}
 	@Test
 	public void testSprintSpeed(){
 		test.moveTo(1, 1, 0);
-		test.setState(State.SPRINTING);
+		test.sprint();
 		assertEquals(test.getBaseSpeed()*2, test.getSpeed(), 0.00000000000001);
 		
 	}
@@ -298,7 +298,7 @@ public class UnitTest {
 	public void testStopSprintingAtZeroStam(){
 		test.moveTo(5, 5, 0);
 		test.setStam(2);
-		test.setState(State.SPRINTING);
+		test.sprint();
 		test.advanceTime(0.2);
 		assertEquals(State.SPRINTING, test.getState());
 		test.advanceTime(0.2);
@@ -479,13 +479,6 @@ public class UnitTest {
 		test.attack(test2);
 		assertEquals(State.COMBAT, test.getState());
 		assertEquals(State.COMBAT, test2.getState());
-	}
-	@Test
-	public void testToggleAttackInitiated(){
-		test.toggleAttackInitiated();
-		assertTrue(test.isAttackInitiated());
-		test.toggleAttackInitiated();
-		assertFalse(test.isAttackInitiated());
 	}
 	@Test
 	public void testChangeStateInCombat(){

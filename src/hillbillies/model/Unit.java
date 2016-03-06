@@ -1405,7 +1405,7 @@ public class Unit {
 	public void rest(){
 		if ((this.isMoving() || this.getState() == State.COMBAT) && (this.restTime < 180) )
 			return;
-		if(this.getState() != State.RESTING){
+		if(this.getState() != State.RESTING && (this.getHp() != this.getMaxHp() || this.getStam() != this.getMaxStam())){
 			this.setState(State.RESTING);
 			this.setMinRestTime(40.0/this.getPrimStats().get("tgh"));
 		return;

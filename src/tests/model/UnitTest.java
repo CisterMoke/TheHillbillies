@@ -191,12 +191,25 @@ public class UnitTest {
 	
 	
 	@Test
-	public void testRestState(){
+	public void testRestWhenFull(){
+		test.rest();
+		assertEquals(State.IDLE, test.getState());
+	}
+	@Test
+	public void testRestWhenInjured(){
+		test.setHp(test.getHp() - 1);
+		test.rest();
+		assertEquals(State.RESTING, test.getState());
+	}
+	@Test
+	public void testRestWhenExhausted(){
+		test.setHp(test.getStam() - 1);
 		test.rest();
 		assertEquals(State.RESTING, test.getState());
 	}
 	@Test
 	public void testMinRestTime(){
+		test.setHp(test.getHp() - 2);
 		test.rest();
 		assertEquals(40.0/test.getPrimStats().get("tgh"), test.getMinRestTime(), 0.000000001);
 		test.advanceTime(0.1);

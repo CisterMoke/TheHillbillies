@@ -6,13 +6,19 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 
+import org.junit.Before;
 import org.junit.Test;
 
 import hillbillies.model.Unit;
 import hillbillies.model.Unit.State;
 
 public class UnitTest {
-	Unit test = new Unit("Billie", 0.5, 0.5, 0.5, 50, 50, 50, 50);
+	private Unit test;
+	
+	@Before
+	public void setup(){
+		this.test = new Unit("Billie", 0.5, 0.5, 0.5, 50, 50, 50, 50);
+	}
 	
 	@Test
 	public void testSetPositionUpperOutOfBounds(){

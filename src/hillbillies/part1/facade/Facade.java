@@ -11,8 +11,16 @@ public class Facade implements IFacade {
 	@Override
 	public Unit createUnit(String name, int[] initialPosition, int weight, int agility, int strength, int toughness,
 			boolean enableDefaultBehavior) throws ModelException {
-		Unit unit = new Unit(name, (double)(initialPosition[0])+0.5 ,(double) (initialPosition[1]) + 0.5,(double) (initialPosition[2]) + 0.5, strength, weight, agility, toughness );
-		return unit;
+		try{
+			Unit unit = new Unit(name, (double)(initialPosition[0])+0.5,
+									(double) (initialPosition[1]) + 0.5,
+									(double) (initialPosition[2]) + 0.5, 
+									strength, weight, agility, toughness );
+			return unit;
+		}
+		catch(IllegalArgumentException exc){
+			throw new ModelException();
+		}
 	}
 
 	@Override
@@ -50,9 +58,9 @@ public class Facade implements IFacade {
 
 	@Override
 	public void setWeight(Unit unit, int newValue) throws ModelException {
-		Map<String, Integer> oldStats = unit.getPrimStats();
-		oldStats.put("wgt", newValue);
-		unit.setPrimStats(oldStats);
+		Map<String, Integer> newStats = unit.getPrimStats();
+		newStats.put("wgt", newValue);
+		unit.setPrimStats(newStats);
 		
 	}
 
@@ -63,9 +71,9 @@ public class Facade implements IFacade {
 
 	@Override
 	public void setStrength(Unit unit, int newValue) throws ModelException {
-		Map<String, Integer> oldStats = unit.getPrimStats();
-		oldStats.put("str", newValue);
-		unit.setPrimStats(oldStats);
+		Map<String, Integer> newStats = unit.getPrimStats();
+		newStats.put("str", newValue);
+		unit.setPrimStats(newStats);
 		
 	}
 
@@ -76,9 +84,9 @@ public class Facade implements IFacade {
 
 	@Override
 	public void setAgility(Unit unit, int newValue) throws ModelException {
-		Map<String, Integer> oldStats = unit.getPrimStats();
-		oldStats.put("agl", newValue);
-		unit.setPrimStats(oldStats);
+		Map<String, Integer> newStats = unit.getPrimStats();
+		newStats.put("agl", newValue);
+		unit.setPrimStats(newStats);
 	}
 
 	@Override
@@ -88,9 +96,9 @@ public class Facade implements IFacade {
 
 	@Override
 	public void setToughness(Unit unit, int newValue) throws ModelException {
-		Map<String, Integer> oldStats = unit.getPrimStats();
-		oldStats.put("tgh", newValue);
-		unit.setPrimStats(oldStats);
+		Map<String, Integer> newStats = unit.getPrimStats();
+		newStats.put("tgh", newValue);
+		unit.setPrimStats(newStats);
 	}
 
 	@Override
@@ -115,13 +123,23 @@ public class Facade implements IFacade {
 
 	@Override
 	public void advanceTime(Unit unit, double dt) throws ModelException {
-		unit.advanceTime(dt);
+		try{
+			unit.advanceTime(dt);
+		}
+		catch(IllegalArgumentException exc){
+			throw new ModelException();
+		}
 		
 	}
 
 	@Override
 	public void moveToAdjacent(Unit unit, int dx, int dy, int dz) throws ModelException {
-		unit.moveToAdjacent(dx, dy, dz);
+		try{
+			unit.moveToAdjacent(dx, dy, dz);
+		}
+		catch (IllegalArgumentException exc){
+			throw new ModelException();
+		}
 	}
 
 	@Override

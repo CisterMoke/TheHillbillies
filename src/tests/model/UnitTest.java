@@ -18,6 +18,7 @@ public class UnitTest {
 	@Before
 	public void setup(){
 		this.test = new Unit("Billie", 0.5, 0.5, 0.5, 50, 50, 50, 50);
+		test.stopDefault();
 	}
 	
 	@Test

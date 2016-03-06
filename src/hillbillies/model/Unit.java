@@ -46,9 +46,6 @@ public class Unit {
 	 * @effect	The unit's primary stats are set to a valid number, 
 	 * 			based on the given stats.
 	 * 			|setPrimStats({"str":str, "wgt":wgt, "agl":agl, "tgh":tgh})
-	 * @post	The maximum amount of hitpoints and stamina points is set to (strength*weight/50);
-	 * 			|new.getMaxHp() == (getPrimStats().get("str") * getPrimStats().get("wgt"))/50
-	 * 			| && new.getMaxStam() == (getPrimStats().get("str") * getPrimStats().get("wgt"))/50
 	 * @post	The amount of hitpoints and stamina points of the unit
 	 * 			is set to the maximum allowed amount.
 	 * 			| new.getHp() == getMaxHp() &&
@@ -77,8 +74,6 @@ public class Unit {
 			
 		this.setName(name);
 		this.setPrimStats(firstStats);
-		this.setMaxHp((int)(Math.ceil((double)(this.getPrimStats().get("str") * this.getPrimStats().get("wgt"))/50)));
-		this.setMaxStam((int)(Math.ceil((double)(this.getPrimStats().get("str") * this.getPrimStats().get("wgt"))/50)));
 		this.setHp(this.getMaxHp());	
 		this.setStam(this.getMaxStam());
 		this.setPosition(x, y, z);
@@ -1002,7 +997,7 @@ public class Unit {
 	 */
 	@Basic
 	private boolean isValidHp(double hp){
-		return (hp>=0 && hp<=this.maxHp);
+		return (hp>=0 && hp<=this.getMaxHp());
 	}
 	/**
 	 * Returns whether or not the given amount of stamina points is a valid amount.
@@ -1014,53 +1009,55 @@ public class Unit {
 	 */
 	@Basic
 	private boolean isValidStam(double stam){
-		return (stam>=0 && stam<=this.maxStam);
+		return (stam>=0 && stam<=this.getMaxStam());
 	}
 	/**
 	 * 
 	 * Returns the maximum allowed amount of hitpoints of this unit.
+	 * 		It is always equal to (strength*weight)/50.
 	 */
 	@Basic
 	public int getMaxHp(){
-		return this.maxHp;
+		return (int)(Math.ceil((double)(this.getPrimStats().get("str") * this.getPrimStats().get("wgt"))/50));
 	}
-	/**
-	 * Sets the maximum amount of hitpoints to the given amount.
-	 * @param maxHp
-	 * 			The given maximum allowed amount of hitpoints.
-	 * @pre  The maximum allowed amount of hitpoints needs to be (strength * weight / 50).
-	 * 			|maxHp == (getPrimStats().get("str") * getPrimStats().get("wgt"))/50
-	 * @post The maximum allowed amount of hitpoints is set to the given amount.
-	 * 			|new.getMaxHp() == maxHp
-	 * 
-	 */
-	public void setMaxHp(int maxHp){
-		assert(maxHp == (int)(Math.ceil((double)(this.getPrimStats().get("str") * this.getPrimStats().get("wgt"))/50)));
-		this.maxHp = maxHp;
-	}
+//	/**
+//	 * Sets the maximum amount of hitpoints to the given amount.
+//	 * @param maxHp
+//	 * 			The given maximum allowed amount of hitpoints.
+//	 * @pre  The maximum allowed amount of hitpoints needs to be (strength * weight / 50).
+//	 * 			|maxHp == (getPrimStats().get("str") * getPrimStats().get("wgt"))/50
+//	 * @post The maximum allowed amount of hitpoints is set to the given amount.
+//	 * 			|new.getMaxHp() == maxHp
+//	 * 
+//	 */
+//	public void setMaxHp(int maxHp){
+//		assert(maxHp == (int)(Math.ceil((double)(this.getPrimStats().get("str") * this.getPrimStats().get("wgt"))/50)));
+//		this.maxHp = maxHp;
+//	}
 
 	/**
 	 * 
 	 * Returns the maximum allowed amount of stamina points of this unit.
+	 * 		It is always equal to (strength*weight)/50.
 	 */
 	@Basic
 	public int getMaxStam(){
-		return this.maxStam;
+		return (int)(Math.ceil((double)(this.getPrimStats().get("str") * this.getPrimStats().get("wgt"))/50));
 	}
-	/**
-	 * Sets the maximum amount of stamina points to the given amount.
-	 * @param maxStam
-	 * 			The given maximum allowed amount of stamina points.
-	 * @pre  The maximum allowed amount of stamina points needs to be (strength * weight / 50).
-	 * 			|maxStam == (getPrimStats().get("str") * getPrimStats().get("wgt"))/50
-	 * @post The maximum allowed amount of stamina points is set to the given amount.
-	 * 			|new.getMaxStam() == maxStam
-	 * 
-	 */
-	public void setMaxStam(int maxStam){
-		assert(maxStam == (int)(Math.ceil((double)(this.getPrimStats().get("str") * this.getPrimStats().get("wgt"))/50)));
-		this.maxStam = maxStam;
-	}
+//	/**
+//	 * Sets the maximum amount of stamina points to the given amount.
+//	 * @param maxStam
+//	 * 			The given maximum allowed amount of stamina points.
+//	 * @pre  The maximum allowed amount of stamina points needs to be (strength * weight / 50).
+//	 * 			|maxStam == (getPrimStats().get("str") * getPrimStats().get("wgt"))/50
+//	 * @post The maximum allowed amount of stamina points is set to the given amount.
+//	 * 			|new.getMaxStam() == maxStam
+//	 * 
+//	 */
+//	public void setMaxStam(int maxStam){
+//		assert(maxStam == (int)(Math.ceil((double)(this.getPrimStats().get("str") * this.getPrimStats().get("wgt"))/50)));
+//		this.maxStam = maxStam;
+//	}
 	
 	/**
 	 * 
@@ -1453,10 +1450,6 @@ public class Unit {
 	private double hp;
 	
 	private double stam;
-	
-	private int maxHp;
-	
-	private int maxStam;
 	
 	private State state;
 	

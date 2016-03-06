@@ -5,12 +5,69 @@ import java.util.*;
 import be.kuleuven.cs.som.annotate.*;
 import be.kuleuven.cs.som.taglet.*;
 /**
+ * Class respresenting a Hillbilly unit of the game.
+ * @author Joost Croonen & Ruben Dedoncker
  * 
- * @author Ruben
+ * @invar 	The unit has a valid name.
+ * 			|unit.isValidName(unit.getName())
+ * @invar 	The unit has a valid position.
+ * 			|isValidPosition(getPosition())
+ * @invar	The unit's primary stats lie between 1 and 200 inclusively
+ * 			| for (key in unit.getPrimStats())
+ * 			|	(getPrimStats.get(key) >=1) &&
+ * 			|	(getPrimStats.get(key) <= 200)
+ * @invar	The unit has a valid amount of hitpoints and stamina points
+ * 			| isValidHp(getHp()) && isValidStam(getStam())
+ * @invar	The weight of the unit is bigger than or equal to
+ * 			the sum of the strength and the agility, divided by two.
+ * 			| getPrimStats().get("wgt")
+ * 			|	 >= (getPrimStats().get("str") + getPrimStats("agl")) / 2)
  *
  */
 public class Unit {
-	
+	/**
+	 * Initializes this new Hillbilly unit with the given name, position and primary stats.
+	 * @param name
+	 * 			The name of the unit.
+	 * @param x
+	 * 			The x-coordinate of the unit's position.
+	 * @param y
+	 * 			The y-coordinate of the unit's position.
+	 * @param z
+	 * 			The z-coordinate of the unit's position.
+	 * @param str
+	 * 			The unit's strength.
+	 * @param wgt
+	 * 			The unit's weight.
+	 * @param agl
+	 * 			The unit's agility.
+	 * @param tgh
+	 * 			The unit's toughness.
+	 * @effect	The unit's primary stats are set to a valid number, 
+	 * 			based on the given stats.
+	 * 			|setPrimStats({"str":str, "wgt":wgt, "agl":agl, "tgh":tgh})
+	 * @post	The maximum amount of hitpoints and stamina points is set to (strength*weight/50);
+	 * 			|new.getMaxHp() == (getPrimStats().get("str") * getPrimStats().get("wgt"))/50
+	 * 			| && new.getMaxStam() == (getPrimStats().get("str") * getPrimStats().get("wgt"))/50
+	 * @post	The amount of hitpoints and stamina points of the unit
+	 * 			is set to the maximum allowed amount.
+	 * 			| new.getHp() == getMaxHp() &&
+	 * 			| new.getStam() == getMaxStam()
+	 * @effect	The position of the unit is set to the given position.
+	 * 			| setPosition(x, y, z)
+	 * @effect	The orientation of the unit is set to pi/2.
+	 * 			| setTheta(Math.PI/2)
+	 * @post	The base speed of the unit equals
+	 * 			1.5 * (strength + agility)/(2*weight).
+	 * 			| new.getBaseSpeed() ==
+	 * 			|	1.5 * (getPrimStats().get("str")+getPrimStats().get("agl"))
+	 * 			|			/(2*getPrimStats().get("wgt"))
+	 * @post	The state of the unit is IDLE.
+	 * 			| new.getState() == State.IDLE
+	 * @throws IllegalArgumentException
+	 * 			An exception is thrown is the name is invalid or if the position is invalid
+	 * 			| !isValidName(name) || !isValidPosition(ArrayList<Double>(Arrays.asList(x, y, z))
+	 */
 	public Unit(String name,double x,double y,double z,int str,int wgt,int agl,int tgh) throws IllegalArgumentException{
 		HashMap<String, Integer> firstStats = new HashMap<String, Integer>();
 		firstStats.put("str", str);
@@ -27,11 +84,56 @@ public class Unit {
 		this.setPosition(x, y, z);
 		this.setTheta(Math.PI/2);
 		this.setTarget(this.getPosition());
-		this.setBaseSpeed(1.5*((double)(this.getPrimStats().get("str")+this.getPrimStats().get("agl")))/(2*this.getPrimStats().get("wgt")));
+		this.setBaseSpeed(1.5*((double)(this.getPrimStats().get("str")+this.getPrimStats().get("agl")))
+				/(2*this.getPrimStats().get("wgt")));
 		this.setState(State.IDLE);
 		
 	}
-
+	/**
+	 * Updates the unit's state, position, attack cooldown, rest time, minimum required rest time,
+	 * 	work time, hitpoints and stamina points based on the given time interval.
+	 * @param dt
+	 * 			The time interval in seconds.
+	 * @post	If the minimum required rest time is bigger than zero,
+	 * 			the given time interval is subtracted from it.
+	 * 			The method then ends here.
+	 * @post	If the attack cooldown is bigger than zero,
+	 * 			the given time interval is subtracted from it.
+	 * 			The method then ends here.
+	 * @post	If the unit's state is COMBAT, it will attack all the units
+	 * 			in its set of combatants.
+	 * 			The method then ends here.
+	 * @post	If the unit's state is RESTING and hasn't fully recovered its hitpoints,
+	 * 			an amount of (toughness/200 * dt/0.2) is added. If the new
+	 * 			amount of hitpoints is invalid, it will be set to the maximum
+	 * 			allowed amount.
+	 * 			The method then ends here.
+	 * @post	If the unit's state is RESTING and has fully recovered its hitpoints but 
+	 * 			hasn't fully recovered its stamina points, an amount of 
+	 * 			(toughness/100 * dt/0.2) will be added. If the new
+	 * 			amount of stamina points is invalid, it will be set to the maximum
+	 * 			allowed amount.
+	 * 			The method then ends here.
+	 * @post	If the unit's state is WORKING and its work time is bigger than zero,
+	 * 			the given time interval will be subtracted from the work time.
+	 * 			The method then ends here.
+	 * @effect	If the unit's state isn't IDLE and it has reached its final target, its
+	 * 			state will be set to IDLE.
+	 * 			The method then ends here.
+	 * @post	If the unit's state is SPRINTING and its stamina is bigger than zero,
+	 * 			an amount of dt/0.1 will be subtracted from its stamina. If the new
+	 * 			amount of stamina points is invalid, it will be set to zero.
+	 * @effect	If the unit is moving, its next position is calculated using
+	 * 			the given time interval and the unit's current velocity vector.
+	 * 			If the next position lies further than the target, the unit's
+	 * 			position is set to the target. If it's not the case then
+	 * 			the unit's position is set to the next position.
+	 * 			If an IllegalArgumentException is caught in this process,
+	 * 			the unit's target is set to its current position.
+	 * @throws IllegalArgumentException
+	 * 			An exception is thrown if the given time interval is smaller than
+	 * 			0 or bigger than 0.2 seconds.
+	 */
 	public void advanceTime(double dt)throws IllegalArgumentException{
 		if (dt<0 || dt>0.2)
 			throw new IllegalArgumentException("Invalid time interval!");
@@ -51,12 +153,15 @@ public class Unit {
 		
 		if (this.getState() == State.IDLE && this.DefaultOn()){
 			int idx = this.randInt()+1;
-			this.setState(this.stateList.get(idx));
-			if (this.getState() == State.WALKING){
+			if (this.stateList.get(idx) == State.WALKING){
+				this.setState(State.WALKING);
 				this.moveTo(Math.random()*50, Math.random()*50, Math.random()*50);
 			}
-			if (this.getState()== State.WORKING){
-				this.setWorkTime(500/this.getPrimStats().get("str"));
+			if (this.stateList.get(idx)== State.WORKING){
+				this.work();
+			}
+			if (this.stateList.get(idx) == State.RESTING){
+				this.rest();
 			}
 		}
 		
@@ -77,11 +182,12 @@ public class Unit {
 		}
 		
 		if (this.getState() == State.RESTING){
+			this.rest();
 			this.setRestTime(0);
 			if (this.getHp()<this.getMaxHp()){
 				double newHp = this.getHp() + (double)(this.getPrimStats().get("tgh"))*dt/(200*0.2);
 				if(!this.isValidHp(newHp)){
-					newHp = this.maxHp;
+					newHp = this.getMaxHp();
 				}
 				this.setHp(newHp);
 			}
@@ -89,7 +195,7 @@ public class Unit {
 				if (this.getStam()<this.getMaxStam()){
 					double newStam = this.getStam() + (double)(this.getPrimStats().get("tgh"))*dt/(200*0.1);
 					if(!this.isValidHp(newStam)){
-						newStam = this.maxStam;	
+						newStam = this.getMaxStam();	
 					}
 					this.setStam(newStam);
 				}
@@ -153,7 +259,6 @@ public class Unit {
 					this.setPosition(nextPos.get(0), nextPos.get(1), nextPos.get(2));
 				}
 				catch (IllegalArgumentException exc){
-					this.setPosition(this.getPosition().get(0), this.getPosition().get(1), this.getPosition().get(2));
 					this.setTarget(this.getPosition());
 				}
 				moved = true;
@@ -171,9 +276,10 @@ public class Unit {
 	}
 	
 	/**
-	 * 
+	 * Changes the name of the unit to a valid name.
 	 * @param newname
-	 * @post Changes the name of the unit to a valid name.
+	 * 			The new name of the unit.
+	 * @post The given name is the new name of the unit
 	 * 			| new.getName() == newname
 	 * @throws IllegalArgumentException
 	 * 			Throws an exception when the given name is invalid.
@@ -188,27 +294,22 @@ public class Unit {
 		}
 	}
 	/**
-	 * 
+	 * Returns whether or not the given name is a valid name.
 	 * @param name
-	 * @return Returns whether the given name is a valid name. A valid name only contains
-	 * 			letters and valid characters, has the defined minimal length and
-	 * 			starts with a capital letter.
+	 * 			The name to be checked.
+	 * @return True if the name only contains letters and valid characters,
+	 * 			has the defined minimal length and starts with a capital letter.
 	 * 			| checker == true
-	 * 			| for (character in name){
-	 * 			| 	if(!Character.isLetter(character)){
-	 * 			|		if(! getValidChars().contains(character)){
-	 * 			|			checker == false
-	 * 			|		}
-	 * 			|	}
-	 * 			|}
+	 * 			| for each character in name : (
+	 * 			| 	if(!Character.isLetter(character) && !getValidChars().contains(character))
+	 * 			|		then checker == false)
 	 * 			| result == (checker) && (name.length() >= getMinNameLength()) && (name.isUpperCase(name.charAt(0)))
 	 */
-	public boolean isValidName(String name){
+	private boolean isValidName(String name){
 		boolean checker = true;
 		for (int i=0; i<name.length();i++){
-			if (!Character.isLetter(name.charAt(i)))
-				if (! this.getValidChars().contains(String.valueOf(name.charAt(i))))
-					checker = false;
+			if (!Character.isLetter(name.charAt(i)) && !this.getValidChars().contains(String.valueOf(name.charAt(i))))
+				checker = false;
 		}
 		return Character.isUpperCase(name.charAt(0)) && name.length() >= this.getMinNameLength() && checker;
 	}
@@ -216,24 +317,27 @@ public class Unit {
 	 * 
 	 * Returns a set containing the valid characters, excluding letters.
 	 */
-	@Basic
-	public Set<String> getValidChars(){
-		return new HashSet<String>(VALIDCHARS);
+	@Basic @Immutable
+	private Set<String> getValidChars(){
+		return new HashSet<String>(Unit.VALIDCHARS);
 	}
 	/**
 	 * 
 	 * Returns the minimal length for a valid name.
 	 */
-	@Basic
-	public int getMinNameLength(){
-		return NAMELENGTH_MIN;
+	@Basic @Immutable
+	private int getMinNameLength(){
+		return Unit.NAMELENGTH_MIN;
 	}
 	
 	/**
-	 * 
+	 * Sets the position of the unit to the given position.
 	 * @param x
+	 * 			The x-coordinate of the new position.
 	 * @param y
+	 * 			The y-coordinate of the new position.
 	 * @param z
+	 * 			The z-coordinate of the new position.
 	 * @throws IllegalArgumentException
 	 * 			Throws an exception when an illegal coordinate is given.
 	 * 			| !isValidPosition(ArrayList<Double>(Arrays.asList(x, y, z))))
@@ -259,17 +363,16 @@ public class Unit {
 		return this.pos;
 	}
 	/**
-	 * 
+	 * Returns whether or not the given position lies within the boundaries.
 	 * @param pos
-	 * @return Returns whether the given position is within the boundaries.
+	 * 			The position the be checked.
+	 * @return True if every coordinate lies 
 	 * 			| result == true
-	 * 			| for (element in pos){
-	 * 			| 	if (element > 50 && element < 0){
-	 * 			|		result == false
-	 * 			|	}
-	 * 			|}
+	 * 			| for each element in pos : (
+	 * 			| 	if (element > 50 && element < 0)
+	 * 			|		then result == false)
 	 */
-	public boolean isValidPosition(ArrayList<Double> pos){
+	private boolean isValidPosition(ArrayList<Double> pos){
 		boolean checker = true;
 		for(int i=0; i<3; i++){
 			if (pos.get(i)>50 || pos.get(i)<0)
@@ -286,34 +389,37 @@ public class Unit {
 		return new HashMap<String, Integer>(this.primStats);
 	}
 	/**
-	 * 
+	 * Sets the primary stats of the unit to the given stats.
 	 * @param primStats
-	 * @post Returns a map containing the primary stats laying between 1 and 200 inclusively
-	 * 			and the weight being larger than (strength + agility)/2. When a unit is created,
-	 * 			the primary stats lay between 25 and 100 inclusively.
-	 * 
-	 * 			| for (key in primStats.keySet()){
-	 * 			|	if(this.getPrimStats().isEmpty()){
-	 *			|		if(primStats.get(key) < 25){
-	 *			|			primStats.put(key, 25)
-	 *			|		}
-	 *			|		if(primStats.get(key) > 100){
-	 *			|			primStats.put(key, 100)
-	 *			|		}
-	 *			|	}	
-	 * 			|	if(primStats.get(key) < 1){
-	 * 			|		primStats.put(key, 1)
-	 * 			|	}
-	 * 			|	if (primStats.get(key) > 200){
-	 *			|		primStats.put(key, 200)
-	 *			|	}
-	 *			| }
-	 *			|	if (primStats.get("wgt") < (primStats.get("str") + primStats.get("agl")) / 2){
-	 *			|		primStats.put("wgt", (primStats.get("str") + primStats.get("agl")) / 2)
-	 *			|	}
-	 *			| new.getPrimStats() = primStats
+	 * 			A map containing the new primary stats.
+	 * @post	Nothing happens if the given map of primary stats is of the wrong format.
+	 * 			| if(!primStats.keySet().equals({"str", "wgt", "agl", "tgh"}))
+	 * 			|	return
+	 * @post	The values of the new primary stats are set to the values of the given map
+	 * 			containing the new primary stats.
+	 * 			| new.getPrimStats() == primStats
+	 * @post	The values of the new primary stats lie between 1 and 200 inclusively.
+	 * 			| for each key in new.getPrimStats().keySet():(
+	 * 			|	(new.getPrimStats().get(key) >= 1) &&
+	 * 			|	(new.getPrimStats().get(key) <= 200))
+	 * @post	If there are no current primary stats, the new primary stats lie between
+	 * 			25 and 100 inclusively.
+	 * 			| if(getPrimStats.isEmpty())
+	 * 			|	then for each key in new.getPrimStats.keySet(): (
+	 * 			|		(new.getPrimStats().get(key) >= 25) &&
+	 * 			|		(new.getPrimStats().get(key) <= 100))
+	 * @post	The new weight of the unit is bigger than or equal to
+	 * 			the sum of the new strength and the new agility, divided by two.
+	 * 			| new.getPrimStats().get("wgt")
+	 * 			|	 >= (new.getPrimStats().get("str") + new.getPrimStats("agl")) / 2)
+	 * @post	The new primary stats only contains the unit's strength, agility,
+	 * 			weight and toughness.
+	 * 			| new.getPrimStats.keySet().equals({"str", "agl", "wgt", "tgh"})
 	 */
 	public void setPrimStats(Map<String, Integer> primStats){
+		if (!primStats.keySet().equals(Unit.primStatSet)){
+			return;
+		}
 		for(String key : primStats.keySet()){
 			if(this.getPrimStats().isEmpty()){
 				if(primStats.get(key) < 25){
@@ -336,39 +442,8 @@ public class Unit {
 		}
 				
 		 this.primStats = new HashMap<String, Integer>(primStats);
-		
-		 
 	}
-	/**
-	 * 
-	 * @param primStats
-	 * @return Returns whether the given primary stats lay between 1 and 200 inclusively.
-	 * 			The weight of the unit also needs to be lower than the sum of the strength
-	 * 			and the agility, divided by two.
-	 * 			| result == true
-	 * 			| for (key in primStats){
-	 * 			|	if((primStats.get(key) <= 0) || (primStats.get(key) > 200)){
-	 * 			|		result == false
-	 * 			|	}
-	 * 			| }
-	 * 			| if (primStats.get("wgt") < primStats.get("str") + primStats.get("agl")/2){
-	 * 			| 	result == false
-	 * 			|}
-	 */
-//	public boolean isValidPrimStats(Map<String, Integer> primStats){
-//		Iterator<String> itr = primStats.keySet().iterator();
-//		boolean checker = true;
-//		while(itr.hasNext()){
-//			String key = itr.next();
-//			if (primStats.get(key) <= 0 || primStats.get(key)> 200)
-//				checker = false;
-//		}
-//		if (primStats.get("wgt")< Math.ceil(((double)primStats.get("str")+(double)primStats.get("agl")) / 2))
-//			checker = false;
-//		
-//		return checker;
-//	}
-	
+		 
 	/**
 	 * 
 	 * Returns the orientation of this unit in the x-y plane in radians.
@@ -378,8 +453,9 @@ public class Unit {
 		return this.theta;
 	}
 	/**
-	 * 
+	 * Sets the orientation of this unit to the given angle.
 	 * @param angle
+	 * 			The new angle of orientation of the unit.
 	 * 
 	 * @post The orientation of the unit is set to the given angle.
 	 * 			|new.getTheta() == angle
@@ -401,46 +477,56 @@ public class Unit {
 		return blockpos;
 	}
 	/**
-	 * 
+	 *  Initiates the movement of the unit to a given adjacent block.
 	 * @param dx
+	 * 			The difference between the x-coordinate of the selected adjacent block
+	 * 			and the block the unit is currently standing in.
 	 * @param dy
+	 * 			The difference between the y-coordinate of the selected adjacent block
+	 * 			and the block the unit is currently standing in.
 	 * @param dz
+	 * 			The difference between the z-coordinate of the selected adjacent block
+	 * 			and the block the unit is currently standing in.
 	 * 
-	 * @post	Nothing happens if the unit is moving
-	 * 			| if (this.isMoving())
-	 * 			|	return
+	 * @post	Nothing happens if the unit is moving and the unit hasn't reached its target.
+	 * 			| if (isMoving()) && (!getTarget().equals(getPosition()))
+	 * 			|	then return
+	 * @post	If the unit is in combat, nothing happens.
+	 * 			| if (getState() == State.COMBAT)
+	 * 			|	then return
 	 * @effect  A new target is set to the center of the given adjacent block.
-	 * 			| this.setTarget(this.getBlockPosition() + <dx, dy, dz>)
+	 * 			|
+	 * 			| setTarget(getBlockPosition().get(0) + dx,
+	 * 			|				getBlockPosition().get(1) + dy,
+	 * 			|				getBlockPosition().get(2) + dz)
 	 * @effect	A new velocity vector is created, pointing in the direction of the target.
-	 * 			| this.setV_Vector()
+	 * 			| setV_Vector()
 	 * @effect	The orientation of the unit is set in the direction of the velocity vector.
 	 * 			| this.setTheta(arctan(this.getV_Vector.get(1)/this.getV_Vector(0)))
 	 * @effect	When going down, the walking speed is set to 1.2*BaseSpeed.
 	 * 			When going up, the walking speed is set to 0.5*BaseSpeed.
 	 * 			Otherwise the walking speed is set to BaseSpeed.
-	 * 			|this.setWalkSpeed(this.getBaseSpeed())
+	 * 			|setWalkSpeed(getBaseSpeed())
 	 * 			| if(dz == -1)
-	 * 			|	this.setWalkSpeed(1.2*this.getBaseSpeed())
-	 * 			| if(dz == 1)
-	 * 			|	this.setWalkSpeed(0.5*this.getBaseSpeed())
+	 * 			|	then setWalkSpeed(1.2*this.getBaseSpeed())
+	 * 			| else if(dz == 1)
+	 * 			|	then setWalkSpeed(0.5*this.getBaseSpeed())
+	 * 			| else setWalkSpeed(getBaseSpeed())
 	 * 			|
-	 * @post	If the unit is in combat, nothing happens
-	 * 			| if (this.getState() == State.COMBAT)
-	 * 			|	return
 	 * @effect	If the unit isn't sprinting, the unit is set to walk.
-	 * 			|if(this.getState() != State.SPRINTING)
-	 *			| 	this.setState(State.WALKING)
+	 * 			|if(getState() != State.SPRINTING)
+	 *			| 	then setState(State.WALKING)
 	 * 
 	 * @throws IllegalArgumentException
 	 * 			Throw an exception when the given block is not adjacent to the block the unit is standing in.
 	 * 			| if ((|dx| > 1) || (|dy| > 1 )|| (|dz| > 1))
-	 *			|	throw new IllegalArgumentException
+	 *			|	then throw new IllegalArgumentException
 	 */
 	public void moveToAdjacent(int dx, int dy, int dz)throws IllegalArgumentException{
 		if (this.isMoving() && !this.getTarget().equals(this.getPosition()))
 			return;
 		if (Math.abs(dx) > 1 || Math.abs(dy) > 1 || Math.abs(dz) > 1){
-			throw new IllegalArgumentException("parameters must lay between -1 and 1!");
+			throw new IllegalArgumentException("parameters must lie between -1 and 1!");
 		}
 		if (this.getState() == State.COMBAT)
 			return;
@@ -470,49 +556,56 @@ public class Unit {
 		this.setTheta(Math.atan2(v_vector.get(1),v_vector.get(0)));
 	}
 	/**
-	 * 
+	 * Initiates the movement of a unit to a given block.
 	 * @param x
+	 * 			The x-coordinates of the given block.
 	 * @param y
+	 * 			The y-coordinates of the given block.
 	 * @param z
+	 * 			The z-coordinates of the given block.
 	 * 
-	 * @effect	Tries to create a new FinalTarget using the given coordinates.
+	 * @post	The final target is removed if the unit's position equals
+	 * 			the position of the final target. The method then ends here
+	 * 			|if(getPosition().equals(getFinTarget))
+	 * 			|	then new.getFinTarget().isEmpty() && return
+	 * @effect	Tries to create a new final target using the given coordinates.
 	 * 			If it fails to create one, nothing happens.
-	 * 			| try{
-	 * 			|	this.setFinTarget(<floor(x) + 0.5, floor(y) + 0.5, floor(z) + 0.5>)
-	 *			| }
-	 * 			| catch(IllegalArgumentException exc){
-	 * 			|	return
-	 *			| }
-	 * @effect	Tries to move to an adjacent block that is closer to FinalTarget than the current block position,
-	 * 			until it has reached FinalTarget. If it fails, nothing happens.
-	 * 			|blockx == this.getBlockPosition().get(0)
-	 * 			|blocky == this.getBlockPosition().get(1)
-	 * 			|blockz == this.getBlockPosition().get(2)
-	 * 			|x'== floor(x) + 0.5
-	 * 			|y'== floor(y) + 0.5
-	 * 			|z'== floor(z) + 0.5
-	 * 			|if (blockx > x')
-	 * 			|	newx == -1
-	 * 			|else if (blockx < x')
-	 * 			|	newx == 1
-	 * 			|else 
-	 * 			|	newx == 0
-	 * 			|if (blocky > y')
-	 * 			|	newy == -1
-	 * 			|else if (blocky < y')
-	 * 			|	newy == 1
-	 * 			|else 
-	 * 			|	newy == 0
-	 * 			|if (blockz > z')
-	 * 			|	newz == -1
-	 * 			|else if (blockz < z')
-	 * 			|	newz == 1
-	 * 			|else 
-	 * 			|	newz == 0
-	 * 			|moveToAdjacent(newx, newy, newz)
+	 * 			| if (setFinTarget(ArrayList<Double>(Arrays.asList(floor(x) + 0.5, floor(y) + 0.5, floor(z) + 0.5)))
+	 * 			|		throws IllegalArgumentException)
+	 * 			|	then return
+	 * 			| else setFinTarget(ArrayList<Double>(Arrays.asList(floor(x) + 0.5, floor(y) + 0.5, floor(z) + 0.5)))
+	 * @effect	Tries to move to an adjacent block that is closer to the final target than the current block position.
+	 * 			If it fails, nothing happens.
+	 * 			| blockx == this.getBlockPosition().get(0)
+	 * 			| blocky == this.getBlockPosition().get(1)
+	 * 			| blockz == this.getBlockPosition().get(2)
+	 * 			| x'== Math.floor(x) + 0.5
+	 * 			| y'== Math.floor(y) + 0.5
+	 * 			| z'== Math.floor(z) + 0.5
+	 * 			| if (blockx > x')
+	 * 			|	then newx == -1
+	 * 			| else if (blockx < x')
+	 * 			|	then newx == 1
+	 * 			| else 
+	 * 			|	then newx == 0
+	 * 			| if (blocky > y')
+	 * 			|	then newy == -1
+	 * 			| else if (blocky < y')
+	 * 			|	then newy == 1
+	 * 			| else 
+	 * 			|	then newy == 0
+	 * 			| if (blockz > z')
+	 * 			|	then newz == -1
+	 * 			| else if (blockz < z')
+	 * 			|	then newz == 1
+	 * 			| else 
+	 * 			|	then newz == 0
+	 * 			| if (moveToAdjacent(newx, newy, newz) throws IllegalArgumentException)
+	 * 			|	then return
+	 * 			| else moveToAdjacent(newx, newy, newz)
 	 */
 	public void moveTo(double x, double y, double z){
-		if (this.getPosition().equals(this.finTarget)){
+		if (this.getPosition().equals(this.getFinTarget())){
 			this.finTarget.clear();
 			return;
 		}
@@ -558,16 +651,24 @@ public class Unit {
 		}
 	}
 	/**
+	 * Updates the unit's velocity vector.
 	 * @post 	If the unit hasn't reached its target, a velocity vector is created pointing in the direction of the target.
-	 * 			|
+	 * 			| d == Math.sqrt(Math.pow(getPosition().get(0)-getTarget().get(0), 2)
+	 *			|				+ Math.pow(getPosition().get(1)-getTarget().get(1), 2)
+	 *			|				+ Math.pow(getPosition().get(2)-getTarget().get(2), 2))
+	 * 			| if(!get.Target().equals(getPosition())
+	 * 			|	then for each integer i == 0..2 : (
+	 * 			|		new.getV_Vector().get(i) == getSpeed() / d * (getTarget().get(i) - getPosition().get(i)))
 	 */
-	public void setV_Vector(){
-		double distance = 0;
-		if(!this.getTarget().equals(this.getPosition()))
-			distance = Math.sqrt(Math.pow(this.pos.get(0)-this.target.get(0), 2) + Math.pow(this.pos.get(1)-this.target.get(1), 2) + Math.pow(this.pos.get(2)-this.target.get(2), 2));
+	private void setV_Vector(){
+		if(!this.getTarget().equals(this.getPosition())){
+			double distance = Math.sqrt(Math.pow(this.getPosition().get(0)-this.getTarget().get(0), 2)
+								+ Math.pow(this.getPosition().get(1)-this.getTarget().get(1), 2)
+								+ Math.pow(this.getPosition().get(2)-this.getTarget().get(2), 2));
 			for (int i = 0; i<3; i++){
-				this.v_vector.set(i, this.getSpeed()*(this.target.get(i)-this.pos.get(i))/distance);
+				this.v_vector.set(i, this.getSpeed()*(this.getTarget().get(i)-this.getPosition().get(i))/distance);
 			}
+		}
 	}
 	/**
 	 * 
@@ -579,30 +680,28 @@ public class Unit {
 	}
 	
 	/**
-	 * 	
+	 * 	Initiates the attack of this unit on the given defending unit.
 	 * @param defender
+	 * 			The defending unit against which the attack is initiated.
 	 * @post	Nothing happens if the unit hasn't rested long enough,
 	 * 			is moving or if the defender is out of range.
-	 * 			| if(this.getMinRestTime() > 0 || !this.inRange(defender) || this.isMoving())
-	 *			|	return
+	 * 			| if(getMinRestTime() > 0 || !inRange(defender) || isMoving())
+	 *			|	then return
 	 * @effect	Tries to add the defender to the unit's set of combatants.
 	 * 			If an IllegalArgumentException is caught, nothing happens
-	 * 			| try{
-	 *			| this.addCombatant(defender)
-	 *			| }
-	 *			| catch(IllegalArgumentException exc){
-	 *			|	return
-	 *			| }
+	 * 			| if(addCombatant(defender) throws IllegalArgumentException)
+	 *			| 	then return
+	 *			| else addCombatant(defender)
 	 * @effect	The orientation of this unit and the defender are set so that they
 	 * 			face each other.
-	 * 			| this.new.getTheta() ==
-	 * 			|	Math.atan2(defender.getPosition().get(1)-this.getPosition().get(1),
-	 * 			|				defender.getPosition().get(0)-this.getPosition().get(0)) &&
-	 * 			| 	defender.new.getTheta() == this.getTheta() + Math.PI
+	 * 			| new.getTheta() ==
+	 * 			|	Math.atan2(defender.getPosition().get(1)-getPosition().get(1),
+	 * 			|				defender.getPosition().get(0)-getPosition().get(0))
+	 * 			| 	&& defender.new.getTheta() == getTheta() + Math.PI
 	 * @post	The attack cooldown is set to 1 second.
 	 * 			| new.getAttackCooldown == 1
 	 * @post	The states of both units are set to COMBAT.
-	 * 			| this.new.getState() == State.COMBAT &&
+	 * 			| new.getState() == State.COMBAT &&
 	 * 			| defender.new.getState() == State.COMBAT
 	 * @post	The attack on the defender is initiated.
 	 * 			| new.isAttackInitiated() == true
@@ -620,7 +719,6 @@ public class Unit {
 		double dy = defender.getPosition().get(1)-this.getPosition().get(1);
 		double dx = defender.getPosition().get(0)-this.getPosition().get(0);
 		this.setTheta(Math.atan2(dy, dx));
-		//defender.setTheta(Math.atan2(-dy, -dx));
 		defender.setTheta(this.getTheta() + Math.PI);
 		this.setAttackCooldown(1);
 		this.setState(State.COMBAT);
@@ -634,10 +732,11 @@ public class Unit {
 	 * Returns true if the attack is initiated.
 	 */
 	@Basic
-	public boolean isAttackInitiated(){
+	private boolean isAttackInitiated(){
 		return this.attackInitiated;
 	}
 	/**
+	 * Toggles whether or not the attack is initiated.
 	 * @post	The value of isAttackInitiated() is set to its opposite.
 	 * 			| new.isAttackInititiated() == !this.isAttackInitiated()
 	 */
@@ -645,27 +744,31 @@ public class Unit {
 		this.attackInitiated = !this.isAttackInitiated();
 	}
 	/**
-	 * 
+	 * The unit performs an attack on the defender.
 	 * @param defender
+	 * 			The defender that get's attacked by the unit.
 	 * @effect	The attack get's initiated if it hasn't been initiated yet.
-	 * 			|if(!this.isAttackInitiated())
-	 *			|	this.initiateAttack(defender) &&
-	 *			|		return
+	 * 			The method then ends here.
+	 * 			| if(!isAttackInitiated())
+	 *			|	then initiateAttack(defender) && return	
 	 * @post	Nothing happens if the unit hasn't finished its attack yet.
 	 * 			| if(this.getAttackCooldown() > 0)
 	 * 			|	return
 	 * @effect	If the defender is out of range, the defender is removed from
 	 * 			the set of combatants, this unit's state is set to IDLE
 	 * 			and the value of isAttackInitiated is set to false.
+	 * 			The method then ends here.
 	 * 			| if (!this.inRange(defender))
-	 *			|	this.removeCombatant(defender) &&
-	 *			|		this.setState(State.IDLE) &&
-	 *			|		new.isAttackInitiated() == false &&
-	 *			|		return
+	 *			|	then removeCombatant(defender)
+	 *			|		&& setState(State.IDLE)
+	 *			|		&& new.isAttackInitiated() == false
+	 *			|		&& return
+	 * @effect	The initiation of the attack is toggled.
+	 * 			| toggleAttackInitiated()
+	 * @effect	The defender is removed from the set of combatants.
+	 * 			| removeCombatant(defender)
 	 * @effect	If the unit performs an attack, the defender will try to defend the attack.	
 	 * 			| defender.defend(this)
-	 * 			
-	 * 
 	 */
 	public void attack(Unit defender){
 		if(!this.isAttackInitiated()){
@@ -688,140 +791,120 @@ public class Unit {
 		defender.defend(this);
 	}
 	/**
-	 * 
+	 * Returns the probability of dodging an attack.
 	 * @param attacker
-	 * @return Returns the probability of dodging an attack. The probability equals
-	 * 			0.2 times the ratio of the units agility to the attacker's agility.
+	 * 			The attacking unit.
+	 * @return The probability equals 0.2 times the ratio of the units agility to the attacker's agility.
 	 * 			|result == 0.2*this.getPrimStats().get("agl")/attacker.getPrimStats().get("agl")
 	 */
-	public double getDodgeProb(Unit attacker){
+	private double getDodgeProb(Unit attacker){
 		return ((double)(0.2*this.getPrimStats().get("agl")))/attacker.getPrimStats().get("agl");
 	}
 	/**
-	 * 
+	 * Returns whether or not then unit successfully dodged the attack.
 	 * @param attacker
+	 * 			The attacking unit.
 	 * @return True if the randomly generated number between 0 and 1 is less than
 	 *			the probability to dodge.
 	 *			|result == (Math.random() <= this.getDodgeProb(attacker))
 	 */
-	public boolean hasDodged(Unit attacker){
+	private boolean hasDodged(Unit attacker){
 		return (Math.random() <= this.getDodgeProb(attacker));
 	}
 	/**
-	 * 
+	 * The unit attemps to dodge the attack.
 	 * @param attacker
-	 * @effect	If the unit successfully dodged the attack, it will randomly select an adjacent block. 
-	 * 			It try to set the position of the unit in that block. If it fails, it will
+	 * 			The attacking unit.
+	 * @effect	The unit will randomly select an adjacent block. It tries to 
+	 * 			set the position of the unit in that block. If it fails, it
 	 * 			randomly select an adjacent block until it succeeds to move the unit.
-	 * 			| dx == 0 &&
-	 *			| dy == 0 &&
-	 *			| dz == 0 &&
-	 *			| checker == true
-	 *			| while (dx == 0 && dy == 0 && dz == 0 && checker){
-	 *			|	dx == this.randInt() &&
-	 *			|	dy == this.randInt() &&
-	 *			|	dz == this.randInt() &&
-	 *			|	try{
-	 *			|		this.setPosition(this.getPosition() + <dx, dy, dz>) &&
-	 *			|		checker == false
-	 *			|	} &&
-	 *			|	catch (IllegalArgumentException exc){
-	 *			|		checker == true
-	 *			|	}
-	 *			| }
-	 * @effect	If the unit is out of range after it has dodged the attack,
-	 * 			the unit is removed from the set of combatants of the attacker
-	 * 			and vice versa.
-	 * 			| if (! this.inRange(attacker))
-	 *			| 	this.removeCombatant(attacker) &&
-	 *			| 	attacker.removeCombatant(this)
+	 *			| while(new.getPosition.equals(old.getPosition()) : (
+	 *			| 	for each integer i == 0..2 : (
+	 *			|		new.getPosition.get(i) == old.Position.get(i) + randInt()
+	 *			|		if(!(setPosition(new.getPosition()) throws IllegalArgumentException))
+	 *			|			then setPosition(new.getPosition()
 	 * @post	If the unit dodged the attack, the target of the unit is set to its position.
-	 * 			| new.getTarget() == this.getPosition()
+	 * 			| new.getTarget() == getPosition()
 	 * @effect The unit will move to its final target if the unit hasn't reached it yet.
-	 * 			| if (!this.getFinTarget().isEmpty())
-	 *			|	this.moveTo(this.getFinTarget().get(0), this.getFinTarget().get(1), this.getFinTarget().get(2))
+	 * 			| if (!getFinTarget().isEmpty())
+	 *			|	then moveTo(getFinTarget().get(0), getFinTarget().get(1), getFinTarget().get(2))
 	 */
-	public void dodge(Unit attacker){
-		if (hasDodged(attacker)){
-			int dx = 0;
-			int dy = 0;
-			int dz = 0;
-			boolean checker = true;
-			while (dx == 0 && dy == 0 && dz == 0 && checker){
-				dx = this.randInt();
-				dy = this.randInt();
-				dz = this.randInt();
-				try{
-					this.setPosition(this.getPosition().get(0)+dx,this.getPosition().get(1)+dy , this.getPosition().get(2)+dz);
-					checker  = false;
-				}
-				catch (IllegalArgumentException exc){
-					checker = true;
-				}
+	private void dodge(Unit attacker){
+		int dx = 0;
+		int dy = 0;
+		int dz = 0;
+		boolean checker = true;
+		while (dx == 0 && dy == 0 && dz == 0 && checker){
+			dx = this.randInt();
+			dy = this.randInt();
+			dz = this.randInt();
+			try{
+				this.setPosition(this.getPosition().get(0)+dx,this.getPosition().get(1)+dy , this.getPosition().get(2)+dz);
+				checker  = false;
 			}
-			
-			this.setTarget(this.getPosition());
-			if (!this.getFinTarget().isEmpty())
-			this.moveTo(this.getFinTarget().get(0), this.getFinTarget().get(1), this.getFinTarget().get(2));
+			catch (IllegalArgumentException exc){
+				checker = true;
+			}
 		}
+		
+		this.setTarget(this.getPosition());
+		if (!this.getFinTarget().isEmpty())
+		this.moveTo(this.getFinTarget().get(0), this.getFinTarget().get(1), this.getFinTarget().get(2));
 	}
 	
 	/**
-	 * 
+	 * Returns the probability of blocking an attack.
 	 * @param attacker
-	 * @return Returns the probability of blocking an attack. The probability equals
-	 * 			0.25 times the ratio of the sum the units agility and strength
+	 * 			The attacking unit.
+	 * @return  The probability equals 0.25 times the ratio of the sum the units agility and strength
 	 * 			to the sum of the attacker's agility and strength.
-	 * 			|result == 0.25*(this.getPrimStats().get("agl")+this.getPrimStats("str"))
-	 * 			|			/ (attacker.getPrimStats().get("agl") + this.getPrimStats("str"))
+	 * 			|result == 0.25*(getPrimStats().get("agl")+getPrimStats("str"))
+	 * 			|			/ (attacker.getPrimStats().get("agl") + getPrimStats("str"))
 	 */
-	public double getBlockProb(Unit attacker){
+	private double getBlockProb(Unit attacker){
 		return ((double)(0.25*(this.getPrimStats().get("agl")+ this.getPrimStats().get("str"))))
 				/(attacker.getPrimStats().get("agl") + attacker.getPrimStats().get("str"));
 	}
 	
 	/**
-	 * 
+	 * Returns whether or not the unit has blocked the attack of the attacker.
 	 * @param attacker
+	 * 			The attacking unit.
 	 * @return True if the randomly generated number between 0 and 1 is less than
 	 *			the probability to block.
-	 *			|result == (Math.random() <= this.getBlockProb(attacker))
+	 *			|result == (Math.random() <= getBlockProb(attacker))
 	 */
-	public boolean hasBlocked(Unit attacker){
+	private boolean hasBlocked(Unit attacker){
 		return(Math.random() <= this.getBlockProb(attacker));
 	}
 	
 
 	/**
-	 * 
+	 * The unit attempts to defend itself from the incoming attack.
 	 * @param attacker
-	 * @post	If the attacker isn't in the set of combatants of this unit, nothing happens
-	 * 			| if(!this.getCombatants().contains(attacker))
-	 * 			|	return
+	 * 			The attacking unit.
 	 * @effect	The unit attempts to dodge the attack. If it succeeds, it won't take any damage.
-	 * 			| if(this.hasDodged(attacker)
-	 * 			|	this.dodge(attacker)
-	 * 			|	return
-	 * 			| new.getHp() == this.getHp()
+	 * 			The method ends here.
+	 * 			| if(this.hasDodged(attacker))
+	 * 			|	then dodge(attacker) && new.getHp() == getHp()
+	 * 			|	&& return
 	 * @post	If the unit failed to dodge the attack, it will attempt to block the attack.
 	 * 			If it succeeds, it won't take any damage.
 	 *			| if(this.hasBlocked(attacker))
-	 *			|	return
-	 *			| new.getHp() == this.getHp()
+	 *			| then new.getHp() == this.getHp() && return
 	 * @effect	If the unit neither dodged nor blocked the attack it will lose an amount of hitpoints
 	 * 			equal to the attacker's strength divided by ten. If this amount is bigger than the current
 	 * 			amount of hitpoints of the unit, its hitpoints will be set to zero.
 	 * 			| damage == attacker.getPrimStats().get("str")/10
-	 * 			| if (!this.isValidHp(this.getHp() - damage))
-	 *			|	this.setHp(0)
+	 * 			| if (!isValidHp(getHp() - damage))
+	 *			|	then setHp(0)
 	 *			| else
-	 *			|	this.setHp(this.getHp() - damage)
+	 *			|	setHp(this.getHp() - damage)
 	 */
 	public void defend(Unit attacker){
 		this.setState(State.IDLE);
 		attacker.setState(State.IDLE);
 		double damage = ((double)(attacker.getPrimStats().get("str")))/10;
-		//INSERT HERE
 		if(this.hasDodged(attacker)){
 			this.dodge(attacker);
 			return;
@@ -838,43 +921,9 @@ public class Unit {
 		
 	}
 	
-//	double dodgeprob = ((double)(0.2*this.getPrimStats().get("agl")))/attacker.getPrimStats().get("agl");
-//	double defprob = ((double)(0.25*(this.getPrimStats().get("str")+this.getPrimStats().get("agl"))))/(attacker.getPrimStats().get("str")+attacker.getPrimStats().get("agl"));
-//	double dodgeroll = Math.random();
-//	double defroll = Math.random();
-//	int dx = 0;
-//	int dy = 0;
-//	int dz = 0;
-//	if (dodgeroll <= dodgeprob){
-//		boolean checker = true;
-//		while (dx == 0 && dy == 0 && dz == 0 && checker){
-//			dx = this.randInt();
-//			dy = this.randInt();
-//			dz = this.randInt();
-//			try{
-//				this.setPosition(this.getPosition().get(0)+dx,this.getPosition().get(1)+dy , this.getPosition().get(2)+dz);
-//				checker  = false;
-//			}
-//			catch (IllegalArgumentException exc){
-//				checker = true;
-//			}
-//		}
-//		
-//		this.setTarget(this.getPosition());
-//		if (! this.inRange(attacker)){
-//			this.removeCombatant(attacker);
-//			attacker.removeCombatant(this);
-//			if (!this.getFinTarget().isEmpty())
-//				this.moveTo(this.getFinTarget().get(0), this.getFinTarget().get(1), this.getFinTarget().get(2));
-//			return;
-//		}
-//	}
-//	if (defroll <= defprob){
-//		return;
-//	}
 	/**
 	 * 
-	 * Returns true the unit is set to the default behaviour.
+	 * Returns whether or not the unit is set to the default behaviour.
 	 */
 	@Basic
 	public boolean DefaultOn(){
@@ -882,6 +931,7 @@ public class Unit {
 	}
 	
 	/**
+	 * Sets the behaviour of the unit to the default behaviour.
 	 * @post 	The unit is set to default behaviour.
 	 * 			| new.DefaultOn() == true
 	 */
@@ -889,6 +939,7 @@ public class Unit {
 		this.Default = true;
 	}
 	/**
+	 * Sets the behaviour of the unit from default behaviour to no behaviour.
 	 * @post	The unit is set from default behaviour to no behaviour
 	 * 			| new.DefaultOn() == false
 	 */
@@ -906,11 +957,10 @@ public class Unit {
 	}
 	
 	/**
-	 * 
+	 * Sets the amount of hitpoints of the unit to the given amount.
 	 * @param hp
-	 * 
-	 * 
-	 * @pre  The given amount of hitpoints is a valid amount
+	 * 			The given amount of new hitpoints of the unit. 
+	 * @pre  The given amount of hitpoints is a valid amount.
 	 * 			|isValidHp(hp)
 	 * @post The amount of hitpoints of this unit is set to the given hp.
 	 * 			|new.getHp() == hp
@@ -929,9 +979,9 @@ public class Unit {
 		return this.stam;
 	}
 	/**
-	 * 
+	 * Sets the amount of stamina points of the unit to the given amount.
 	 * @param stam
-	 * 
+	 * 			The given amount of new stamina points of the unit. 
 	 * @pre  The given amount of stamina points is a valid amount.
 	 * 			|isValidStam(stam)
 	 * @post The amount of stamina points of this unit is set to
@@ -943,25 +993,27 @@ public class Unit {
 		this.stam = stam;
 	}
 	/**
-	 * 
+	 * Returns whether or not the given amount of hitpoints is a valid amount.
 	 * @param hp
-	 * @return Returns whether the given amount of hitpoints lays between 0 and
+	 * 			The amount of hitpoints to be checked.
+	 * @return True if the given amount of hitpoints lies between 0 and
 	 * 			the maximum amount of hitpoints inclusively.
-	 * 			|result == (hp>=0) && (hp<=this.getMaxHp())
+	 * 			|result == (hp>=0) && (hp<=getMaxHp())
 	 */
 	@Basic
-	public boolean isValidHp(double hp){
+	private boolean isValidHp(double hp){
 		return (hp>=0 && hp<=this.maxHp);
 	}
 	/**
-	 * 
+	 * Returns whether or not the given amount of stamina points is a valid amount.
 	 * @param stam
-	 * @return Returns whether the given amount of stamina points lays between 0 and
+	 * 			The amount of stamina points to be checked.
+	 * @return True if the given amount of stamina points lies between 0 and
 	 * 			the maximum amount of stamina points inclusively.
-	 * 			|result == (stam>=0) && (stam<=this.getMaxStam())
+	 * 			|result == (stam>=0) && (stam<=getMaxStam())
 	 */
 	@Basic
-	public boolean isValidStam(double stam){
+	private boolean isValidStam(double stam){
 		return (stam>=0 && stam<=this.maxStam);
 	}
 	/**
@@ -973,11 +1025,11 @@ public class Unit {
 		return this.maxHp;
 	}
 	/**
-	 * 
+	 * Sets the maximum amount of hitpoints to the given amount.
 	 * @param maxHp
-	 * 
+	 * 			The given maximum allowed amount of hitpoints.
 	 * @pre  The maximum allowed amount of hitpoints needs to be (strength * weight / 50).
-	 * 			|maxHp == (this.getPrimStats().get("str") * this.getPrimStats().get("wgt"))/50
+	 * 			|maxHp == (getPrimStats().get("str") * getPrimStats().get("wgt"))/50
 	 * @post The maximum allowed amount of hitpoints is set to the given amount.
 	 * 			|new.getMaxHp() == maxHp
 	 * 
@@ -996,11 +1048,11 @@ public class Unit {
 		return this.maxStam;
 	}
 	/**
-	 * 
+	 * Sets the maximum amount of stamina points to the given amount.
 	 * @param maxStam
-	 * 
+	 * 			The given maximum allowed amount of stamina points.
 	 * @pre  The maximum allowed amount of stamina points needs to be (strength * weight / 50).
-	 * 			|maxStam == (this.getPrimStats().get("str") * this.getPrimStats().get("wgt"))/50
+	 * 			|maxStam == (getPrimStats().get("str") * getPrimStats().get("wgt"))/50
 	 * @post The maximum allowed amount of stamina points is set to the given amount.
 	 * 			|new.getMaxStam() == maxStam
 	 * 
@@ -1012,16 +1064,19 @@ public class Unit {
 	
 	/**
 	 * 
-	 * Returns the current target.
+	 * Returns the current target of the unit.
+	 * 		The target of a unit is a position at which the unit
+	 * 		will directly move towards.
 	 */
 	@Basic
 	public ArrayList<Double> getTarget(){
 		return this.target;
 	}
 	/**
-	 * 
+	 * Sets the target of the unit to the given target.
 	 * @param target
-	 * @post	Sets the target to the given target
+	 * 			The given position of the new target.
+	 * @post	The target of the unit is set to the given position.
 	 * 			|new.getTarget() = target
 	 */
 	private void setTarget(ArrayList<Double> target){
@@ -1029,23 +1084,26 @@ public class Unit {
 	}
 	/**
 	 * 
-	 * Returns the FinalTarget of this unit.
+	 * Returns the final target of this unit.
+	 * 		The final target of a unit is a position at which
+	 * 		the unit will move towards by setting new targets.
 	 */
 	@Basic
 	public ArrayList<Double> getFinTarget(){
 		return this.finTarget;
 	}
 	/**
-	 * 
+	 * Sets the final target of the unit to the given position.
 	 * @param target
-	 * @post	Sets FinalTarget to the given target if the target is valid.
-	 * 				|if (this.isValidPosition(target))
+	 * 			The given position of the new final target.
+	 * @post	The final target of the unit is set to the given position if its is valid.
+	 * 				|if (isValidPosition(target))
 	 * 				|	new.getFinTarget() = target
 	 * @throws IllegalArgumentException
 	 * 			Throws and exception if the target is an invalid position.
 	 * 				|!isValidPosition(target)
 	 */
-	public void setFinTarget(ArrayList<Double> target) throws IllegalArgumentException{
+	private void setFinTarget(ArrayList<Double> target) throws IllegalArgumentException{
 		if (!this.isValidPosition(target))
 			throw new IllegalArgumentException("Target out of bounds!");
 		this.finTarget = new ArrayList<Double>(target);
@@ -1053,28 +1111,27 @@ public class Unit {
 	
 	/**
 	 * 
-	 * Returns the basespeed of this unit.
+	 * Returns the base speed of this unit.
 	 */
 	@Basic
 	public double getBaseSpeed(){
 		return this.v_base;
 	}
 	/**
-	 * 
-	 * @param velocity
-	 * @post	Sets BaseSpeed to the given velocity 
-	 * 			|new.getBaseSpeed() == velocity
+	 * Sets the base speed of the unit to the given speed.
+	 * @param speed
+	 * 			The new speed of the unit.
+	 * @post	The base speed of the unit is set to the given speed.
+	 * 			|new.getBaseSpeed() == speed
 	 * @throws	IllegalArgumentException
-	 * 			|velocity != 1.5*(this.getPrimStats().get("str")+this.getPrimStats().get("agl")))/(2*this.getPrimStats().get("wgt")
+	 * 			|speed != 1.5*(getPrimStats().get("str")+getPrimStats().get("agl")))/(2*getPrimStats().get("wgt")
 	 */
-	public void setBaseSpeed(double velocity)throws IllegalArgumentException{
-		if (velocity != 1.5*((double)(this.getPrimStats().get("str")+this.getPrimStats().get("agl")))/(2*this.getPrimStats().get("wgt")))
+	private void setBaseSpeed(double speed)throws IllegalArgumentException{
+		if (speed != 1.5*((double)(this.getPrimStats().get("str")+this.getPrimStats().get("agl")))/(2*this.getPrimStats().get("wgt")))
 			throw new IllegalArgumentException("Invalid basespeed!");
-		this.v_base = velocity;
+		this.v_base = speed;
 	}
 	
-	
-	//Random integer between -1 and 1
 	/**
 	 * 
 	 * Returns a random integer between -1 and 1.
@@ -1096,14 +1153,18 @@ public class Unit {
 	}
 	
 	/**
-	 * 
+	 * Adds the given unit to the set of combatants.
+	 *  	A unit will continue attacking a combatant until it is removed from the set.
 	 * @param unit
-	 * @post	Unit is added to the set of combatants.
+	 * 			The given unit to be added to the set of combatants.
+	 * @post	The given unit is added to the set of combatants.
 	 * 			|new.getCombatants().contains(unit)
 	 * @throws	IllegalArgumentException
+	 * 			An IllegalArgumentException is thrown if the given unit
+	 * 			is the unit itself.
 	 * 			|unit == this
 	 */
-	public void addCombatant(Unit unit) throws IllegalArgumentException{
+	private void addCombatant(Unit unit) throws IllegalArgumentException{
 		if (unit == this){
 			throw new IllegalArgumentException("You are not allowed to fight with yourself!");
 		}
@@ -1111,23 +1172,24 @@ public class Unit {
 	}
 	
 	/**
-	 * 
+	 * Removes the given unit from the set of combatants of this unit.
 	 * @param unit
-	 * @post	Unit is removed from the set of combatants.
+	 * 			The given unit to be removed from the set of combatants of this unit.
+	 * @post	The given unit is removed from the set of combatants of this unit.
 	 * 			|!new.getCombatants().contains(unit)
 	 */
-	public void removeCombatant(Unit unit){
+	private void removeCombatant(Unit unit){
 		this.combatants.remove(unit);
 	}
 	/**
-	 * 
+	 * Returns the current speed of the unit
 	 * @return	Returns the walking speed of this unit if its state is walking.
-	 * 			Returns the walking speed of this unit times two if its state is sprinting.
-	 * 			Returns 0 otherwise.
 	 * 			|if (this.getState() == State.WALKING)
-	 *			|	result == this.getWalkSpeed();
+	 *			|	result == getWalkSpeed();
+	 * 			Returns the walking speed of this unit times two if its state is sprinting.
 	 *			|if (this.getState() == State.SPRINTING)
-	 *			|	result == this.getWalkingSpeed() * 2
+	 *			|	result == getWalkingSpeed() * 2
+	 * 			Returns 0 otherwise.
 	 *			|else
 	 *			|	result == 0
 	 */
@@ -1146,9 +1208,9 @@ public class Unit {
 		return this.v;
 	}
 	/**
-	 * 
+	 * Sets the walking speed of this unit to the given speed.
 	 * @param v
-	 * 
+	 * 			The given speed to be set to the new walking speed.
 	 * @post 	The walking speed of this unit is set to the given speed.
 	 * 			|new.getWalkingSpeed() == v
 	 * 
@@ -1156,7 +1218,7 @@ public class Unit {
 	 * 			An exception is thrown if the given speed is negative.
 	 * 			|(v < 0)
 	 */
-	public void setWalkSpeed(double v) throws IllegalArgumentException{
+	private void setWalkSpeed(double v) throws IllegalArgumentException{
 		if (v < 0){
 			throw new IllegalArgumentException();
 		}
@@ -1180,9 +1242,10 @@ public class Unit {
 		IDLE, COMBAT, WALKING, WORKING, RESTING, SPRINTING		
 	}
 	/**
-	 * 
+	 * Sets the state of the unit to the given state.
 	 * @param state
-	 * @post 	The state of the unit is set to the given state
+	 * 			The given state to be set to the new state.
+	 * @post 	The state of the unit is set to the given state.
 	 * 			|new.getState() == state
 	 * @post	The state of the unit remains unchanged if it hasn't rested long enough and is not in combat.
 	 * 			|if(this.getMinRestTime() > 0 && state != State.COMBAT)
@@ -1211,9 +1274,9 @@ public class Unit {
 		return this.state;
 	}
 	/**
-	 * 
+	 * Returns whether or not the unit is moving.
 	 * @return True if the unit is either walking or sprinting
-	 * 			| (this.getState() == State.WALKING) || (this.getState() == State.SPRINTING)
+	 * 			| result == (getState() == State.WALKING) || (getState() == State.SPRINTING)
 	 */
 	public boolean isMoving(){
 		return (this.getState() == State.WALKING || this.getState() == State.SPRINTING);
@@ -1227,22 +1290,24 @@ public class Unit {
 		return this.workTime;
 	}
 	/**
-	 * 
+	 * Sets the remaining amount of work time needed to the given time.
 	 * @param newTime
+	 * 			The given time to be set as the new amount of work time needed.
 	 * @post  	The remaining amount of work time needed is set to the given time.
 	 * 			|new.getWorkTime() == newTime
 	 */
-	public void setWorkTime(double newTime){
+	private void setWorkTime(double newTime){
 		this.workTime = newTime;
 	}
 	/**
-	 * @post	Nothing happens if the unit is moving
+	 * The unit starts to work.
+	 * @post	Nothing happens if the unit is moving.
 	 * 			| if (this.isMoving())
 	 * 			|	return
 	 * @effect 	If the unit isn't working, it is set to work and the work time is set to 500/strength.
-	 * 			|if(this.getState() != State.WORKING)
-	 * 			|	this.setState(State.WORKING)
-	 *			|	this.setWorkTime(500/this.getPrimStats().get("str"));
+	 * 			|if(getState() != State.WORKING)
+	 * 			|	setState(State.WORKING)
+	 *			|	setWorkTime(500/getPrimStats().get("str"));
 	 * 
 	 */
 	public void work(){
@@ -1254,12 +1319,13 @@ public class Unit {
 		}
 	}
 	/**
-	 * 
+	 * Returns whether or not the given unit is in range.
 	 * @param unit
-	 * @return Returns whether the given unit is in the same or adjacent block as this unit.
-	 * 			|dx = this.getBlockPosition().get(0) - unit.getBlockPosition().get(0)
-	 * 			|dy = this.getBlockPosition().get(1) - unit.getBlockPosition().get(1)
-	 * 			|dz = this.getBlockPosition().get(2) - unit.getBlockPosition().get(2)
+	 * 			The unit to be checked.
+	 * @return True if the given unit in the same or adjacent block as this unit.
+	 * 			|dx = getBlockPosition().get(0) - unit.getBlockPosition().get(0)
+	 * 			|dy = getBlockPosition().get(1) - unit.getBlockPosition().get(1)
+	 * 			|dz = getBlockPosition().get(2) - unit.getBlockPosition().get(2)
 	 * 			|result == (|dx|<= 1) && (|dy| <=1) && (|dz| <= 1)
 	 */
 	public boolean inRange(Unit unit){
@@ -1282,12 +1348,13 @@ public class Unit {
 		return this.restTime;
 	}
 	/**
-	 * 
+	 * Sets the time that has passed since the unit last rested to the given time.
 	 * @param newTime
-	 * @post 	The RestTime is set to the given time
+	 * 			The given time to be set to the time that has passed since the unit last rested.
+	 * @post 	The time that has passed since the unit last rested is set to the given time.
 	 * 			|new.getRestTime() == newTime
 	 */
-	public void setRestTime(double newTime){
+	private void setRestTime(double newTime){
 		this.restTime = newTime;
 	}
 	/**
@@ -1299,43 +1366,47 @@ public class Unit {
 		return this.attcooldown;
 	}
 	/**
-	 * 
+	 * Sets the time until this unit can perform an attack to the given time.
 	 * @param newTime
-	 * @post	The cooldown is set to the given time
+	 * 			The given time to be set to the time until this unit can perform an attack.
+	 * @post	The cooldown is set to the given time.
 	 * 			|new.getAttackCooldown() == newTime
 	 */
-	public void setAttackCooldown(double newTime){
+	private void setAttackCooldown(double newTime){
 		this.attcooldown = newTime;
 	}
 	/**
 	 * 
-	 * Returns the time the unit needs to rest until it can perform any other actions
+	 * Returns the time the unit needs to rest until it can perform any other actions.
 	 */
 	@Basic
 	public double getMinRestTime(){
 		return this.minRestTime;
 	}
 	/**
-	 * 
+	 * Sets the time the unit needs to rest until it can perform any other actions to the given time.
 	 * @param newtime
+	 * 			The given time to be set to the minimum resting time.
 	 * @post	The minimum resting time is set to the given time.
 	 * 			|new.getMinRestTime() == newTime
 	 */
-	public void setMinRestTime(double newtime){
+	private void setMinRestTime(double newtime){
 		this.minRestTime = newtime;
 	}
 	/**
-	 * @post	Nothing happens if the unit is moving
-	 * 			| if (this.isMoving())
+	 * The unit starts to rest.
+	 * @post	Nothing happens if the unit is moving or in combat
+	 * 			and if the rest time is bigger than 180 seconds.
+	 * 			| if ((isMoving() || getState() == State.COMBAT) && (restTime >= 180) )
 	 * 			| 	return
 	 * @effect If the unit isn't resting, its state is set to resting
 	 * 			and its minimum resting time is set to 40/toughness.
-	 * 			| if (this.getState() != State.RESTING)
-	 * 			|	this.setState(State.RESTING)
-	 * 			|	this.setMinRestTime(40.0/this.getPrimStats().get("tgh"))
+	 * 			| if (getState() != State.RESTING)
+	 * 			|	setState(State.RESTING)
+	 * 			|	setMinRestTime(40.0/getPrimStats().get("tgh"))
 	 */
 	public void rest(){
-		if (this.isMoving() || this.getState() == State.COMBAT)
+		if ((this.isMoving() || this.getState() == State.COMBAT) && (this.restTime >= 180) )
 			return;
 		if(this.getState() != State.RESTING){
 			this.setState(State.RESTING);
@@ -1343,7 +1414,6 @@ public class Unit {
 		return;
 		}
 	}
-	
 	private double theta;
 	
 	private Map<String, Integer> primStats = new HashMap<String, Integer>();
@@ -1389,6 +1459,8 @@ public class Unit {
 	private double minRestTime = 0;
 	
 	private boolean attackInitiated = false;
+	
+	private static final Set<String> primStatSet = new HashSet<String>(Arrays.asList("str", "wgt", "agl", "tgh"));
 	
 	private final ArrayList<State> stateList;{
 		this.stateList = new ArrayList<State>();

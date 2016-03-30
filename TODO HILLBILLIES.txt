@@ -1,0 +1,20 @@
+World:
+- Faction namegen
+- Factiongen
+- Factionlist...
+- Unitspawn
+
+Unit:
+-combat
+- Documentatie (factionstuff, boulder/logstuff, carryweightstuff)
+- Unit moet altijd tot een factie behoren? (dode units ook? Kunnen factie leden verliezen?)
+- "Tegenspraak bij invariant over de faction en canHaveAsFaction
+- World borders
+- Meer excpetions bij associaties met Boulder/Log
+
+Boulder/Log:
+- World borders
+- Vallen
+- Documentatie (associatiestuff, vallenstuff)
+- Meer exceptions?
+- Erven van klasse Prop?

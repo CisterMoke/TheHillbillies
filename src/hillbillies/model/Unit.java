@@ -335,10 +335,10 @@ public class Unit {
 	 * @param z
 	 * 			The z-coordinate of the new position.
 	 * @throws IllegalArgumentException
-	 * 			Throws an exception when an illegal coordinate is given.
-	 * 			| !isValidPosition(ArrayList<Double>(Arrays.asList(x, y, z))))
+	 * 			Throws an exception when an illegal position is given.
+	 * 			| !isValidPosition(Vector(x, y, z))
 	 * @post The new position is a valid position
-	 * 			| new.getPosition() == ArrayList<Double>(Arrays.asList(x, y, z))
+	 * 			| new.getPosition() == Vector(x, y, z) && isValidPosition(new.getPosition())
 	 * 
 	 */
 	public void setPosition(double x, double y, double z)throws IllegalArgumentException{
@@ -347,7 +347,7 @@ public class Unit {
 		this.pos = new Vector(x, y, z);
 	}
 	/**
-	 * Returns the coordinates of the current position of the unit.
+	 * Returns the vector representing the current position of the unit.
 	 * 
 	 */
 	@Basic
@@ -358,11 +358,8 @@ public class Unit {
 	 * Returns whether or not the given position lies within the boundaries.
 	 * @param pos
 	 * 			The position vector the be checked.
-	 * @return True if every coefficient of pos lies between 0 and 50 inclusively.
-	 * 			| result == true
-	 * 			| for each coefficient in pos : (
-	 * 			| 	if (coefficient > 50 && coefficient < 0)
-	 * 			|		then result == false)
+	 * @return True if and only if every coefficient of the given position vector lies between 0 and 50 inclusively.
+	 * 			| result == for each coefficient in pos.getCoeff() : (coefficient >= 0 && coefficient =< 50)
 	 */
 	private boolean isValidPosition(Vector pos){
 		ArrayList<Double> coords = pos.getCoeff();
@@ -488,10 +485,9 @@ public class Unit {
 	 * 			| if (getState() == State.COMBAT)
 	 * 			|	then return
 	 * @effect  A new target is set to the center of the given adjacent block.
-	 * 			|
-	 * 			| setTarget(getBlockPosition().get(0) + dx,
-	 * 			|				getBlockPosition().get(1) + dy,
-	 * 			|				getBlockPosition().get(2) + dz)
+	 * 			| newTarget == this.getBlockPosition
+	 * 			| newTarget.add(dx, dy, dz)
+	 * 			| setTarget(newTarget)
 	 * @effect	A new velocity vector is created, pointing in the direction of the target.
 	 * 			| setV_Vector()
 	 * @effect	The orientation of the unit is set in the direction of the velocity vector.
@@ -558,21 +554,22 @@ public class Unit {
 	 * @post	The final target is removed if the unit's position equals
 	 * 			the position of the final target. The method then ends here
 	 * 			|if(getPosition().equals(getFinTarget))
-	 * 			|	then new.getFinTarget().isEmpty() && return
+	 * 			|	then new.getFinTarget() == null && return
 	 * @effect	Tries to create a new final target using the given coordinates.
 	 * 			If it fails to create one, nothing happens.
-	 * 			| if (setFinTarget(ArrayList<Double>(Arrays.asList(floor(x) + 0.5, floor(y) + 0.5, floor(z) + 0.5)))
+	 * 			| newTarget == Vector(floor(x) + 0.5, floor(y) + 0.5, floor(z) + 0.5)
+	 * 			| if (setFinTarget(newTarget)
 	 * 			|		throws IllegalArgumentException)
 	 * 			|	then return
-	 * 			| else setFinTarget(ArrayList<Double>(Arrays.asList(floor(x) + 0.5, floor(y) + 0.5, floor(z) + 0.5)))
+	 * 			| else setFinTarget(newTarget)
 	 * @effect	Tries to move to an adjacent block that is closer to the final target than the current block position.
 	 * 			If it fails, nothing happens.
-	 * 			| blockx == this.getBlockPosition().get(0)
-	 * 			| blocky == this.getBlockPosition().get(1)
-	 * 			| blockz == this.getBlockPosition().get(2)
-	 * 			| x'== Math.floor(x) + 0.5
-	 * 			| y'== Math.floor(y) + 0.5
-	 * 			| z'== Math.floor(z) + 0.5
+	 * 			| blockx == this.getBlockPosition().getX()
+	 * 			| blocky == this.getBlockPosition().getY()
+	 * 			| blockz == this.getBlockPosition().getZ()
+	 * 			| x'== floor(x) + 0.5
+	 * 			| y'== floor(y) + 0.5
+	 * 			| z'== floor(z) + 0.5
 	 * 			| if (blockx > x')
 	 * 			|	then newx == -1
 	 * 			| else if (blockx < x')
@@ -679,8 +676,8 @@ public class Unit {
 	 * @effect	The orientation of this unit and the defender are set so that they
 	 * 			face each other.
 	 * 			| new.getTheta() ==
-	 * 			|	Math.atan2(defender.getPosition().get(1)-getPosition().get(1),
-	 * 			|				defender.getPosition().get(0)-getPosition().get(0))
+	 * 			|	Math.atan2(defender.getPosition().getY()-getPosition().getY(),
+	 * 			|				defender.getPosition().getX()-getPosition().getX())
 	 * 			| 	&& defender.new.getTheta() == getTheta() + Math.PI
 	 * @post	The attack cooldown is set to 1 second.
 	 * 			| new.getAttackCooldown == 1
@@ -803,15 +800,15 @@ public class Unit {
 	 * 			set the position of the unit in that block. If it fails, it
 	 * 			randomly select an adjacent block until it succeeds to move the unit.
 	 *			| while(new.getPosition.equals(old.getPosition()) : (
-	 *			| 	for each integer i == 0..2 : (
-	 *			|		new.getPosition.get(i) == old.Position.get(i) + randInt()
-	 *			|		if(!(setPosition(new.getPosition()) throws IllegalArgumentException))
-	 *			|			then setPosition(new.getPosition()
+	 *			| 	newPosition == Vector(oldPosition)
+	 *			|	newPosition.add(randInt(), randInt(), 0)
+	 *			|	if(!(setPosition(newPosition) throws IllegalArgumentException))
+	 *			|		then setPosition(newPosition)
 	 * @post	If the unit dodged the attack, the target of the unit is set to its position.
 	 * 			| new.getTarget() == getPosition()
 	 * @effect The unit will move to its final target if the unit hasn't reached it yet.
-	 * 			| if (!getFinTarget().isEmpty())
-	 *			|	then moveTo(getFinTarget().get(0), getFinTarget().get(1), getFinTarget().get(2))
+	 * 			| if (getFinTarget() != null)
+	 *			|	then moveTo(getFinTarget().getX(), getFinTarget().getY(), getFinTarget().getZ())
 	 */
 	private void dodge(Unit attacker){
 		int dx = 0;
@@ -1063,7 +1060,7 @@ public class Unit {
 	 * @param target
 	 * 			The given position of the new target.
 	 * @post	The target of the unit is set to the given position.
-	 * 			|new.getTarget() = target
+	 * 			|new.getTarget() == target
 	 */
 	private void setTarget(Vector target){
 		this.target = target;
@@ -1086,7 +1083,7 @@ public class Unit {
 	 * 			The given position of the new final target.
 	 * @post	The final target of the unit is set to the given position if its is valid.
 	 * 				|if (isValidPosition(target))
-	 * 				|	new.getFinTarget() = target
+	 * 				|	then new.getFinTarget() == target
 	 * @throws IllegalArgumentException
 	 * 			Throws and exception if the target is an invalid position.
 	 * 				|!isValidPosition(target)
@@ -1307,20 +1304,20 @@ public class Unit {
 		}
 	}
 	/**
-	 * Returns whether or not the given unit is in range.
+	 * Returns whether or not the given unit is in range. Two units are in range if they
+	 *	occupy the same block or a block adjacent to the other block.
 	 * @param unit
 	 * 			The unit to be checked.
-	 * @return True if the given unit in the same or adjacent block as this unit.
-	 * 			|dx = getBlockPosition().get(0) - unit.getBlockPosition().get(0)
-	 * 			|dy = getBlockPosition().get(1) - unit.getBlockPosition().get(1)
-	 * 			|dz = getBlockPosition().get(2) - unit.getBlockPosition().get(2)
-	 * 			|result == (|dx|<= 1) && (|dy| <=1) && (|dz| <= 1)
+	 * @return True if and only if the distance between the units is less than 2 meters.
+	 * 			| distance == Vector(this.getBlockPosition)
+	 * 			| distance.add(unit.getBlockPosition.getOpposite())
+	 * 			| result == distance.getLength() < 2
 	 */
 	public boolean inRange(Unit unit){
 		boolean inRange = false;
-		Vector difference = this.getBlockPosition();
-		difference.add(unit.getBlockPosition().getOpposite());
-		if (difference.getLength() < 2)
+		Vector distance = this.getBlockPosition();
+		distance.add(unit.getBlockPosition().getOpposite());
+		if (distance.getLength() < 2)
 			inRange = true;
 		return inRange;
 	}

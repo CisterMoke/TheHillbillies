@@ -56,15 +56,15 @@ public class Unit {
 	 * @effect	The orientation of the unit is set to pi/2.
 	 * 			| setTheta(Math.PI/2)
 	 * @post	The base speed of the unit equals
-	 * 			1.5 * (strength + agility)/(2*weight).
+	 * 			1.5 * (strength + agility)/(2*totalWeight).
 	 * 			| new.getBaseSpeed() ==
 	 * 			|	1.5 * (getPrimStats().get("str")+getPrimStats().get("agl"))
-	 * 			|			/(2*getPrimStats().get("wgt"))
+	 * 			|			/(2*getTotalWeight())
 	 * @post	The state of the unit is IDLE.
 	 * 			| new.getState() == State.IDLE
 	 * @throws IllegalArgumentException
 	 * 			An exception is thrown is the name is invalid or if the position is invalid
-	 * 			| !isValidName(name) || !isValidPosition(ArrayList<Double>(Arrays.asList(x, y, z))
+	 * 			| !isValidName(name) || !isValidPosition(Vector(x, y, z))
 	 */
 	public Unit(String name,double x,double y,double z,int str,int wgt,int agl,int tgh) throws IllegalArgumentException{
 		HashMap<String, Integer> firstStats = new HashMap<String, Integer>();
@@ -81,7 +81,7 @@ public class Unit {
 		this.setTheta(Math.PI/2);
 		this.setTarget(this.getPosition());
 		this.setBaseSpeed(1.5*((double)(this.getPrimStats().get("str")+this.getPrimStats().get("agl")))
-				/(2*this.getPrimStats().get("wgt")));
+				/(2*this.getTotalWeight()));
 		this.setState(State.IDLE);
 		
 	}
@@ -149,14 +149,14 @@ public class Unit {
 		
 		if (this.getState() == State.IDLE && this.DefaultOn()){
 			int idx = this.randInt()+1;
-			if (this.stateList.get(idx) == State.WALKING){
+			if (Unit.stateList.get(idx) == State.WALKING){
 				this.setState(State.WALKING);
 				this.moveTo(Math.random()*50, Math.random()*50, Math.random()*50);
 			}
-			if (this.stateList.get(idx)== State.WORKING){
+			if (Unit.stateList.get(idx)== State.WORKING){
 				this.work();
 			}
-			if (this.stateList.get(idx) == State.RESTING){
+			if (Unit.stateList.get(idx) == State.RESTING){
 				this.rest();
 			}
 		}
@@ -420,7 +420,6 @@ public class Unit {
 				if(primStats.get(key) > 100){
 					primStats.put(key, 100);
 				}
-			
 			}
 			if (primStats.get(key) < 1){
 				primStats.put(key, 1);
@@ -431,8 +430,7 @@ public class Unit {
 		}
 		if (primStats.get("wgt") < Math.ceil(((double)(primStats.get("str"))+(double)(primStats.get("agl"))) / 2)){
 			primStats.put("wgt", (int)(Math.ceil(((double)(primStats.get("str"))+(double)(primStats.get("agl"))) / 2)));
-		}
-				
+		}		
 		 this.primStats = new HashMap<String, Integer>(primStats);
 	}
 		 
@@ -1116,10 +1114,12 @@ public class Unit {
 	 * @post	The base speed of the unit is set to the given speed.
 	 * 			|new.getBaseSpeed() == speed
 	 * @throws	IllegalArgumentException
-	 * 			|speed != 1.5*(getPrimStats().get("str")+getPrimStats().get("agl")))/(2*getPrimStats().get("wgt")
+	 * 			Throws an exception if the given speed is not equal to
+	 * 			1.5*(strength + agility)/(2*totalWeigth).
+	 * 			|speed != 1.5*(getPrimStats().get("str")+getPrimStats().get("agl")))/(2*getTotalWeight())
 	 */
 	private void setBaseSpeed(double speed)throws IllegalArgumentException{
-		if (speed != 1.5*((double)(this.getPrimStats().get("str")+this.getPrimStats().get("agl")))/(2*this.getPrimStats().get("wgt")))
+		if (speed != 1.5*((double)(this.getPrimStats().get("str")+this.getPrimStats().get("agl")))/(2*this.getTotalWeight()))
 			throw new IllegalArgumentException("Invalid basespeed!");
 		this.v_base = speed;
 	}
@@ -1464,6 +1464,56 @@ public class Unit {
 		this.faction = null;
 	}
 	
+	public boolean isCarrying() {
+		return (this.boulder != null); // || this.log != null);		
+	}
+	
+	@Basic
+	public Boulder getBoulder(){
+		return this.boulder;
+	}
+	
+	public void setBoulder(Boulder boulder) {
+		if(boulder.canHaveAsCarrier(this))
+			this.boulder = boulder;
+			this.setCarryWeight(boulder.getWeight());
+	}
+	
+	@Basic
+	public Log getLog(){
+		return this.log;
+	}
+	
+	public void setLog(Log log) {
+		if(log.canHaveAsCarrier(this))
+			this.log = log;
+			this.setCarryWeight(log.getWeight());
+	}
+	
+	public void drop(){
+		if(!isCarrying())
+			return;
+		this.getBoulder().removeCarrier();
+		this.boulder = null;
+		this.setCarryWeight(0);
+		this.getLog().removeCarrier();
+		this.log = null;
+	}
+	
+	@Basic
+	public int getCarryWeight(){
+		return this.carryWeight;
+	}
+	
+	@Basic
+	private void setCarryWeight(int weight){
+		this.carryWeight = weight;
+	}
+	
+	public int getTotalWeight(){
+		return this.getPrimStats().get("wgt") + this.getCarryWeight();
+	}
+	
 	private double theta;
 	
 	private Map<String, Integer> primStats = new HashMap<String, Integer>();
@@ -1510,13 +1560,20 @@ public class Unit {
 
 	private Faction faction = null;
 	
-	private final ArrayList<State> stateList;{
-		this.stateList = new ArrayList<State>();
-		this.stateList.add(State.WALKING);
-		this.stateList.add(State.RESTING);
-		this.stateList.add(State.WORKING);
-		
-	}
+	private static final ArrayList<State> stateList = new ArrayList<State>(Arrays.asList(State.WALKING, State.RESTING, State.WORKING));
+//	{
+//		Unit.stateList = new ArrayList<State>();
+//		Unit.stateList.add(State.WALKING);
+//		Unit.stateList.add(State.RESTING);
+//		Unit.stateList.add(State.WORKING);
+//		
+//	}
+	
+	private Boulder boulder = null;
+	
+	private Log log = null;
+	
+	private int carryWeight = 0;
 	
 	
 }

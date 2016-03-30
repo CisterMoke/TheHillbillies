@@ -10,6 +10,12 @@ public class Vector {
 		this.z = z;
 	}
 	
+	public Vector (Vector vector){
+		this.x = vector.getX();
+		this.y = vector.getY();
+		this.z = vector.getZ();
+	}
+	
 	public double getX(){
 		return this.x;
 	}
@@ -22,16 +28,30 @@ public class Vector {
 		return this.z;
 	}
 	
-	public ArrayList<Double> getCoords(){
-		ArrayList<Double> coords = new ArrayList<Double>();
-		coords.add(this.x);
-		coords.add(this.y);
-		coords.add(this.z);
-		return coords;
+	public ArrayList<Double> getCoeff(){
+		ArrayList<Double> coeff = new ArrayList<Double>();
+		coeff.add(this.x);
+		coeff.add(this.y);
+		coeff.add(this.z);
+		return coeff;
+	}
+	
+	public void setCoeff(double x, double y, double z){
+		this.x = x;
+		this.y = y;
+		this.z = z;
+	}
+	
+	public void setVector(Vector vector){
+		this.x = vector.getX();
+		this.y = vector.getY();
+		this.z = vector.getZ();
 	}
 	
 	public boolean equals(Vector vector){
-		return((this.x == vector.getX()) && (this.y == vector.getY()) && equals(this.z == vector.getZ()));
+		if (this == null || vector == null)
+			return false;
+		return((this.x == vector.getX()) && (this.y == vector.getY()) && (this.z == vector.getZ()));
 	}
 	
 	public double getLength(){
@@ -39,9 +59,12 @@ public class Vector {
 	}
 	
 	public void normalize(){
-		this.x /= this.getLength();
-		this.y /= this.getLength();
-		this.z /= this.getLength();
+		if (this.getLength() == 0)
+				return;
+		double length = this.getLength();
+		this.x /= length;
+		this.y /= length;
+		this.z /= length;
 	}
 	
 	public void add(Vector vector){
@@ -49,12 +72,12 @@ public class Vector {
 		this.y += vector.getY();
 		this.z += vector.getZ();
 	}
-//	
-//	public void add(double x, double y, double z){
-//		this.x += x;
-//		this.y += y;
-//		this.z += z;
-//	}
+	
+	public void add(double x, double y, double z){
+		this.x += x;
+		this.y += y;
+		this.z += z;
+	}
 	
 	public double scalarProduct(Vector vector){
 		return (this.x*vector.getX() + this.y*vector.getY() + this.z*vector.getZ());
@@ -72,6 +95,12 @@ public class Vector {
 		this.x *= factor;
 		this.y *= factor;
 		this.z *= factor;
+	}
+	
+	public Vector getOpposite(){
+		Vector opposite = new Vector(this);
+		opposite.multiply(-1);
+		return opposite;
 	}
 	
 	private double x;

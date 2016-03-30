@@ -25,13 +25,13 @@ public class Facade implements IFacade {
 
 	@Override
 	public double[] getPosition(Unit unit) throws ModelException {
-		double[] pos = new double[]{unit.getPosition().get(0), unit.getPosition().get(1), unit.getPosition().get(2)};
+		double[] pos = new double[]{unit.getPosition().getX(), unit.getPosition().getY(), unit.getPosition().getZ()};
 		return pos;
 	}
 
 	@Override
 	public int[] getCubeCoordinate(Unit unit) throws ModelException {
-		int[] cubepos = new int[]{unit.getBlockPosition().get(0).intValue(), unit.getBlockPosition().get(1).intValue(), unit.getBlockPosition().get(2).intValue()};
+		int[] cubepos = new int[]{(int)(unit.getBlockPosition().getX()), (int)(unit.getBlockPosition().getY()), (int)(unit.getBlockPosition().getZ())};
 		return cubepos;
 	}
 

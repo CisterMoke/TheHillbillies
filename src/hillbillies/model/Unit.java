@@ -213,15 +213,14 @@ public class Unit {
 		}
 		if (this.getState() == State.IDLE && !this.getTarget().equals(this.getPosition())){
 			this.setState(State.WALKING);
-			this.setTheta(Math.atan2(v_vector.get(1),v_vector.get(0)));
+			this.setTheta(Math.atan2(v_vector.getY(),v_vector.getX()));
 		}
-		if (this.getTarget().equals(this.getPosition()) && this.getFinTarget().isEmpty() && this.getState() != State.IDLE){
+		if (this.getTarget().equals(this.getPosition()) && this.getFinTarget() == null && this.getState() != State.IDLE){
 			this.setState(State.IDLE);
 			return;
 		}
 		
 		if (this.isMoving()){
-			ArrayList<Double> nextPos = new ArrayList<Double>(this.getPosition());
 			if (this.getState() == State.SPRINTING){
 				if (this.getStam()  <= 0)
 					this.setState(State.WALKING);
@@ -234,23 +233,26 @@ public class Unit {
 				
 				}
 			}
-			for (int i = 0; i<3; i++){
-				nextPos.set(i, nextPos.get(i) + this.getV_Vector().get(i)*dt);
-			}
+			Vector nextPos = this.getPosition();
+			Vector stepSize = this.getV_Vector();
+			stepSize.multiply(dt);
+			nextPos.add(stepSize);
+			Vector difference = new Vector(this.getTarget());
+			difference.add(nextPos.getOpposite());
+			difference.normalize();
+			Vector currentDirection = this.getV_Vector();
+			currentDirection.normalize();
+			difference.add(currentDirection.getOpposite());
 			boolean moved = false;
-			int idx = 0;
-			while (!moved && idx<3){
-				if(Math.signum(nextPos.get(idx)-this.getTarget().get(idx)) == Math.signum(this.getV_Vector().get(idx)) && (Math.signum(this.getV_Vector().get(idx)) != 0)){
-					this.setPosition(this.target.get(0), this.target.get(1), this.target.get(2));
-					if (!this.getFinTarget().isEmpty())
-						moveTo(this.getFinTarget().get(0), this.getFinTarget().get(1), this.getFinTarget().get(2));
-					moved = true;
-				}
-				idx += 1;
+			if(difference.getLength() > 0.5){
+				this.setPosition(this.getTarget().getX(), this.getTarget().getY(), this.getTarget().getZ());
+				moved = true;
+				if (this.getFinTarget() != null)
+					this.moveTo(this.getFinTarget().getX(), this.getFinTarget().getY(), this.getFinTarget().getZ());
 			}
 			if (!moved){
 				try{
-					this.setPosition(nextPos.get(0), nextPos.get(1), nextPos.get(2));
+					this.setPosition(nextPos.getX(), nextPos.getY(), nextPos.getZ());
 				}
 				catch (IllegalArgumentException exc){
 					this.setTarget(this.getPosition());
@@ -340,36 +342,33 @@ public class Unit {
 	 * 
 	 */
 	public void setPosition(double x, double y, double z)throws IllegalArgumentException{
-		ArrayList<Double> pos= new ArrayList<Double>();
-		pos.add(x);
-		pos.add(y);
-		pos.add(z);
-		if (!isValidPosition(pos))
+		if (!isValidPosition(new Vector(x, y, z)))
 			throw new IllegalArgumentException("Out of bounds");
-		this.pos = new ArrayList<Double>(pos);
+		this.pos = new Vector(x, y, z);
 	}
 	/**
 	 * Returns the coordinates of the current position of the unit.
 	 * 
 	 */
 	@Basic
-	public ArrayList<Double> getPosition(){
-		return this.pos;
+	public Vector getPosition(){
+		return new Vector(this.pos);
 	}
 	/**
 	 * Returns whether or not the given position lies within the boundaries.
 	 * @param pos
-	 * 			The position the be checked.
-	 * @return True if every coordinate lies 
+	 * 			The position vector the be checked.
+	 * @return True if every coefficient of pos lies between 0 and 50 inclusively.
 	 * 			| result == true
-	 * 			| for each element in pos : (
-	 * 			| 	if (element > 50 && element < 0)
+	 * 			| for each coefficient in pos : (
+	 * 			| 	if (coefficient > 50 && coefficient < 0)
 	 * 			|		then result == false)
 	 */
-	private boolean isValidPosition(ArrayList<Double> pos){
+	private boolean isValidPosition(Vector pos){
+		ArrayList<Double> coords = pos.getCoeff();
 		boolean checker = true;
 		for(int i=0; i<3; i++){
-			if (pos.get(i)>50 || pos.get(i)<0)
+			if (coords.get(i)>50 || coords.get(i)<0)
 				checker = false;
 		}
 		return checker;
@@ -459,15 +458,15 @@ public class Unit {
 	}
 	
 	/**
-	 * Returns the coordinates of the center of the block in which the unit is located.
+	 * Returns the vector of the center of the block in which the unit is located.
 	 * 
 	 */
-	public ArrayList<Double> getBlockPosition(){
-		ArrayList<Double> blockpos = new ArrayList<Double>(this.pos);
-		for (int i = 0; i<3; i++){
+	public Vector getBlockPosition(){
+		double blockX = Math.floor(this.pos.getX()) + 0.5;
+		double blockY = Math.floor(this.pos.getY()) + 0.5;
+		double blockZ = Math.floor(this.pos.getZ()) + 0.5;
+		Vector blockpos = new Vector(blockX, blockY, blockZ);
 			
-			blockpos.set(i, Math.floor(this.pos.get(i)) + 0.5);
-		}
 		return blockpos;
 	}
 	/**
@@ -541,13 +540,11 @@ public class Unit {
 				this.setWalkSpeed(-v_base*0.5);
 		}
 		
-		ArrayList<Double> target = new ArrayList<Double>(this.getBlockPosition());
-		target.set(0, target.get(0) + dx);
-		target.set(1, target.get(1) + dy);
-		target.set(2, target.get(2) + dz);
+		Vector target = this.getBlockPosition();
+		target.add(dx, dy, dz);
 		this.setTarget(target);
 		this.setV_Vector();
-		this.setTheta(Math.atan2(v_vector.get(1),v_vector.get(0)));
+		this.setTheta(Math.atan2(v_vector.getY(),v_vector.getX()));
 	}
 	/**
 	 * Initiates the movement of a unit to a given block.
@@ -600,13 +597,11 @@ public class Unit {
 	 */
 	public void moveTo(double x, double y, double z){
 		if (this.getPosition().equals(this.getFinTarget())){
-			this.finTarget.clear();
+			this.finTarget = null;
+			System.out.println(this.getFinTarget());
 			return;
 		}
-		ArrayList<Double> newBlockPos = new ArrayList<Double>();
-		newBlockPos.add(Math.floor(x)+0.5);
-		newBlockPos.add(Math.floor(y)+0.5);
-		newBlockPos.add(Math.floor(z)+0.5);
+		Vector newBlockPos = new Vector(Math.floor(x)+0.5, Math.floor(y)+0.5, Math.floor(z)+0.5);
 		if (!newBlockPos.equals(this.getFinTarget())){
 			try{
 				this.setFinTarget(newBlockPos);
@@ -615,24 +610,24 @@ public class Unit {
 				return;
 			}
 		}
-		if (this.getBlockPosition().get(0) > newBlockPos.get(0))
+		if (this.getBlockPosition().getX() > newBlockPos.getX())
 			x = -1;
 		else{
-			if (this.getBlockPosition().get(0) < newBlockPos.get(0))
+			if (this.getBlockPosition().getX() < newBlockPos.getX())
 				x = 1;
 			else x = 0;
 		}
-		if (this.getBlockPosition().get(1) > newBlockPos.get(1))
+		if (this.getBlockPosition().getY() > newBlockPos.getY())
 			y = -1;
 		else{
-			if (this.getBlockPosition().get(1) < newBlockPos.get(1))
+			if (this.getBlockPosition().getY() < newBlockPos.getY())
 				y = 1;
 			else y = 0;
 		}
-		if (this.getBlockPosition().get(2) > newBlockPos.get(2))
+		if (this.getBlockPosition().getZ() > newBlockPos.getZ())
 			z = -1;
 		else{
-			if (this.getBlockPosition().get(2) < newBlockPos.get(2))
+			if (this.getBlockPosition().getZ() < newBlockPos.getZ())
 				z = 1;
 			else z = 0;
 		}
@@ -646,31 +641,26 @@ public class Unit {
 	}
 	/**
 	 * Updates the unit's velocity vector.
-	 * @post 	If the unit hasn't reached its target, a velocity vector is created pointing in the direction of the target.
-	 * 			| d == Math.sqrt(Math.pow(getPosition().get(0)-getTarget().get(0), 2)
-	 *			|				+ Math.pow(getPosition().get(1)-getTarget().get(1), 2)
-	 *			|				+ Math.pow(getPosition().get(2)-getTarget().get(2), 2))
-	 * 			| if(!get.Target().equals(getPosition())
-	 * 			|	then for each integer i == 0..2 : (
-	 * 			|		new.getV_Vector().get(i) == getSpeed() / d * (getTarget().get(i) - getPosition().get(i)))
+	 * @effect 	A velocity vector is created pointing in the direction of the target.
+	 * 			| tempV_Vector == this.getPosition()
+	 * 			| tempV_Vector.add(this.getTarget().getOpposite())
+	 * 			| tempV_Vector.normalize()
+	 * 			| tempV_Vector.multiply(this.getSpeed())
+	 * 			| new.getV_Vector() == tempV_Vector
 	 */
 	private void setV_Vector(){
-		if(!this.getTarget().equals(this.getPosition())){
-			double distance = Math.sqrt(Math.pow(this.getPosition().get(0)-this.getTarget().get(0), 2)
-								+ Math.pow(this.getPosition().get(1)-this.getTarget().get(1), 2)
-								+ Math.pow(this.getPosition().get(2)-this.getTarget().get(2), 2));
-			for (int i = 0; i<3; i++){
-				this.v_vector.set(i, this.getSpeed()*(this.getTarget().get(i)-this.getPosition().get(i))/distance);
-			}
-		}
+		this.v_vector = this.getTarget();
+		this.v_vector.add(this.getPosition().getOpposite());
+		this.v_vector.normalize();
+		this.v_vector.multiply(this.getSpeed());
 	}
 	/**
 	 * 
 	 * Returns the velocity vector of this unit.
 	 */
 	@Basic
-	public ArrayList<Double> getV_Vector(){
-		return new ArrayList<Double>(this.v_vector);
+	public Vector getV_Vector(){
+		return new Vector(this.v_vector);
 	}
 	
 	/**
@@ -710,8 +700,8 @@ public class Unit {
 		catch(IllegalArgumentException exc){
 			return;
 		}
-		double dy = defender.getPosition().get(1)-this.getPosition().get(1);
-		double dx = defender.getPosition().get(0)-this.getPosition().get(0);
+		double dy = defender.getPosition().getY()-this.getPosition().getY();
+		double dx = defender.getPosition().getX()-this.getPosition().getX();
 		this.setTheta(Math.atan2(dy, dx));
 		defender.setTheta(this.getTheta() + Math.PI);
 		this.setAttackCooldown(1);
@@ -806,7 +796,7 @@ public class Unit {
 		return (Math.random() <= this.getDodgeProb(attacker));
 	}
 	/**
-	 * The unit attemps to dodge the attack.
+	 * The unit attempts to dodge the attack.
 	 * @param attacker
 	 * 			The attacking unit.
 	 * @effect	The unit will randomly select an adjacent block. It tries to 
@@ -826,14 +816,14 @@ public class Unit {
 	private void dodge(Unit attacker){
 		int dx = 0;
 		int dy = 0;
-		int dz = 0;
 		boolean checker = true;
-		while (dx == 0 && dy == 0 && dz == 0 && checker){
+		while (dx == 0 && dy == 0 && checker){
 			dx = this.randInt();
 			dy = this.randInt();
-			dz = this.randInt();
 			try{
-				this.setPosition(this.getPosition().get(0)+dx,this.getPosition().get(1)+dy , this.getPosition().get(2)+dz);
+				Vector newPos = this.getPosition();
+				newPos.add(dx, dy, 0);
+				this.setPosition(newPos.getX(),newPos.getY() , newPos.getZ());
 				checker  = false;
 			}
 			catch (IllegalArgumentException exc){
@@ -842,8 +832,8 @@ public class Unit {
 		}
 		
 		this.setTarget(this.getPosition());
-		if (!this.getFinTarget().isEmpty())
-		this.moveTo(this.getFinTarget().get(0), this.getFinTarget().get(1), this.getFinTarget().get(2));
+		if (this.getFinTarget() != null)
+		this.moveTo(this.getFinTarget().getX(), this.getFinTarget().getY(), this.getFinTarget().getZ());
 	}
 	
 	/**
@@ -1065,8 +1055,8 @@ public class Unit {
 	 * 		will directly move towards.
 	 */
 	@Basic
-	public ArrayList<Double> getTarget(){
-		return this.target;
+	public Vector getTarget(){
+		return new Vector(this.target);
 	}
 	/**
 	 * Sets the target of the unit to the given target.
@@ -1075,8 +1065,8 @@ public class Unit {
 	 * @post	The target of the unit is set to the given position.
 	 * 			|new.getTarget() = target
 	 */
-	private void setTarget(ArrayList<Double> target){
-		this.target = new ArrayList<Double>(target);
+	private void setTarget(Vector target){
+		this.target = target;
 	}
 	/**
 	 * 
@@ -1085,8 +1075,10 @@ public class Unit {
 	 * 		the unit will move towards by setting new targets.
 	 */
 	@Basic
-	public ArrayList<Double> getFinTarget(){
-		return this.finTarget;
+	public Vector getFinTarget(){
+		if (this.finTarget == null)
+				return null;
+		return new Vector(this.finTarget);
 	}
 	/**
 	 * Sets the final target of the unit to the given position.
@@ -1099,10 +1091,10 @@ public class Unit {
 	 * 			Throws and exception if the target is an invalid position.
 	 * 				|!isValidPosition(target)
 	 */
-	private void setFinTarget(ArrayList<Double> target) throws IllegalArgumentException{
+	private void setFinTarget(Vector target) throws IllegalArgumentException{
 		if (!this.isValidPosition(target))
 			throw new IllegalArgumentException("Target out of bounds!");
-		this.finTarget = new ArrayList<Double>(target);
+		this.finTarget = new Vector(target);
 	}
 	
 	/**
@@ -1325,14 +1317,11 @@ public class Unit {
 	 * 			|result == (|dx|<= 1) && (|dy| <=1) && (|dz| <= 1)
 	 */
 	public boolean inRange(Unit unit){
-		boolean inRange = true;
-		int idx = 0;
-		while (idx <3 && inRange){
-			if(Math.abs(unit.getBlockPosition().get(idx) - this.getBlockPosition().get(idx)) > 1.1){
-				inRange = false;
-			}
-			idx += 1;
-		}
+		boolean inRange = false;
+		Vector difference = this.getBlockPosition();
+		difference.add(unit.getBlockPosition().getOpposite());
+		if (difference.getLength() < 2)
+			inRange = true;
 		return inRange;
 	}
 	/**
@@ -1426,11 +1415,11 @@ public class Unit {
 	
 	private Map<String, Integer> primStats = new HashMap<String, Integer>();
 	
-	private ArrayList<Double> pos;
+	private Vector pos;
 	
-	private ArrayList<Double> target;
+	private Vector target;
 	
-	private ArrayList<Double> finTarget = new ArrayList<Double>();
+	private Vector finTarget = null;
 	
 	private String name;
 		
@@ -1438,7 +1427,7 @@ public class Unit {
 	
 	private double v;
 	
-	private ArrayList<Double> v_vector = new ArrayList<Double>(Arrays.asList(0.0, 0.0, 0.0));
+	private Vector v_vector = new Vector(0.0, 0.0, 0.0);
 	
 	private static final int NAMELENGTH_MIN = 2;
 	
@@ -1458,7 +1447,7 @@ public class Unit {
 	
 	private double restTime = 0;
 	
-	private boolean Default = true;
+	private boolean Default = false;
 	
 	private double minRestTime = 0;
 	

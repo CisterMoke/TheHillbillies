@@ -3,7 +3,6 @@ package tests.model;
 import static org.junit.Assert.*;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 
 import org.junit.Before;
@@ -11,6 +10,7 @@ import org.junit.Test;
 
 import hillbillies.model.Unit;
 import hillbillies.model.Unit.State;
+import hillbillies.model.Vector;
 
 public class UnitTest {
 	private Unit test;
@@ -56,8 +56,8 @@ public class UnitTest {
 			checker = true;
 		}
 		assertFalse(checker);
-		ArrayList<Double> correct = new ArrayList<Double>(Arrays.asList(5.5, 5.5, 5.5));
-		assertEquals(correct, test.getPosition());
+		ArrayList<Double> correct = new Vector(5.5, 5.5, 5.5).getCoeff();
+		assertEquals(correct, test.getPosition().getCoeff());
 		
 	}
 	
@@ -246,7 +246,7 @@ public class UnitTest {
 	public void testFinPosOutBoundsMoveTo(){
 		test.moveTo(-1, -1, -1);
 		test.advanceTime(0.1);
-		assertEquals(test.getBlockPosition(), test.getPosition());
+		assertTrue(test.getBlockPosition().equals(test.getPosition()));
 	}
 	@Test
 	public void testInCentreOfBlockAfterMoveTo(){
@@ -257,8 +257,8 @@ public class UnitTest {
 		test.advanceTime(0.2);
 		test.advanceTime(0.2);
 		test.advanceTime(0.2);
-		ArrayList<Double> Correct = new ArrayList<Double>(Arrays.asList(0.5, 0.5, 0.5));
-		assertEquals(Correct, test.getPosition());
+		ArrayList<Double> Correct = new Vector(0.5, 0.5, 0.5).getCoeff();
+		assertEquals(Correct, test.getPosition().getCoeff());
 	}
 	@Test
 	public void testMoveToAdjacentOutOfRange(){

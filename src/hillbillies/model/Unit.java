@@ -21,6 +21,8 @@ import be.kuleuven.cs.som.annotate.*;
  * 			the sum of the strength and the agility, divided by two.
  * 			| getPrimStats().get("wgt")
  * 			|	 >= (getPrimStats().get("str") + getPrimStats("agl")) / 2)
+ * @invar	A unit must always belong to a faction
+ * 			| getFaction() != null
  *
  */
 public class Unit {
@@ -237,14 +239,14 @@ public class Unit {
 			Vector stepSize = this.getV_Vector();
 			stepSize.multiply(dt);
 			nextPos.add(stepSize);
-			Vector difference = new Vector(this.getTarget());
-			difference.add(nextPos.getOpposite());
-			difference.normalize();
+			Vector distance = new Vector(this.getTarget());
+			distance.add(nextPos.getOpposite());
+			distance.normalize();
 			Vector currentDirection = this.getV_Vector();
 			currentDirection.normalize();
-			difference.add(currentDirection.getOpposite());
+			distance.add(currentDirection.getOpposite());
 			boolean moved = false;
-			if(difference.getLength() > 0.5){
+			if(distance.getLength() > 0.5){
 				this.setPosition(this.getTarget().getX(), this.getTarget().getY(), this.getTarget().getZ());
 				moved = true;
 				if (this.getFinTarget() != null)
@@ -595,7 +597,6 @@ public class Unit {
 	public void moveTo(double x, double y, double z){
 		if (this.getPosition().equals(this.getFinTarget())){
 			this.finTarget = null;
-			System.out.println(this.getFinTarget());
 			return;
 		}
 		Vector newBlockPos = new Vector(Math.floor(x)+0.5, Math.floor(y)+0.5, Math.floor(z)+0.5);
@@ -728,6 +729,9 @@ public class Unit {
 	 * The unit performs an attack on the defender.
 	 * @param defender
 	 * 			The defender that get's attacked by the unit.
+	 * @effect 	Nothing happens if both units are from the same faction.
+	 * 			| if (getFaction == defender.getFaction)
+	 * 			|	then return
 	 * @effect	The attack get's initiated if it hasn't been initiated yet.
 	 * 			The method then ends here.
 	 * 			| if(!isAttackInitiated())
@@ -752,6 +756,8 @@ public class Unit {
 	 * 			| defender.defend(this)
 	 */
 	public void attack(Unit defender){
+		if(getFaction() == defender.getFaction())
+			return;
 		if(!this.isAttackInitiated()){
 			this.initiateAttack(defender);
 			return;
@@ -882,7 +888,8 @@ public class Unit {
 	 *			| else
 	 *			|	setHp(this.getHp() - damage)
 	 */
-	public void defend(Unit attacker){
+	private void defend(Unit attacker){
+		System.out.println("DEFENDED");
 		this.setState(State.IDLE);
 		attacker.setState(State.IDLE);
 		double damage = ((double)(attacker.getPrimStats().get("str")))/10;
@@ -1408,6 +1415,55 @@ public class Unit {
 	public void idle(){
 		this.setState(State.IDLE);
 	}
+	/**
+	 * Return the faction to which this unit belongs.
+	 */
+	@Basic
+	public Faction getFaction() {
+		return this.faction;
+	}
+	/**
+	 * Set the faction of this unit a given faction.
+	 * @param 	faction
+	 * 			The given faction to be set to this unit's
+	 * 			faction.
+	 * @effect	If this unit can belong to the given faction,
+	 * 			this unit's faction is set to the given faction.
+	 * 			| if (canHaveAsFaction(faction))
+	 * 			| 	then new.getFaction() == faction
+	 * 			| else newgetFaction() == getFaction()
+	 */
+	public void setFaction(Faction faction){
+		if (!canHaveAsFaction(faction))
+			return;
+		this.faction = faction;
+	}
+	
+	/**
+	 * Return a boolean stating whether or not this unit can belong
+	 * 	to the given faction.
+	 * @param 	faction
+	 * 			The given faction to be checked.
+	 * @return	True if and only if this unit is currently not
+	 * 			belonging to any faction.
+	 * 			| return getFaction() == null
+	 */
+	@Basic @Raw
+	public boolean canHaveAsFaction(Faction faction) {
+		return this.faction == null;
+	}
+	/**
+	 * Remove the unit from it's current faction.
+	 * @effect	The unit is removed from the set of units
+	 * 			belonging to its faction and the unit's
+	 * 			faction is set to null.
+	 * 			|this.faction.removeUnit(this) && new.getFaction == null
+	 */
+	public void removeFaction(){
+		this.faction.removeUnit(this);
+		this.faction = null;
+	}
+	
 	private double theta;
 	
 	private Map<String, Integer> primStats = new HashMap<String, Integer>();
@@ -1451,6 +1507,8 @@ public class Unit {
 	private boolean attackInitiated = false;
 	
 	private static final Set<String> primStatSet = new HashSet<String>(Arrays.asList("str", "wgt", "agl", "tgh"));
+
+	private Faction faction = null;
 	
 	private final ArrayList<State> stateList;{
 		this.stateList = new ArrayList<State>();
@@ -1459,5 +1517,6 @@ public class Unit {
 		this.stateList.add(State.WORKING);
 		
 	}
+	
 	
 }

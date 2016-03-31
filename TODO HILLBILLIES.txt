@@ -5,12 +5,12 @@ World:
 - Unitspawn
 
 Unit:
--combat
+- Combat
 - Documentatie (factionstuff, boulder/logstuff, carryweightstuff)
 - Unit moet altijd tot een factie behoren? (dode units ook? Kunnen factie leden verliezen?)
 - "Tegenspraak bij invariant over de faction en canHaveAsFaction
 - World borders
-- Meer excpetions bij associaties met Boulder/Log
+- Meer exceptions bij associaties met Boulder/Log?
 
 Boulder/Log:
 - World borders

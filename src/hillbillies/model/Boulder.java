@@ -89,6 +89,17 @@ public class Boulder {
 	}
 	
 	/**
+	 * Return the coordinates of the cube
+	 * 	this Boulder is currently in.
+	 */
+	public Vector getBlockPosition(){
+		double blockX = Math.floor(getPosition().getX());
+		double blockY = Math.floor(getPosition().getY());
+		double blockZ = Math.floor(getPosition().getZ());
+		return new Vector(blockX, blockY, blockZ);
+	}
+	
+	/**
 	 * Check whether the given position is a valid position for
 	 * any Boulder.
 	 *  
@@ -127,28 +138,64 @@ public class Boulder {
 		this.position = position;
 	}
 	
+	/**
+	 * Return the carrier of this Boulder.
+	 */
 	@Basic
 	public Unit getCarrier(){
 		return this.carrier;
 	}
-	
-	public void setCarrier(Unit unit){
-		if(canHaveAsCarrier(unit)){
-			this.carrier = unit;
-			unit.setBoulder(this);
-		}
+	 /**
+	  * Set the carrier of this Boulder to a given Unit.
+	  * @param	unit
+	  * 		The given Unit to be set as the carrier
+	  * 		of this Boulder.
+	  * @post	If this Boulder can have the given Unit
+	  * 		as a carrier, the Unit is set as the carrier
+	  * 		of this Boulder and this Boulder is set as
+	  * 		the Boulder that the given Unit is carrying.
+	  * @throws	IllegalArgumentException
+	  * 		An exception is thrown if the given unit is an
+	  * 		invalid carrier.
+	  */
+	public void setCarrier(Unit unit) 
+			throws IllegalArgumentException{
+		if(!canHaveAsCarrier(unit))
+			throw new IllegalArgumentException("Invalid carrier!");
+		this.carrier = unit;
+		unit.setBoulder(this);
 		return;
 	}
 	
+	/**
+	 * Return a boolean stating whether or not the given
+	 * 	Unit can be the carrier of this Boulder.
+	 * @param 	unit
+	 * 			The given Unit to be checked.
+	 * @return	True if and only if this Boulder has no
+	 * 			current carrier and the given Unit isn't
+	 * 			carrying anything.
+	 */
 	public boolean canHaveAsCarrier(Unit unit){
 		return((this.carrier == null) && !unit.isCarrying());
 	}
 	
+	/**
+	 * Remove the current carrier.
+	 * @post	Tries to set the Boulder's position to the position
+	 * 			of its carrier and remove the carrier of this Boulder.
+	 * 			If a NullPointerException is caught, nothing happens.
+	 */
 	public void removeCarrier(){
-		if(this.carrier == null)
+		try {
+			setPosition(getCarrier().getPosition());
+			this.carrier = null;
+		} catch (NullPointerException exc) {
 			return;
-		setPosition(getCarrier().getPosition());
-		this.carrier = null;
+		} 
+//		catch (IllegalArgumentException exc){
+//			System.out.println("??????");
+//		}
 	}
 	
 	/**

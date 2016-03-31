@@ -12,7 +12,7 @@ public class Facade implements IFacade {
 	public Unit createUnit(String name, int[] initialPosition, int weight, int agility, int strength, int toughness,
 			boolean enableDefaultBehavior) throws ModelException {
 		try{
-			Unit unit = new Unit(name, (double)(initialPosition[0])+0.5,
+			Unit unit = new Unit(name, (double)(initialPosition[0]) + 0.5,
 									(double) (initialPosition[1]) + 0.5,
 									(double) (initialPosition[2]) + 0.5, 
 									strength, weight, agility, toughness );
@@ -31,7 +31,7 @@ public class Facade implements IFacade {
 
 	@Override
 	public int[] getCubeCoordinate(Unit unit) throws ModelException {
-		int[] cubepos = new int[]{(int)(unit.getBlockPosition().getX()), (int)(unit.getBlockPosition().getY()), (int)(unit.getBlockPosition().getZ())};
+		int[] cubepos = new int[]{(int) (unit.getBlockPosition().getX()), (int) (unit.getBlockPosition().getY()), (int)(unit.getBlockPosition().getZ())};
 		return cubepos;
 	}
 

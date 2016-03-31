@@ -459,9 +459,9 @@ public class Unit {
 	 * 
 	 */
 	public Vector getBlockPosition(){
-		double blockX = Math.floor(this.pos.getX()) + 0.5;
-		double blockY = Math.floor(this.pos.getY()) + 0.5;
-		double blockZ = Math.floor(this.pos.getZ()) + 0.5;
+		double blockX = Math.floor(this.pos.getX());
+		double blockY = Math.floor(this.pos.getY());
+		double blockZ = Math.floor(this.pos.getZ());
 		Vector blockpos = new Vector(blockX, blockY, blockZ);
 			
 		return blockpos;
@@ -486,7 +486,7 @@ public class Unit {
 	 * 			|	then return
 	 * @effect  A new target is set to the center of the given adjacent block.
 	 * 			| newTarget == this.getBlockPosition
-	 * 			| newTarget.add(dx, dy, dz)
+	 * 			| newTarget.add(dx + 0.5, dy + 0.5, dz + 0.5)
 	 * 			| setTarget(newTarget)
 	 * @effect	A new velocity vector is created, pointing in the direction of the target.
 	 * 			| setV_Vector()
@@ -537,19 +537,21 @@ public class Unit {
 		}
 		
 		Vector target = this.getBlockPosition();
-		target.add(dx, dy, dz);
+		target.add(dx + 0.5, dy + 0.5, dz + 0.5);
 		this.setTarget(target);
 		this.setV_Vector();
 		this.setTheta(Math.atan2(v_vector.getY(),v_vector.getX()));
 	}
 	/**
-	 * Initiates the movement of a unit to a given block.
+	 * Initiates the movement of a unit to a given position.
+	 * 	The position is set to the centre of the block containing
+	 * 	this position.
 	 * @param x
-	 * 			The x-coordinates of the given block.
+	 * 			The x-coordinates of the given position.
 	 * @param y
-	 * 			The y-coordinates of the given block.
+	 * 			The y-coordinates of the given position.
 	 * @param z
-	 * 			The z-coordinates of the given block.
+	 * 			The z-coordinates of the given position.
 	 * 
 	 * @post	The final target is removed if the unit's position equals
 	 * 			the position of the final target. The method then ends here
@@ -562,11 +564,12 @@ public class Unit {
 	 * 			|		throws IllegalArgumentException)
 	 * 			|	then return
 	 * 			| else setFinTarget(newTarget)
-	 * @effect	Tries to move to an adjacent block that is closer to the final target than the current block position.
+	 * @effect	Tries to move to the centre of an adjacent block that is closer to
+	 * 			the final target than the current block centre.
 	 * 			If it fails, nothing happens.
-	 * 			| blockx == this.getBlockPosition().getX()
-	 * 			| blocky == this.getBlockPosition().getY()
-	 * 			| blockz == this.getBlockPosition().getZ()
+	 * 			| blockx == this.getBlockPosition().getX() + 0.5
+	 * 			| blocky == this.getBlockPosition().getY() + 0.5
+	 * 			| blockz == this.getBlockPosition().getZ() + 0.5
 	 * 			| x'== floor(x) + 0.5
 	 * 			| y'== floor(y) + 0.5
 	 * 			| z'== floor(z) + 0.5
@@ -597,33 +600,35 @@ public class Unit {
 			this.finTarget = null;
 			return;
 		}
-		Vector newBlockPos = new Vector(Math.floor(x)+0.5, Math.floor(y)+0.5, Math.floor(z)+0.5);
-		if (!newBlockPos.equals(this.getFinTarget())){
+		Vector newBlockCentre = new Vector(Math.floor(x)+0.5, Math.floor(y)+0.5, Math.floor(z)+0.5);
+		if (!newBlockCentre.equals(this.getFinTarget())){
 			try{
-				this.setFinTarget(newBlockPos);
+				this.setFinTarget(newBlockCentre);
 			}
 			catch(IllegalArgumentException exc){
 				return;
 			}
 		}
-		if (this.getBlockPosition().getX() > newBlockPos.getX())
+		Vector currentBlockCentre = this.getBlockPosition();
+		currentBlockCentre.add(0.5, 0.5, 0.5);
+		if (currentBlockCentre.getX() > newBlockCentre.getX())
 			x = -1;
 		else{
-			if (this.getBlockPosition().getX() < newBlockPos.getX())
+			if (currentBlockCentre.getX() < newBlockCentre.getX())
 				x = 1;
 			else x = 0;
 		}
-		if (this.getBlockPosition().getY() > newBlockPos.getY())
+		if (currentBlockCentre.getY() > newBlockCentre.getY())
 			y = -1;
 		else{
-			if (this.getBlockPosition().getY() < newBlockPos.getY())
+			if (currentBlockCentre.getY() < newBlockCentre.getY())
 				y = 1;
 			else y = 0;
 		}
-		if (this.getBlockPosition().getZ() > newBlockPos.getZ())
+		if (currentBlockCentre.getZ() > newBlockCentre.getZ())
 			z = -1;
 		else{
-			if (this.getBlockPosition().getZ() < newBlockPos.getZ())
+			if (currentBlockCentre.getZ() < newBlockCentre.getZ())
 				z = 1;
 			else z = 0;
 		}
@@ -1464,52 +1469,175 @@ public class Unit {
 		this.faction = null;
 	}
 	
+	/**
+	 * Return a boolean stating whether or not the unit is carrying
+	 * 	something.
+	 * @return 	True if the unit is carrying a boulder or a log.
+	 * 			|result == (getBoulder() != null || getLog() != null)
+	 */
 	public boolean isCarrying() {
-		return (this.boulder != null); // || this.log != null);		
+		return (this.boulder != null || this.log != null);		
 	}
-	
+	 /**
+	  * Return the boulder this unit is currently carrying.
+	  */
 	@Basic
 	public Boulder getBoulder(){
 		return this.boulder;
 	}
 	
-	public void setBoulder(Boulder boulder) {
+	 /**
+	  * Set the boulder the unit is carrying to a given boulder.
+	  * @param 	boulder
+	  * 		The given boulder to be set as the boulder this unit is carrying.
+	  * @effect	If the boulder can have this unit as a carrier, it is set to the
+	  * 		boulder that this unit is carrying and the its weight is set
+	  * 		as the carry weight.
+	  * 		| if(boulder.canHaveAsCarrier(this)
+	  * 		| 	then new.getBoulder() == boulder &&
+	  * 		|	new.getCarryWeight() == boulder.getWeight()
+	  */
+	protected void setBoulder(Boulder boulder) {
 		if(boulder.canHaveAsCarrier(this))
 			this.boulder = boulder;
 			this.setCarryWeight(boulder.getWeight());
 	}
 	
+	/**
+	  * Return the log this unit is currently carrying.
+	  */
 	@Basic
 	public Log getLog(){
 		return this.log;
 	}
 	
-	public void setLog(Log log) {
+	 /**
+	  * Set the log the unit is carrying to a given log.
+	  * @param 	log
+	  * 		The given log to be set as the log this unit is carrying.
+	  * @effect	If the log can have this unit as a carrier, it is set to the
+	  * 		log that this unit is carrying and the its weight is set
+	  * 		as the carry weight.
+	  * 		| if(log.canHaveAsCarrier(this)
+	  * 		| 	then new.getLog() == log &&
+	  * 		|	new.getCarryWeight() == log.getWeight()
+	  */
+	protected void setLog(Log log) {
 		if(log.canHaveAsCarrier(this))
 			this.log = log;
 			this.setCarryWeight(log.getWeight());
 	}
 	
+	/**
+	 * Drop the prop that this unit is carrying.
+	 * 
+	 * @effect	Nothing happens if the unit isn't carrying
+	 * 			anything.
+	 * 			| if(!isCarrying)
+	 * 			|	then return
+	 * @effect	If the unit is carrying a boulder, the boulder
+	 * 			this unit is carrying will be removed.
+	 * 			The boulder's carrier will be removed as well.
+	 * 			Otherwise the log this unit is carrying will
+	 * 			be removed together with the log's carrier.
+	 * 			| if(getBoulder != null)
+	 * 			|	then getBoulder().removeCarrier() &&
+	 * 			|	new.getBoulder() == null
+	 * 			| else getLog().removeCarrier() &&
+	 * 			|	new.getLog() == null
+	 * @post	The carry weight is set to zero.
+	 * 			| new.getCarryWeight() == 0
+	 */
 	public void drop(){
 		if(!isCarrying())
 			return;
-		this.getBoulder().removeCarrier();
-		this.boulder = null;
+		if(getBoulder() != null){
+			this.getBoulder().removeCarrier();
+			this.boulder = null;			
+		}
+		else{
+			this.getLog().removeCarrier();
+			this.log = null;
+		}
 		this.setCarryWeight(0);
-		this.getLog().removeCarrier();
-		this.log = null;
 	}
 	
+	/**
+	 * Lift a boulder lying in the same cube as this Unit.
+	 * @param	boulder
+	 * 			The given boulder to be lifted.
+	 * @effect	If the given boulder and this unit occupy the
+	 * 			same cube, the boulder will try to set this
+	 * 			unit as its carrier. If an IllegalArgumentException
+	 * 			is caught, nothing happens.
+	 * 			| if(getBlockPosition() == boulder.getBlockPosition())
+	 * 			|	then if(boulder.setCarrier(this) throws
+	 * 			|			IllegalArgumentException)
+	 *			|			then return
+	 *			|		else boulder.setCarrier(this)
+	 */
+	public void lift(Boulder boulder){
+		if(getBlockPosition() != boulder.getBlockPosition())
+			return;
+		try {
+			boulder.setCarrier(this);
+		} catch (IllegalArgumentException exc) {
+			return;
+		}
+	}
+	
+	/**
+	 * Lift a log lying in the same cube as this Unit.
+	 * @param	log
+	 * 			The given log to be lifted.
+	 * @effect	If the given log and this unit occupy the
+	 * 			same cube, the log will try to set this
+	 * 			unit as its carrier. If an IllegalArgumentException
+	 * 			is caught, nothing happens.
+	 * 			| if(getBlockPosition() == log.getBlockPosition())
+	 * 			|	then if(log.setCarrier(this) throws
+	 * 			|			IllegalArgumentException)
+	 *			|			then return
+	 *			|		else log.setCarrier(this)
+	 */
+	public void lift(Log log){
+		if(getBlockPosition() != boulder.getBlockPosition())
+			return;
+		try {
+			log.setCarrier(this);
+		} catch (IllegalArgumentException exc) {
+			return;
+		}
+	}
+	
+	/**
+	 * Return the carry weight of this unit.
+	 * 	This is the weight of the prop that this
+	 * 	unit is currently carrying.
+	 */
 	@Basic
 	public int getCarryWeight(){
 		return this.carryWeight;
 	}
-	
+	 /**
+	  * Set the carry weight of this unit to a given weight.
+	  * 
+	  * @param	weight
+	  * 		The given weight to be set as carry weight.
+	  * @post	The new carry weight of this unit is set
+	  * 		to the given weight.
+	  * 		| new.getCarryWeight() == weight.
+	  */
 	@Basic
-	private void setCarryWeight(int weight){
+	public void setCarryWeight(int weight){
 		this.carryWeight = weight;
 	}
 	
+	/**
+	 * Return the total weight of this unit.
+	 * 	This is the sum of the unit's weight
+	 * 	with the carry weight.
+	 */
 	public int getTotalWeight(){
 		return this.getPrimStats().get("wgt") + this.getCarryWeight();
 	}

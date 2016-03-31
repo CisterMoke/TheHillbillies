@@ -8,24 +8,23 @@ import java.util.HashMap;
 import org.junit.Before;
 import org.junit.Test;
 
-import hillbillies.model.Unit;
+import hillbillies.model.*;
 import hillbillies.model.Unit.State;
-import hillbillies.model.Vector;
 
 public class UnitTest {
-	private Unit test;
-	
+	private Unit testUnit;
 	@Before
 	public void setup(){
-		this.test = new Unit("Billie", 0.5, 0.5, 0.5, 50, 50, 50, 50);
-		test.stopDefault();
+		this.testUnit = new Unit("Billie", 0.5, 0.5, 0.5, 50, 50, 50, 50);
+		new Faction(testUnit);
+		testUnit.stopDefault();
 	}
 	
 	@Test
 	public void testSetPositionUpperOutOfBounds(){
 		boolean checker = false;
 		try{
-			test.setPosition(-1.0, -1.0, -1.0);
+			testUnit.setPosition(-1.0, -1.0, -1.0);
 		}
 		catch(IllegalArgumentException exc){
 			exc.printStackTrace();
@@ -37,7 +36,7 @@ public class UnitTest {
 	public void testSetPositionLowerOutOfBounds() {
 		boolean checker = false;
 		try{
-			test.setPosition(51, 51, 51);
+			testUnit.setPosition(51, 51, 51);
 		}
 		catch(IllegalArgumentException exc){
 			exc.printStackTrace();
@@ -49,7 +48,7 @@ public class UnitTest {
 	public void testSetPostionAllowed(){
 		boolean checker = false;
 		try{
-			test.setPosition(5.5, 5.5, 5.5);
+			testUnit.setPosition(5.5, 5.5, 5.5);
 		}
 		catch(IllegalArgumentException exc){
 			exc.printStackTrace();
@@ -57,7 +56,7 @@ public class UnitTest {
 		}
 		assertFalse(checker);
 		ArrayList<Double> correct = new Vector(5.5, 5.5, 5.5).getCoeff();
-		assertEquals(correct, test.getPosition().getCoeff());
+		assertEquals(correct, testUnit.getPosition().getCoeff());
 		
 	}
 	
@@ -69,14 +68,14 @@ public class UnitTest {
 		Stats.put("wgt", 3);
 		Stats.put("agl", 51);
 		Stats.put("tgh", 0);
-		test.setPrimStats(Stats);
+		testUnit.setPrimStats(Stats);
 		HashMap<String, Integer> CorrectStats = new HashMap<String, Integer>();
 		CorrectStats.put("str", 200);
 		CorrectStats.put("wgt", 126);
 		CorrectStats.put("agl", 51);
 		CorrectStats.put("tgh", 1);
 				
-		assertEquals(test.getPrimStats(), CorrectStats);
+		assertEquals(testUnit.getPrimStats(), CorrectStats);
 	}
 	@Test
 	public void testSetAllowedPrimStats(){
@@ -85,28 +84,28 @@ public class UnitTest {
 		Stats.put("wgt", 150);
 		Stats.put("agl", 50);
 		Stats.put("tgh", 75);
-		test.setPrimStats(Stats);
-		assertEquals(Stats, test.getPrimStats());
+		testUnit.setPrimStats(Stats);
+		assertEquals(Stats, testUnit.getPrimStats());
 	}
 	@Test
 	public void testIllegalInitialPrimStats(){
-		Unit test2 = new Unit("Dummie", 0, 0, 0, 20, 20, 120, 120);
+		Unit testUnit2 = new Unit("Dummie", 0, 0, 0, 20, 20, 120, 120);
 		HashMap<String, Integer> CorrectStats = new HashMap<String, Integer>();
 		CorrectStats.put("str", 25);
 		CorrectStats.put("wgt", 63);
 		CorrectStats.put("agl", 100);
 		CorrectStats.put("tgh", 100);
-		assertEquals(test2.getPrimStats(), CorrectStats);
+		assertEquals(testUnit2.getPrimStats(), CorrectStats);
 	}
 	@Test
 	public void testAllowedInitialPrimStats(){
-		Unit test2 = new Unit("Dummie", 0, 0, 0, 75, 50, 25, 60);
+		Unit testUnit2 = new Unit("Dummie", 0, 0, 0, 75, 50, 25, 60);
 		HashMap<String, Integer> Stats = new HashMap<String, Integer>();
 		Stats.put("str", 75);
 		Stats.put("wgt", 50);
 		Stats.put("agl", 25);
 		Stats.put("tgh", 60);
-		assertEquals(Stats, test2.getPrimStats());
+		assertEquals(Stats, testUnit2.getPrimStats());
 	}
 	
 	
@@ -114,7 +113,7 @@ public class UnitTest {
 	public void testNoUpperCaseName(){
 		boolean checker = false;
 		try{
-			test.setName("billie");
+			testUnit.setName("billie");
 		}
 		catch(IllegalArgumentException exc){
 			exc.printStackTrace();
@@ -126,7 +125,7 @@ public class UnitTest {
 	public void testIllegalCharacterName(){	
 		boolean checker = false;
 		try{
-			test.setName("Billie1");
+			testUnit.setName("Billie1");
 		}
 		catch(IllegalArgumentException exc){
 			exc.printStackTrace();
@@ -138,7 +137,7 @@ public class UnitTest {
 	public void testTooShortName(){
 		boolean checker = false;
 		try{
-			test.setName("B");
+			testUnit.setName("B");
 		}
 		catch(IllegalArgumentException exc){
 			exc.printStackTrace();
@@ -150,121 +149,122 @@ public class UnitTest {
 	public void testAllowedName(){
 		boolean checker = false;
 		try{
-			test.setName("Bob");
+			testUnit.setName("Bob");
 		}
 		catch(IllegalArgumentException exc){
 			exc.printStackTrace();
 			checker = true;
 		}
 		assertFalse(checker);
-		assertEquals("Bob", test.getName());
+		assertEquals("Bob", testUnit.getName());
 	}
 	
 	
 	@Test
 	public void testWorkState(){
-		test.work();
-		assertEquals(State.WORKING, test.getState());
+		testUnit.work();
+		assertEquals(State.WORKING, testUnit.getState());
 	}
 	@Test
 	public void testWorkTime(){
-		test.work();
-		assertEquals(10.0, test.getWorkTime(), 0.0000000001);
-		test.advanceTime(0.1);
-		assertEquals(9.9, test.getWorkTime(), 0.0000000001);
+		testUnit.work();
+		assertEquals(10.0, testUnit.getWorkTime(), 0.0000000001);
+		testUnit.advanceTime(0.1);
+		assertEquals(9.9, testUnit.getWorkTime(), 0.0000000001);
 	}
 	@Test
 	public void testStopWorking(){
-		test.work();
+		testUnit.work();
 		for (int idx = 1; idx<11 ; idx++){
-			test.advanceTime(0.2);
-			test.advanceTime(0.2);
-			test.advanceTime(0.2);
-			test.advanceTime(0.2);
-			test.advanceTime(0.2);
+			testUnit.advanceTime(0.2);
+			testUnit.advanceTime(0.2);
+			testUnit.advanceTime(0.2);
+			testUnit.advanceTime(0.2);
+			testUnit.advanceTime(0.2);
 		}
-		assertEquals(State.WORKING, test.getState());
-		test.advanceTime(0.2);
-		test.advanceTime(0.2);
-		assertEquals(State.IDLE, test.getState());
+		assertEquals(State.WORKING, testUnit.getState());
+		testUnit.advanceTime(0.2);
+		testUnit.advanceTime(0.2);
+		assertEquals(State.IDLE, testUnit.getState());
 	}
 	
 	
 	@Test
 	public void testRestWhenFull(){
-		test.rest();
-		assertEquals(State.IDLE, test.getState());
+		testUnit.rest();
+		assertEquals(State.IDLE, testUnit.getState());
 	}
 	@Test
 	public void testRestWhenInjured(){
-		test.setHp(test.getHp() - 1);
-		test.rest();
-		assertEquals(State.RESTING, test.getState());
+		testUnit.setHp(testUnit.getHp() - 1);
+		testUnit.rest();
+		assertEquals(State.RESTING, testUnit.getState());
 	}
 	@Test
 	public void testRestWhenExhausted(){
-		test.setHp(test.getStam() - 1);
-		test.rest();
-		assertEquals(State.RESTING, test.getState());
+		testUnit.setHp(testUnit.getStam() - 1);
+		testUnit.rest();
+		assertEquals(State.RESTING, testUnit.getState());
 	}
 	@Test
 	public void testMinRestTime(){
-		test.setHp(test.getHp() - 2);
-		test.rest();
-		assertEquals(40.0/test.getPrimStats().get("tgh"), test.getMinRestTime(), 0.000000001);
-		test.advanceTime(0.1);
-		assertEquals(40.0/test.getPrimStats().get("tgh")-0.1, test.getMinRestTime(), 0.000000001);
-		test.moveTo(1.0, 1.0, 1.0);
-		test.advanceTime(0.1);
-		assertEquals(State.RESTING, test.getState());
+		testUnit.setHp(testUnit.getHp() - 2);
+		testUnit.rest();
+		assertEquals(40.0/testUnit.getPrimStats().get("tgh"), testUnit.getMinRestTime(), 0.000000001);
+		testUnit.advanceTime(0.1);
+		assertEquals(40.0/testUnit.getPrimStats().get("tgh")-0.1, testUnit.getMinRestTime(), 0.000000001);
+		testUnit.moveTo(1.0, 1.0, 1.0);
+		testUnit.advanceTime(0.1);
+		assertEquals(State.RESTING, testUnit.getState());
 	}
 	@Test
 	public void testAutoRest(){
-		test.moveTo(10.0, 10.0, 10.0);
-		test.sprint();
+		testUnit.moveTo(10.0, 10.0, 10.0);
+		testUnit.sprint();
 		for (int idx = 1; idx<181 ; idx++){
-			test.advanceTime(0.2);
-			test.advanceTime(0.2);
-			test.advanceTime(0.2);
-			test.advanceTime(0.2);
-			test.advanceTime(0.2);
-			assertEquals((double)(idx), test.getRestTime(), 0.000001);
+			testUnit.advanceTime(0.2);
+			testUnit.advanceTime(0.2);
+			testUnit.advanceTime(0.2);
+			testUnit.advanceTime(0.2);
+			testUnit.advanceTime(0.2);
+			assertEquals((double)(idx), testUnit.getRestTime(), 0.000001);
 		}
-		assertEquals(State.IDLE, test.getState());
-		test.advanceTime(0.2);
-		test.advanceTime(0.2);
-		assertEquals(State.RESTING, test.getState());
+		assertEquals(State.IDLE, testUnit.getState());
+		testUnit.advanceTime(0.2);
+		testUnit.advanceTime(0.2);
+		assertEquals(State.RESTING, testUnit.getState());
 	}
 	
 	
 	@Test
 	public void testOrientationMoveTo(){
-		test.moveTo(2, 2, 2);
-		assertEquals(Math.PI/4, test.getTheta(), 0.0000000001);
+		testUnit.moveTo(2, 2, 2);
+		assertEquals(Math.PI/4, testUnit.getTheta(), 0.0000000001);
 	}
 	@Test
 	public void testFinPosOutBoundsMoveTo(){
-		test.moveTo(-1, -1, -1);
-		test.advanceTime(0.1);
-		assertTrue(test.getBlockPosition().equals(test.getPosition()));
+		Vector startPos = testUnit.getPosition();
+		testUnit.moveTo(-1, -1, -1);
+		testUnit.advanceTime(0.1);
+		assertTrue(startPos.equals(testUnit.getPosition()));
 	}
 	@Test
 	public void testInCentreOfBlockAfterMoveTo(){
-		test.setPosition(1, 1, 1);
-		test.moveTo(0, 0, 0);
-		test.advanceTime(0.2);
-		test.advanceTime(0.2);
-		test.advanceTime(0.2);
-		test.advanceTime(0.2);
-		test.advanceTime(0.2);
+		testUnit.setPosition(1, 1, 1);
+		testUnit.moveTo(0, 0, 0);
+		testUnit.advanceTime(0.2);
+		testUnit.advanceTime(0.2);
+		testUnit.advanceTime(0.2);
+		testUnit.advanceTime(0.2);
+		testUnit.advanceTime(0.2);
 		ArrayList<Double> Correct = new Vector(0.5, 0.5, 0.5).getCoeff();
-		assertEquals(Correct, test.getPosition().getCoeff());
+		assertEquals(Correct, testUnit.getPosition().getCoeff());
 	}
 	@Test
 	public void testMoveToAdjacentOutOfRange(){
 		boolean checker = false;
 		try{
-			test.moveToAdjacent(2, 0, 0);
+			testUnit.moveToAdjacent(2, 0, 0);
 		}
 		catch(IllegalArgumentException exc){
 			exc.printStackTrace();
@@ -274,62 +274,62 @@ public class UnitTest {
 	}
 	@Test
 	public void testMoveToCorrectBaseSpeed(){
-		test.moveTo(1, 1, 1);
-		test.advanceTime(0.1);
-		assertEquals(1.5*((double)(test.getPrimStats().get("str")+test.getPrimStats().get("agl")))/(2*test.getPrimStats().get("wgt")), test.getBaseSpeed(), 0.000000001);
+		testUnit.moveTo(1, 1, 1);
+		testUnit.advanceTime(0.1);
+		assertEquals(1.5*((double)(testUnit.getPrimStats().get("str")+testUnit.getPrimStats().get("agl")))/(2*testUnit.getPrimStats().get("wgt")), testUnit.getBaseSpeed(), 0.000000001);
 		
 	}
 	@Test
 	public void testMoveToCorrectWalkSpeedUp(){
-		test.moveTo(0, 0, 1);
-		test.advanceTime(0.1);
-		assertEquals(test.getBaseSpeed()*0.5, test.getSpeed(), 0.0000000001);
+		testUnit.moveTo(0, 0, 1);
+		testUnit.advanceTime(0.1);
+		assertEquals(testUnit.getBaseSpeed()*0.5, testUnit.getSpeed(), 0.0000000001);
 		
 	}
 	@Test
 	public void testMoveToCorrectWalkSpeedDown(){
-		test.setPosition(0.5, 0.5, 1.5);
-		test.moveTo(0, 0, 0);
-		test.advanceTime(0.1);
-		assertEquals(test.getBaseSpeed()*1.2, test.getSpeed(), 0.0000000001);
+		testUnit.setPosition(0.5, 0.5, 1.5);
+		testUnit.moveTo(0, 0, 0);
+		testUnit.advanceTime(0.1);
+		assertEquals(testUnit.getBaseSpeed()*1.2, testUnit.getSpeed(), 0.0000000001);
 	}
 	@Test
 	public void testIsMoving(){
-		test.moveTo(1, 1, 1);
-		test.advanceTime(0.1);
-		assertTrue(test.isMoving());
+		testUnit.moveTo(1, 1, 1);
+		testUnit.advanceTime(0.1);
+		assertTrue(testUnit.isMoving());
 		
 	}
 	@Test
 	public void testIsSprinting(){
-		test.moveTo(1, 1, 0);
-		test.sprint();
-		assertEquals(State.SPRINTING, test.getState());
+		testUnit.moveTo(1, 1, 0);
+		testUnit.sprint();
+		assertEquals(State.SPRINTING, testUnit.getState());
 		
 	}
 	@Test
 	public void testSprintSpeed(){
-		test.moveTo(1, 1, 0);
-		test.sprint();
-		assertEquals(test.getBaseSpeed()*2, test.getSpeed(), 0.00000000000001);
+		testUnit.moveTo(1, 1, 0);
+		testUnit.sprint();
+		assertEquals(testUnit.getBaseSpeed()*2, testUnit.getSpeed(), 0.00000000000001);
 		
 	}
 	@Test
 	public void testStopSprintingAtZeroStam(){
-		test.moveTo(5, 5, 0);
-		test.setStam(2);
-		test.sprint();
-		test.advanceTime(0.2);
-		assertEquals(State.SPRINTING, test.getState());
-		test.advanceTime(0.2);
-		assertEquals(State.WALKING, test.getState());
+		testUnit.moveTo(5, 5, 0);
+		testUnit.setStam(2);
+		testUnit.sprint();
+		testUnit.advanceTime(0.2);
+		assertEquals(State.SPRINTING, testUnit.getState());
+		testUnit.advanceTime(0.2);
+		assertEquals(State.WALKING, testUnit.getState());
 		
 	}
 	@Test
 	public void testSetTooLowHp(){
 		boolean checker = false;
 		try{
-			test.setHp(-1);
+			testUnit.setHp(-1);
 		}
 		catch(AssertionError AE){
 			AE.printStackTrace();
@@ -341,7 +341,7 @@ public class UnitTest {
 	public void testSetTooHighHp(){
 		boolean checker = false;
 		try{
-			test.setHp(test.getMaxHp()+1);
+			testUnit.setHp(testUnit.getMaxHp()+1);
 		}
 		catch(AssertionError AE){
 			AE.printStackTrace();
@@ -353,20 +353,20 @@ public class UnitTest {
 	public void testSetAllowedHp(){
 		boolean checker = false;
 		try{
-			test.setHp(test.getMaxHp());
+			testUnit.setHp(testUnit.getMaxHp());
 		}
 		catch(AssertionError AE){
 			AE.printStackTrace();
 			checker = true;
 		}
 		assertFalse(checker);
-		assertEquals(test.getMaxHp(), test.getHp(), 0.0000000000001);
+		assertEquals(testUnit.getMaxHp(), testUnit.getHp(), 0.0000000000001);
 	}
 	@Test
 	public void testSetTooLowStam(){
 		boolean checker = false;
 		try{
-			test.setStam(-1);
+			testUnit.setStam(-1);
 		}
 		catch(AssertionError AE){
 			AE.printStackTrace();
@@ -378,7 +378,7 @@ public class UnitTest {
 	public void testSetTooHighStam(){
 		boolean checker = false;
 		try{
-			test.setStam(test.getMaxStam()+1);
+			testUnit.setStam(testUnit.getMaxStam()+1);
 		}
 		catch(AssertionError AE){
 			AE.printStackTrace();
@@ -390,30 +390,30 @@ public class UnitTest {
 	public void testSetAllowedStam(){
 		boolean checker = false;
 		try{
-			test.setStam(test.getMaxStam());
+			testUnit.setStam(testUnit.getMaxStam());
 		}
 		catch(AssertionError AE){
 			AE.printStackTrace();
 			checker = true;
 		}
 		assertFalse(checker);
-		assertEquals(test.getMaxStam(), test.getStam(), 0.0000000000001);
+		assertEquals(testUnit.getMaxStam(), testUnit.getStam(), 0.0000000000001);
 	}
 	
 	
 	@Test
 	public void testRestWhenMoving(){
-		test.moveTo(0, 0, 0);
-		test.advanceTime(0.1);
-		test.rest();
-		assertEquals(State.WALKING, test.getState());
+		testUnit.moveTo(0, 0, 0);
+		testUnit.advanceTime(0.1);
+		testUnit.rest();
+		assertEquals(State.WALKING, testUnit.getState());
 	}
 	@Test
 	public void testWorkWhenMoving(){
-		test.moveTo(0, 0, 0);
-		test.advanceTime(0.1);
-		test.work();
-		assertEquals(State.WALKING, test.getState());
+		testUnit.moveTo(0, 0, 0);
+		testUnit.advanceTime(0.1);
+		testUnit.work();
+		assertEquals(State.WALKING, testUnit.getState());
 	}
 
 	
@@ -421,7 +421,7 @@ public class UnitTest {
 	public void testAdvanceTimeTooLong(){
 		boolean checker = false;
 		try{
-			test.advanceTime(1);;
+			testUnit.advanceTime(1);;
 		}
 		catch(IllegalArgumentException exc){
 			exc.printStackTrace();
@@ -433,7 +433,7 @@ public class UnitTest {
 	public void testAdvanceTimeNegative(){
 		boolean checker = false;
 		try{
-			test.advanceTime(-1);;
+			testUnit.advanceTime(-1);;
 		}
 		catch(IllegalArgumentException exc){
 			exc.printStackTrace();
@@ -445,7 +445,7 @@ public class UnitTest {
 	public void testAdvanceTimeAllowed(){
 		boolean checker = false;
 		try{
-			test.advanceTime(0.1);;
+			testUnit.advanceTime(0.1);;
 		}
 		catch(IllegalArgumentException exc){
 			exc.printStackTrace();
@@ -456,64 +456,69 @@ public class UnitTest {
 	
 	@Test
 	public void testThetaAllowed(){
-		test.setTheta(0.0);
-		assertEquals(0.0, test.getTheta(), 0.000000001);
+		testUnit.setTheta(0.0);
+		assertEquals(0.0, testUnit.getTheta(), 0.000000001);
 	}
 	
 	@Test
 	public void testStartDefault(){
-		test.startDefault();
-		assertTrue(test.DefaultOn());
+		testUnit.startDefault();
+		assertTrue(testUnit.DefaultOn());
 	}
 	@Test
 	public void testStopDefault(){
-		test.stopDefault();
-		assertFalse(test.DefaultOn());
+		testUnit.stopDefault();
+		assertFalse(testUnit.DefaultOn());
 	}
 	
 	@Test
 	public void testAttackSelf(){
-		test.attack(test);
-		assertEquals(State.IDLE, test.getState());
+		testUnit.attack(testUnit);
+		assertEquals(State.IDLE, testUnit.getState());
 	}
 	@Test
 	public void testAttackCooldown(){
-		Unit test2 = new Unit("Dummie", 0.5, 0.5, 0.5, 50, 50, 50, 50);
-		Unit test3 = new Unit("Bob", 0.5, 0.5, 0.5, 50, 50, 50, 50);
-		test.attack(test2);
-		test.advanceTime(0.1);
-		assertEquals(0.9, test.getAttackCooldown(), 0.0000000001);
-		test.attack(test3);
-		assertEquals(State.IDLE, test3.getState());
+		Unit testUnit2 = new Unit("Dummie", 0.5, 0.5, 0.5, 50, 50, 50, 50);
+		new Faction(testUnit2);
+		Unit testUnit3 = new Unit("Bob", 0.5, 0.5, 0.5, 50, 50, 50, 50);
+		new Faction(testUnit3);
+		testUnit.attack(testUnit2);
+		testUnit.advanceTime(0.1);
+		assertEquals(0.9, testUnit.getAttackCooldown(), 0.0000000001);
+		testUnit.attack(testUnit3);
+		assertEquals(State.IDLE, testUnit3.getState());
 	}
 	@Test
 	public void testAttackOutOfRange(){
-		Unit test2 = new Unit("Dummie", 0.5, 0.5, 2.5, 50, 50, 50, 50);
-		test.attack(test2);
-		assertEquals(State.IDLE, test.getState());
-		assertEquals(State.IDLE, test2.getState());
+		Unit testUnit2 = new Unit("Dummie", 0.5, 0.5, 2.5, 50, 50, 50, 50);
+		new Faction(testUnit2);
+		testUnit.attack(testUnit2);
+		assertEquals(State.IDLE, testUnit.getState());
+		assertEquals(State.IDLE, testUnit2.getState());
 	}
 	@Test
 	public void testAttackAllowed(){
-		Unit test2 = new Unit("Dummie", 0.5, 0.5, 0.5, 50, 50, 50, 50);
-		test.attack(test2);
-		assertEquals(State.COMBAT, test.getState());
-		assertEquals(State.COMBAT, test2.getState());
+		Unit testUnit2 = new Unit("Dummie", 0.5, 0.5, 0.5, 50, 50, 50, 50);
+		new Faction(testUnit2);
+		testUnit.attack(testUnit2);
+		assertEquals(State.COMBAT, testUnit.getState());
+		assertEquals(State.COMBAT, testUnit2.getState());
 	}
 	@Test
 	public void testChangeStateInCombat(){
-		Unit test2 = new Unit("Dummie", 0.5, 0.5, 0.5, 50, 50, 50, 50);
-		test.attack(test2);
-		test.advanceTime(0.1);
-		test.moveTo(1.0, 1.0, 1.0);
-		test.advanceTime(0.1);
-		assertEquals(State.COMBAT, test.getState());
-		test.work();
-		test.advanceTime(0.1);
-		assertEquals(State.COMBAT, test.getState());
-		test.rest();
-		test.advanceTime(0.1);
-		assertEquals(State.COMBAT, test.getState());
+		Unit testUnit2 = new Unit("Dummie", 0.5, 0.5, 0.5, 50, 50, 50, 50);
+		new Faction(testUnit2);
+		testUnit.attack(testUnit2);
+		testUnit.advanceTime(0.1);
+		testUnit.moveTo(1.0, 1.0, 1.0);
+		testUnit.advanceTime(0.1);
+		assertEquals(State.COMBAT, testUnit.getState());
+		testUnit.work();
+		testUnit.advanceTime(0.1);
+		assertEquals(State.COMBAT, testUnit.getState());
+		testUnit.rest();
+		testUnit.advanceTime(0.1);
+		assertEquals(State.COMBAT, testUnit.getState());
 	}
 }
 	

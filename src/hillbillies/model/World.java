@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 
 import be.kuleuven.cs.som.annotate.*;
+import hillbillies.model.Block.BlockType;
 
 public class World {
 	
@@ -55,14 +56,16 @@ public class World {
 	 * @param V
 	 */
 	public void setToPassable(ArrayList<Integer> V){
-		this.emptyChecked();
-		ArrayList<ArrayList<Integer>> Adjacent = new ArrayList<ArrayList<Integer>>(this.getDirectlyAdjacnent(V));
+		this.getBlockAtPos(V).setBlockType(BlockType.AIR);
+		this.getChecked().clear();
+		ArrayList<ArrayList<Integer>> Adjacent = new ArrayList<ArrayList<Integer>>(this.getDirectlyAdjacent(V));
 		for (int i=0; i<6; i++){
-			this.emptyCurrentChecked();
-			if (this.stillSuspended(Adjacent.get(i)) == false ){
-				this.makeGroup(Adjacent.get(i));
-				for (int j=0; j<currentGroup.size(); j++){
-					collapseSet.add(currentGroup.get(j));
+			if (this.getBlockAtPos(Adjacent.get(i)).getSolid()==true && this.inChecked(Adjacent.get(i)) == false && this.inCollapseSet(Adjacent.get(i))==false){
+				this.getCurrentChecked().clear();
+				if (this.stillSuspended(Adjacent.get(i)) == false ){
+					for (ArrayList<Integer> item: getCurrentChecked()){
+						this.addCollapseSet(item);
+					}
 				}
 			}
 		}
@@ -75,22 +78,41 @@ public class World {
 	 */
 	public boolean stillSuspended(ArrayList<Integer> V){
 		this.addToCurrentChecked(V);
-		ArrayList<ArrayList<Integer>> Adjacent = new ArrayList<ArrayList<Integer>>(this.getDirectlyAdjacnent(V));
-		for (int i=0; i<6; i++){
-			if (this.isValidPosition(Adjacent.get(i)) == true){
+		if ((this.Max(V)==49) == false && (this.Min(V)==0) == false){
+			ArrayList<ArrayList<Integer>> Adjacent = new ArrayList<ArrayList<Integer>>(this.getDirectlyAdjacent(V));
+			for (int i=0; i<6; i++){
+				if(this.inChecked(Adjacent.get(i))==true){
+					return true;
+				}
 				if (this.getBlockAtPos(Adjacent.get(i)).getSolid() == true && this.inCurrentChecked(Adjacent.get(i))==false){
 					return stillSuspended(Adjacent.get(i));
 				}
-//				if(this.inCurrentChecked(Adjacent.get(i))==true){
-//					boolean check = collapseSet.contains(Adjacent.get(i));
-//					return false;
-//				}
-			}
-			if (this.isValidPosition(Adjacent.get(i)) == false){
-				return true;
 			}
 		}
+		if ((this.Max(V)==49) == true || (this.Min(V)==0) == true){
+			return true;
+		}
 		return false;
+	}
+	
+	public int Max(ArrayList<Integer> V){
+		int max = -1;
+		for (int i=0;i<3;i++){
+			if (V.get(i)>max){
+				max = V.get(i);
+			}
+		}
+		return max;
+	}
+	
+	public int Min(ArrayList<Integer> V){
+		int min = 50;
+		for (int i=0;i<3;i++){
+			if (V.get(i)<min){
+				min = V.get(i);
+			}
+		}
+		return min;
 	}
 	
 	/**
@@ -118,7 +140,7 @@ public class World {
 	 * @return	
 	 * 			List of ArrayList<Integer> indicating the positions of the adjacent cubes of cube at position V
 	 */
-	public ArrayList<ArrayList<Integer>> getDirectlyAdjacnent(ArrayList<Integer> V){		
+	public ArrayList<ArrayList<Integer>> getDirectlyAdjacent(ArrayList<Integer> V){		
 		ArrayList<ArrayList<Integer>> adjacent = new ArrayList<ArrayList<Integer>>();
 		for(int i=0; i<3; i++){
 			ArrayList<Integer> clone1 = new ArrayList<Integer>(V);
@@ -132,11 +154,12 @@ public class World {
 		return adjacent;
 	}
 	
+	
 	/**
 	 * 
 	 * returns the list with postitions that have already been checked for collapsing
 	 */
-	public ArrayList<ArrayList<Integer>> getChecked(){
+	public Set<ArrayList<Integer>> getChecked(){
 		return this.checked;
 	}
 	
@@ -145,7 +168,7 @@ public class World {
 	 * @param newchecked
 	 * @post new.checked == newchecked
 	 */
-	public void setChecked(ArrayList<ArrayList<Integer>> newchecked){
+	public void setChecked(Set<ArrayList<Integer>> newchecked){
 		this.checked = newchecked;
 	}
 	 /**
@@ -165,29 +188,16 @@ public class World {
 	 * returns true if V is already in Checked
 	 */
 	public boolean inChecked(ArrayList<Integer> V){
-		boolean isIn = false;
-		for (int i=0; i<this.getChecked().size(); i++){
-			if (this.getChecked().get(i).equals(V)){
-				return true;
-			}
-		}
-		return false;
+		return checked.contains(V);
 	}
 	
-	/**
-	 * clears the list Checked
-	 */
-	public void emptyChecked(){
-		ArrayList<ArrayList<Integer>> emptyChecked = new ArrayList<ArrayList<Integer>>();
-		this.setChecked(emptyChecked);
-	}
-	
-	public ArrayList<ArrayList<Integer>> getCurrentChecked(){
-		return this.checked;
+
+	public Set<ArrayList<Integer>> getCurrentChecked(){
+		return currentChecked;
 	}
 	
 	public void setCurrentChecked(Set<ArrayList<Integer>> newchecked){
-		this.currentChecked = newchecked;
+		currentChecked = newchecked;
 	}
 	
 	public void addToCurrentChecked(ArrayList<Integer> v){
@@ -198,10 +208,6 @@ public class World {
 		return this.getCurrentChecked().contains(V);
 	}
 	
-	public void emptyCurrentChecked(){
-		Set<ArrayList<Integer>> emptyChecked = new HashSet<ArrayList<Integer>>();
-		this.setCurrentChecked(emptyChecked);
-	}
 	
 	/**
 	 * this checks the entire gameworld for collapses
@@ -235,7 +241,7 @@ public class World {
 	public void checkSuspensionGroup(){
 		boolean suspended = false;
 		for (int i=0; i<currentGroup.size(); i++){
-			ArrayList<ArrayList<Integer>> Adjacent = new ArrayList<ArrayList<Integer>>(this.getDirectlyAdjacnent(currentGroup.get(i)));
+			ArrayList<ArrayList<Integer>> Adjacent = new ArrayList<ArrayList<Integer>>(this.getDirectlyAdjacent(currentGroup.get(i)));
 			for (int j=0; j<6; j++){
 				if (this.isValidPosition(Adjacent.get(j))==false){
 					suspended = true;
@@ -256,7 +262,7 @@ public class World {
 	 */
 	public void makeGroup(ArrayList<Integer> V){
 		currentGroup.add(V);
-		ArrayList<ArrayList<Integer>> Adjacent = new ArrayList<ArrayList<Integer>>(this.getDirectlyAdjacnent(V));
+		ArrayList<ArrayList<Integer>> Adjacent = new ArrayList<ArrayList<Integer>>(this.getDirectlyAdjacent(V));
 		for (int i=0; i<6; i++){
 			if (this.isValidPosition(Adjacent.get(i)) == true){
 				if (this.getBlockAtPos(Adjacent.get(i)).getSolid() == true && this.currentGroupContains(Adjacent.get(i))==false){
@@ -269,80 +275,30 @@ public class World {
 	
 	/**
 	 * 
-	 * @param V
-	 * returns whether V is in currentgroup or not
-	 * 				currentGroup.contains(V)
-	 */
-	public boolean currentGroupContains(ArrayList<Integer> V){
-		return currentGroup.contains(V);
-	}
-	
-	/**
-	 * empty currentgroup
-	 */
-	public void emptyCurrentGroup(){
-		ArrayList<ArrayList<Integer>> empty = new ArrayList<ArrayList<Integer>>();
-		this.currentGroup = empty;
-	}
-	
-	/**
-	 * 
 	 * returns the set containing all the positions of the blocks that should collapse.
 	 */
 	public Set<ArrayList<Integer>> getCollapseSet(){
 		return this.collapseSet;
 	}
 	
-	private ArrayList<ArrayList<Integer>> currentGroup = new ArrayList<ArrayList<Integer>>();
+	public Boolean inCollapseSet(ArrayList<Integer> V){
+		return this.collapseSet.contains(V);
+	}
+	
+	public void setCollapseSet(Set<ArrayList<Integer>> V){
+		collapseSet = V;
+	}
+	
+	public void addCollapseSet(ArrayList<Integer> V){
+		this.getCollapseSet().add(V);
+	}
+	
+//	private ArrayList<ArrayList<Integer>> currentGroup = new ArrayList<ArrayList<Integer>>();
 	private Set<ArrayList<Integer>> collapseSet = new HashSet<ArrayList<Integer>>();
 	protected Map<ArrayList<Integer>, Block> gameWorld = new HashMap<ArrayList<Integer>, Block>();
-//	protected Map<Vector, Block> gameWorld = new HashMap<Vector, Block>();
-	private ArrayList<ArrayList<Integer>> checked = new ArrayList<ArrayList<Integer>>();
+	private Set<ArrayList<Integer>> checked = new HashSet<ArrayList<Integer>>();
 	private Set<ArrayList<Integer>>  currentChecked = new HashSet<ArrayList<Integer>>();
 	
-//	public ArrayList<Block> checkTotalSuspension(){
-//	ArrayList<Vector> emptyChecked = new ArrayList<Vector>();
-//	this.setChecked(emptyChecked);
-//	for (Map.Entry<Vector, Block> entry : this.getGameWorld().entrySet()){
-//		entry.getValue().setSuspended(false);
-//	}
-//	ArrayList<Block> collapseList = new ArrayList<Block>();
-//	for (Map.Entry<Vector, Block> entry : this.getGameWorld().entrySet()){
-//		if (this.getGameWorld().get(entry.getKey()).getSolid() == true && this.getGameWorld().get(entry.getKey()).getSuspended() == false && this.inChecked(entry.getKey())==false){
-//			checkSuspension(entry.getKey());
-//			this.addToChecked(entry.getKey());
-//			if (this.getGameWorld().get(entry.getKey()).getSuspended()==false){
-//				collapseList.add(this.getGameWorld().get(entry.getKey()));
-//			}
-//		}
-//	}
-//	return collapseList;
-//}
-//
-//public void checkSuspension(Vector V){
-//	System.out.println("initiate checkSuspension");
-//	System.out.println(V);
-//	ArrayList<Vector> Adjacent = new ArrayList<Vector>(this.getDirectlyAdjacnent(V));
-//	for (int i=0; i<6; i++){
-//		System.out.println(Adjacent.get(i));
-//		System.out.println("if 1");
-//		if (this.isValidPosition(Adjacent.get(i))==false || this.getBlockAtPos(Adjacent.get(i)).getSuspended() == true){
-//			System.out.println("in if 1");
-//			this.getBlockAtPos(V).setSuspended(true);
-//			this.addToChecked(V);
-//		}
-//		System.out.println("if 2");
-//		if (this.getBlockAtPos(Adjacent.get(i)).getSolid() == true){
-//			System.out.println("in if 2");
-//			this.addToChecked(V);
-//			if (this.inChecked(Adjacent.get(i)) == false)
-//				checkSuspension(Adjacent.get(i));
-//		}
-//		else{
-//			System.out.println("in else");
-//			this.getBlockAtPos(V).setSuspended(false);
-//		}
-//	}
-//}
+
 	
 }

@@ -1441,7 +1441,7 @@ public class Unit {
 	 * 			| else newgetFaction() == getFaction() &&
 	 * 			|	!faction.getUnits.contains(this)
 	 */
-	protected void setFaction(Faction faction){
+	public void setFaction(Faction faction){
 		if (!canHaveAsFaction(faction))
 			return;
 		faction.addUnit(this);

@@ -36,6 +36,9 @@ public class Boulder {
 		this.setPosition(new Vector(x, y, z));
 	}
 	
+	public void advanceTime(double dt){
+		
+	}
 	
 	/**
 	 * Return the weight of this Boulder.
@@ -108,34 +111,40 @@ public class Boulder {
 	 * @return 	True if and only if every coordinate lies within
 	 * 			the world's boundary.
 	*/
-	public static boolean isValidPosition(Vector position) {
-		boolean checker = true;
-		for(double coord : position.getCoeff()){
-			if((coord < 0) || (coord > 50))
-				checker = false;
-		}
-		return checker;
+	public boolean isValidPosition(Vector position) {
+		if(position.getX() < 0 || position.getX() > this.getWorld().getBorders().get(0))
+			return false;
+		if(position.getY() < 0 || position.getY() > this.getWorld().getBorders().get(1))
+			return false;
+		if(position.getZ() < 0 || position.getZ() > this.getWorld().getBorders().get(2))
+			return false;
+		return true;
 	}
 	
 	/**
 	 * Set the position of this Boulder to the given position.
 	 * 
-	 * @param  position
-	 *         The new position for this Boulder.
-	 * @post   The position of this new Boulder is equal to
-	 *         the given position.
-	 *       | new.getPosition() == position
-	 * @throws IllegalArgumentException
-	 *         The given position is not a valid position for any
-	 *         Boulder.
-	 *       | ! isValidPosition(getPosition())
+	 * @param  	position
+	 *         	The new position for this Boulder.
+	 * @effect  Tries to remove this boulder from the block is was previously in,
+	 * 			set its position to the given position and add this boulder to the
+	 * 			new block it is in. If a NullPointerException is caught, nothing happens.
+	 * @throws 	IllegalArgumentException
+	 *         	The given position is not a valid position for any
+	 *         	Boulder.
 	 */
 	@Raw
 	public void setPosition(Vector position) 
 			throws IllegalArgumentException {
-		if (! isValidPosition(position))
+		if (!isValidPosition(position))
 			throw new IllegalArgumentException();
-		this.position = position;
+		try {
+			this.getWorld().getBlockAtPos(this.getPosition()).removeBoulder(this);
+			this.position = position;
+			this.getWorld().getBlockAtPos(this.getPosition()).addBoulder(this);
+		} catch (NullPointerException exc) {
+			return;
+		}
 	}
 	
 	/**
@@ -214,6 +223,7 @@ public class Boulder {
 	protected void removeWorld(){
 		this.world = null;
 	}
+	
 	/**
 	 * Variable registering the position of this Boulder.
 	 */

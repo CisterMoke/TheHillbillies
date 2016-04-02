@@ -2,6 +2,7 @@ package hillbillies.model;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -18,6 +19,8 @@ public class World {
 	 */
 	public World(Map<ArrayList<Integer>, Block> intialGameWorld){
 		this.setGameWorld(intialGameWorld);
+		this.createPositionList();
+		this.WORLD_BORDER = new ArrayList<Integer>(Arrays.asList(50, 50, 50));
 	}
 	
 	/**
@@ -44,7 +47,7 @@ public class World {
 	 * @param newWorld
 	 * 			The new GameWorld
 	 * 
-	 * @post 	GameWorld equals newWorld
+	 * @post 	new.getGameWorld() equals newWorld
 	 */
 	public void setGameWorld(Map<ArrayList<Integer>, Block> newWorld){
 		for (Map.Entry<ArrayList<Integer>, Block> entry : newWorld.entrySet()){
@@ -191,6 +194,13 @@ public class World {
 		return this.getGameWorld().get(pos);
 	}
 	
+	public Block getBlockAtPos(Vector pos){
+		ArrayList<Integer> key = new ArrayList<Integer>();
+		for(double coeff : pos.getCoeff())
+			key.add((int)(coeff));
+		return this.getGameWorld().get(key);
+	}
+	
 	/**
 	 * 
 	 * returns the map gameWorld 
@@ -326,11 +336,153 @@ public class World {
 		return this.collapseSet.contains(V);
 	}
 	
+	
+	public Set<Unit> getUnits(){
+		return new HashSet<Unit>(this.units);
+	}
+	
+	public ArrayList<Faction> getFactions(){
+		return new ArrayList<Faction>(this.factions);
+	}
+	
+	private void createPositionList(){
+		for(int x=0 ; x< this.WORLD_BORDER.get(0) ; x++){
+			for(int y=0 ; y<this.WORLD_BORDER.get(1) ; y++){
+				for(int z=0 ; z<this.WORLD_BORDER.get(2) ; z++){
+					ArrayList<Integer> pos = new ArrayList<Integer>();
+					pos.add(x);
+					pos.add(y);
+					pos.add(z);
+					this.positionList.add(pos);
+				}
+			}
+		}
+	}
+	
+	public boolean isAtBorder(Block block){
+		Vector position = block.getLocation();
+		if(position.getX() == 0 || position.getX() == (this.WORLD_BORDER.get(0) - 1) )
+			return true;
+		if(position.getY() == 0 || position.getY() == (this.WORLD_BORDER.get(1) - 1) )
+			return true;
+		if(position.getZ() == 0 || position.getZ() == (this.WORLD_BORDER.get(2) - 1) )
+			return true;
+		return false;
+	}
+	
+	public boolean isWalkable(Block block){
+		if(block.isSolid())
+			return false;
+		if(this.isAtBorder(block))
+			return true;
+		boolean checker = false;
+		for(Block cube : this.getDirectlyAdjacent(block)){
+			if(cube.isSolid())
+				return true;
+		}
+		return false;
+	}
+	
+	public void spawnUnit(){
+		if(this.getUnits().size() == World.MAX_UNITS)
+			return;
+		Collections.shuffle(this.positionList);
+		int idx = 0;
+		while(!this.isWalkable(this.getBlockAtPos(this.positionList.get(idx)))){
+			idx += 1;
+			if(idx == this.positionList.size())
+				return;
+		}
+		ArrayList<Integer> position = this.positionList.get(idx);
+		int strength = (int)(Math.random()*75 + 25);
+		int weight = (int)(Math.random()*75 + 25);
+		int toughness = (int)(Math.random()*75 + 25);
+		int agility = (int)(Math.random()*75 + 25);
+		Unit unit = new Unit("Billie", position.get(0), position.get(1), position.get(2), strength, weight, agility, toughness);
+		this.units.add(unit);
+		if(this.getFactions().size() < World.MAX_FACTIONS)
+			unit.setFaction(new Faction(unit, "Faction" + Integer.toString(this.factions.size() + 1)));
+		else{
+			Faction smallestFaction = this.getFactions().get(0);
+			for(Faction faction : this.getFactions()){
+				if(faction.getUnits().size() < smallestFaction.getUnits().size())
+					smallestFaction = faction;
+			}
+			unit.setFaction(smallestFaction);
+			if(unit.getFaction() != this.getFactions().get(0))
+				unit.startDefault();
+		}
+	}
+	
+	protected Set<Boulder> getBoulders(){
+		return new HashSet<Boulder>(this.boulders);
+	}
+	
+	public void addBoulder(Boulder boulder){
+		try {
+			boulder.setWorld(this);
+			this.boulders.add(boulder);
+			this.getBlockAtPos(boulder.getPosition()).addBoulder(boulder);
+		} catch (IllegalArgumentException exc) {
+			return;
+		}
+	}
+	
+	public void removeBoulder(Boulder boulder){
+		this.boulders.remove(boulder);
+		boulder.removeWorld();
+		this.getBlockAtPos(boulder.getPosition()).removeBoulder(boulder);
+	}
+	
+	protected Set<Log> getLogs(){
+		return new HashSet<Log>(this.logs);
+	}
+	
+	public void addLog(Log log){
+		try {
+			log.setWorld(this);
+			this.logs.add(log);
+			this.getBlockAtPos(log.getPosition()).addLog(log);
+		} catch (IllegalArgumentException exc) {
+			return;
+		}
+	}
+	
+	public void removeLog(Log log){
+		this.logs.remove(log);
+		log.removeWorld();
+		this.getBlockAtPos(log.getPosition()).removeLog(log);
+	}
+	
+	public ArrayList<Integer> getBorders(){
+		return new ArrayList<Integer>(this.WORLD_BORDER);
+	}
+	
+	public void updateCollapseAt(ArrayList<Integer> startPos){
+		if(!this.getBlockAtPos(startPos).isSolid())
+			return;
+		ArrayList<ArrayList<Integer>> checked = new ArrayList<ArrayList<Integer>>();
+		this.
+		for(ArrayList<Integer> adjacent : this.getDirectlyAdjacent(startPos)){
+			checked.add(adjacent);
+			this.updateCollapseAt(adjacent, );
+			
+		}
+	}
+	
 	private Set<Block> collapseSet = new HashSet<Block>();
 	protected Map<ArrayList<Integer>, Block> gameWorld = new HashMap<ArrayList<Integer>, Block>();
 	private Set<Block> stableSet = new HashSet<Block>();
 	private Set<Block>  checkedSet = new HashSet<Block>();
 	private Set<Block>  toBeChecked = new HashSet<Block>();
+	private ArrayList<Faction> factions = new ArrayList<Faction>();
+	private Set<Unit> units = new HashSet<Unit>();
+	private static final int MAX_FACTIONS = 5;
+	private static final int MAX_UNITS = 100;
+	private ArrayList<ArrayList<Integer>> positionList = new ArrayList<ArrayList<Integer>>();
+	private final ArrayList<Integer> WORLD_BORDER;
+	private Set<Boulder> boulders = new HashSet<Boulder>();
+	private Set<Log> logs = new HashSet<Log>();
 	
 
 	

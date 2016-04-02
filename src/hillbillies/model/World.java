@@ -13,13 +13,14 @@ import hillbillies.model.Block.BlockType;
 
 public class World {
 	
+	/**
+	 * Creates a new World
+	 * @param intialGameWorld : Map containing the Blocks of each position in the to be created world
+	 */
 	public World(Map<ArrayList<Integer>, Block> intialGameWorld){
 		this.setGameWorld(intialGameWorld);
 		this.createPositionList();
 		this.WORLD_BORDER = new ArrayList<Integer>(Arrays.asList(50, 50, 50));
-	}
-	public World(){
-		
 	}
 	
 	/**
@@ -46,7 +47,7 @@ public class World {
 	 * @param newWorld
 	 * 			The new GameWorld
 	 * 
-	 * @post 	new.getGameWorld() == newWorld
+	 * @post 	new.getGameWorld() equals newWorld
 	 */
 	public void setGameWorld(Map<ArrayList<Integer>, Block> newWorld){
 		for (Map.Entry<ArrayList<Integer>, Block> entry : newWorld.entrySet()){
@@ -56,66 +57,132 @@ public class World {
 	
 	/**
 	 * switches a block from a solid to a passable, and checks whether this would causes any collapsing
-	 * @param V
+	 * @param V : Block which should be set to passable
+	 * @post The BlockType of V is set to AIR and any block that should collapse is added to collapseSet
 	 */
-	public void setToPassable(ArrayList<Integer> V){
-		this.getBlockAtPos(V).setBlockType(BlockType.AIR);
-		this.getChecked().clear();
-		ArrayList<ArrayList<Integer>> Adjacent = new ArrayList<ArrayList<Integer>>(this.getDirectlyAdjacent(V));
-		for (int i=0; i<6; i++){
-			if (this.getBlockAtPos(Adjacent.get(i)).isSolid()==true && this.inChecked(Adjacent.get(i)) == false && this.inCollapseSet(Adjacent.get(i))==false){
-				this.getCurrentChecked().clear();
-				if (this.stillSuspended(Adjacent.get(i)) == false ){
-					for (ArrayList<Integer> item: getCurrentChecked()){
+	public void setToPassable(Block V){
+		System.out.println(V.getLocation());
+		V.setBlockType(BlockType.AIR);
+		this.getStableSet().clear();
+		ArrayList<Block> Adjacent = new ArrayList<Block>(this.getDirectlyAdjacent(V));
+		for (Block element : Adjacent){
+			if (element.isSolid()==true && this.inStableSet(element) == false && this.inCollapseSet(element)==false){
+				this.getCheckedSet().clear();
+				if (this.stillSuspended(element) == false ){
+					for (Block item: getCheckedSet()){
 						this.addCollapseSet(item);
 					}
 				}
 			}
 		}
+	//	this.collapse();
+	}
+	
+	public void checkWorldSuspension(){
+		this.getStableSet().clear();
+		Set<Block> solidBlocks = new HashSet<Block>();
+		for (Block element : this.getGameWorld().values()){
+			if (element.isSolid()){
+				solidBlocks.add(element);
+			}
+		}
+		for (Block entry : solidBlocks){
+			if (this.inStableSet(entry) == false && this.inCollapseSet(entry)==false){
+				this.getCheckedSet().clear();
+				if (this.stillSuspended(entry) == false ){
+					for (Block item: getCheckedSet()){
+						this.addCollapseSet(item);
+					}
+				}
+			}
+		}
+	//	this.collapse();
 	}
 	
 	/**
 	 * checks whether a given Block is connected to the edge of the world
-	 * @param V
-	 * returns true if V is connected to the border
+	 * @param V : Block for which the check must be done
+	 * returns true if V is connected to the border and false otherwise
 	 */
-	public boolean stillSuspended(ArrayList<Integer> V){
-		this.addToCurrentChecked(V);
-		if ((this.Max(V)==49) == false && (this.Min(V)==0) == false){
-			ArrayList<ArrayList<Integer>> Adjacent = new ArrayList<ArrayList<Integer>>(this.getDirectlyAdjacent(V));
-			for (int i=0; i<6; i++){
-				if(this.inChecked(Adjacent.get(i))==true){
+	public boolean stillSuspended(Block V){
+		System.out.println(V.getLocation());
+		this.addToCheckedSet(V);
+		if ((this.maxBlockCoord(V)==49) == false && (this.minBlockCoord(V)==0) == false){
+			ArrayList<Block> Adjacent = new ArrayList<Block>(this.getDirectlyAdjacent(V));
+			for (Block element : Adjacent){
+				toBeChecked.add(element);
+				if(this.inStableSet(element)==true){
+					System.out.println("1 true");
 					return true;
 				}
-				if (this.getBlockAtPos(Adjacent.get(i)).isSolid() == true && this.inCurrentChecked(Adjacent.get(i))==false){
-					return stillSuspended(Adjacent.get(i));
+				if (element.isSolid() == true && this.inCheckedSet(element)==false){
+					boolean checker = stillSuspended(element);
+					if (toBeChecked.isEmpty()){
+						return checker;
+					}
 				}
 			}
 		}
-		if ((this.Max(V)==49) == true || (this.Min(V)==0) == true){
+		if ((this.maxBlockCoord(V)==49) == true || (this.minBlockCoord(V)==0) == true){
+			System.out.println("2 true");
 			return true;
 		}
+		System.out.println("3 false");
+		toBeChecked.remove(V);
 		return false;
 	}
-	
-	public int Max(ArrayList<Integer> V){
+	/**
+	 * Find the coordinate with the highest absolute value of a given block
+	 * @param V : Block for which the largest coordinate must be found
+	 * @return integer value of the coordinate of the given block with highest absolute value
+	 */
+	public int maxBlockCoord(Block V){
 		int max = -1;
-		for (int i=0;i<3;i++){
-			if (V.get(i)>max){
-				max = V.get(i);
+		for (double coord : V.getLocation().getCoeff()){
+			if (coord > max){
+				max = (int)(coord);
 			}
 		}
 		return max;
 	}
-	
-	public int Min(ArrayList<Integer> V){
-		int min = 50;
-		for (int i=0;i<3;i++){
-			if (V.get(i)<min){
-				min = V.get(i);
+	/**
+	 * Find the coordinate with the lowest absolute value of a given block
+	 * @param V : Block for which the smallest coordinate must be found
+	 * @return integer value of the coordinate of the given block with lowest absolute value
+	 */
+	public int minBlockCoord(Block V){
+		int min = (int)(V.getLocation().getX());
+		for (double coord : V.getLocation().getCoeff()){
+			if (coord < min){
+				min = (int)(coord);
 			}
 		}
 		return min;
+	}
+	
+	public void collapse(){
+		double spawnChance = 0.25;
+//		duration function
+		for (Block entry : collapseSet){
+			entry.setBlockType(BlockType.AIR);
+			double spawnRoll = Math.random();
+			if (spawnRoll<spawnChance){
+				int weight = (int) (40*Math.random()) + 10;
+				if (entry.getBlockType()==BlockType.ROCK){
+					double x = entry.getLocation().getX()+0.5;
+					double y = entry.getLocation().getY()+0.5;
+					double z = entry.getLocation().getZ()+0.5;
+					Boulder boulder = new Boulder(x, y, z, weight);
+				}
+				if (entry.getBlockType()==BlockType.WOOD){
+					double x = entry.getLocation().getX()+0.5;
+					double y = entry.getLocation().getY()+0.5;
+					double z = entry.getLocation().getZ()+0.5;
+					Log log = new Log(x, y, z, weight);
+				}
+			}
+		}
+		this.getCollapseSet().clear();
 	}
 	
 	/**
@@ -145,99 +212,134 @@ public class World {
 	
 	/**
 	 * 
-	 * @param v
-	 * 			Position of the cube for which the directly adjacent cubes must be found
+	 * @param V
+	 * 			Block for which the adjacent Blocks must be found
 	 * @return	
-	 * 			List of ArrayList<Integer> indicating the positions of the adjacent cubes of cube at position V
+	 * 			List of Blocks that are directly adjacent to the given Block V
 	 */
-	public ArrayList<ArrayList<Integer>> getDirectlyAdjacent(ArrayList<Integer> V){		
-		ArrayList<ArrayList<Integer>> adjacent = new ArrayList<ArrayList<Integer>>();
+	public ArrayList<Block> getDirectlyAdjacent(Block V){		
+		ArrayList<Block> adjacent = new ArrayList<Block>();
+		ArrayList<Integer> clone1 = new ArrayList<Integer>();
+		ArrayList<Integer> clone2 = new ArrayList<Integer>();
+		for(double coord : V.getLocation().getCoeff()){
+			clone1.add((int)(coord));
+			clone2.add((int)(coord));
+		}
 		for(int i=0; i<3; i++){
-			ArrayList<Integer> clone1 = new ArrayList<Integer>(V);
 			clone1.set(i, clone1.get(i)+1);
-			adjacent.add(clone1);
-			ArrayList<Integer> clone2 = new ArrayList<Integer>(V);
+			if (this.isValidPosition(clone1)){
+				adjacent.add(this.getBlockAtPos(clone1));
+			}
 			clone2.set(i, clone2.get(i)-1);
-			adjacent.add(clone2);
+			if (this.isValidPosition(clone2)){
+				adjacent.add(this.getBlockAtPos(clone2));
+			}
 
 		}
 		return adjacent;
 	}
 	
-	
 	/**
 	 * 
-	 * returns the list with postitions that have already been checked for collapsing
+	 * returns a set with Blocks that are known to be connected to the border
 	 */
-	public Set<ArrayList<Integer>> getChecked(){
-		return this.checked;
+	public Set<Block> getStableSet(){
+		return this.stableSet;
 	}
 	
 	/**
-	 * sets the checked-list to a given list
-	 * @param newchecked
-	 * @post new.checked == newchecked
+	 * changes stableSet to the given set
+	 * @param newstable
+	 * @post The new stableSet will equal the given newChecked
 	 */
-	public void setChecked(Set<ArrayList<Integer>> newchecked){
-		this.checked = newchecked;
+	public void setStableSet(Set<Block> newstable){
+		this.stableSet = newstable;
 	}
 	 /**
-	  * add given element to checked-list
-	  * @param v
-	  * @post this.getChecked.contains(V)==true
+	  * Add given element to stableSet
+	  * @param v : element to be added
+	  * @post stableSet contains V
 	  */
-	public void addToChecked(ArrayList<Integer> v){
-		if(this.inChecked(v)==false){
-			this.getChecked().add(v);
+	public void addToStableSet(Block v){
+		if(this.inStableSet(v)==false){
+			this.getStableSet().add(v);
 		}
 	}
 	
 	/**
-	 * checks whether a given ellement is in the list Checked
-	 * @param V
-	 * returns true if V is already in Checked
+	 * checks whether a given element is in the set stableSet or not
+	 * @param element
+	 * returns true if V is in the set stableSet and false if V is not in the set stableSet
 	 */
-	public boolean inChecked(ArrayList<Integer> V){
-		return checked.contains(V);
+	public boolean inStableSet(Block element){
+		return stableSet.contains(element);
 	}
-	
-
-	public Set<ArrayList<Integer>> getCurrentChecked(){
-		return currentChecked;
-	}
-	
-	public void setCurrentChecked(Set<ArrayList<Integer>> newchecked){
-		currentChecked = newchecked;
-	}
-	
-	public void addToCurrentChecked(ArrayList<Integer> v){
-		this.getCurrentChecked().add(v);
-	}
-	
-	public boolean inCurrentChecked(ArrayList<Integer> V){
-		return this.getCurrentChecked().contains(V);
-	}
-
 	
 	/**
 	 * 
-	 * returns the set containing all the positions of the blocks that should collapse.
+	 * returns a set with Blocks that have already been checked
 	 */
-	public Set<ArrayList<Integer>> getCollapseSet(){
-		return this.collapseSet;
+	public Set<Block> getCheckedSet(){
+		return checkedSet;
 	}
 	
-	public Boolean inCollapseSet(ArrayList<Integer> V){
+	/**
+	 * changes checkedSet to the given set
+	 * @param newchecked : the new checkedSet
+	 * @post The new checkedSet will equal the given newchecked
+	 */
+	public void setCheckedSet(Set<Block> newchecked){
+		checkedSet = newchecked;
+	}
+	/**
+	  * Add given element to checkedSet
+	  * @param v : element to be added
+	  * @post checkedSet contains V
+	  */
+	public void addToCheckedSet(Block v){
+		this.getCheckedSet().add(v);
+	}
+	/**
+	 * checks whether a given element is in the set checkedSet or not
+	 * @param V : Block to be checked
+	 * returns true if V is in the set checkedSet and false if V is not in the set checkedSet
+	 */
+	public boolean inCheckedSet(Block V){
+		return this.getCheckedSet().contains(V);
+	}
+	
+	/**
+	 * 
+	 * returns a set with Blocks that are not connected to the border and therefore must collapse
+	 */
+	public Set<Block> getCollapseSet(){
+		return this.collapseSet;
+	}
+	/**
+	 * changes collapseSet to the given set
+	 * @param newcollapse : the new checkedSet
+	 * @post The new collapseSet will equal the given newcollapse
+	 */
+	public void setCollapseSet(Set<Block> newcollapse){
+		collapseSet = newcollapse;
+	}
+	/**
+	  * Add given element to collapseSet
+	  * @param v : element to be added
+	  * @post collapseSet contains V
+	  */
+	public void addCollapseSet(Block V){
+		this.getCollapseSet().add(V);
+	}
+	/**
+	 * checks whether a given element is in the set collapseSet or not
+	 * @param V : Block to be checked
+	 * returns true if V is in the set collapseSet and false if V is not in the set collapseSet
+	 */
+	public Boolean inCollapseSet(Block V){
 		return this.collapseSet.contains(V);
 	}
 	
-	public void setCollapseSet(Set<ArrayList<Integer>> V){
-		collapseSet = V;
-	}
-	
-	public void addCollapseSet(ArrayList<Integer> V){
-		this.getCollapseSet().add(V);
-	}
 	
 	public Set<Unit> getUnits(){
 		return new HashSet<Unit>(this.units);
@@ -356,11 +458,27 @@ public class World {
 		this.getBlockAtPos(log.getPosition()).removeLog(log);
 	}
 	
-//	private ArrayList<ArrayList<Integer>> currentGroup = new ArrayList<ArrayList<Integer>>();
-	private Set<ArrayList<Integer>> collapseSet = new HashSet<ArrayList<Integer>>();
-	private Map<ArrayList<Integer>, Block> gameWorld = new HashMap<ArrayList<Integer>, Block>();
-	private Set<ArrayList<Integer>> checked = new HashSet<ArrayList<Integer>>();
-	private Set<ArrayList<Integer>>  currentChecked = new HashSet<ArrayList<Integer>>();
+	public ArrayList<Integer> getBorders(){
+		return new ArrayList<Integer>(this.WORLD_BORDER);
+	}
+	
+	public void updateCollapseAt(Block startBlock){
+		if(!startBlock.isSolid())
+			return;
+		ArrayList<Block> checked = new ArrayList<Block>();
+		this.
+		for(Block adjacent : this.getDirectlyAdjacent(startBlock)){
+			checked.add(adjacent);
+			this.updateCollapseAt(adjacent, );
+			
+		}
+	}
+	
+	private Set<Block> collapseSet = new HashSet<Block>();
+	protected Map<ArrayList<Integer>, Block> gameWorld = new HashMap<ArrayList<Integer>, Block>();
+	private Set<Block> stableSet = new HashSet<Block>();
+	private Set<Block>  checkedSet = new HashSet<Block>();
+	private Set<Block>  toBeChecked = new HashSet<Block>();
 	private ArrayList<Faction> factions = new ArrayList<Faction>();
 	private Set<Unit> units = new HashSet<Unit>();
 	private static final int MAX_FACTIONS = 5;

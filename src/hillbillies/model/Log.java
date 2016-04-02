@@ -120,22 +120,27 @@ public class Log {
 	/**
 	 * Set the position of this Log to the given position.
 	 * 
-	 * @param  position
-	 *         The new position for this Log.
-	 * @post   The position of this new Log is equal to
-	 *         the given position.
-	 *       | new.getPosition() == position
-	 * @throws IllegalArgumentException
-	 *         The given position is not a valid position for any
-	 *         Log.
-	 *       | ! isValidPosition(getPosition())
+	 * @param  	position
+	 *         	The new position for this Log.
+	 * @effect  Tries to remove this log from the block is was previously in,
+	 * 			set its position to the given position and add this log to the
+	 * 			new block it is in. If a NullPointerException is caught, nothing happens.
+	 * @throws 	IllegalArgumentException
+	 *         	The given position is not a valid position for any
+	 *         	Log.
 	 */
 	@Raw
 	public void setPosition(Vector position) 
 			throws IllegalArgumentException {
 		if (! isValidPosition(position))
 			throw new IllegalArgumentException();
-		this.position = position;
+		try {
+			this.getWorld().getBlockAtPos(this.getPosition()).removeLog(this);
+			this.position = position;
+			this.getWorld().getBlockAtPos(this.getPosition()).addLog(this);
+		} catch (NullPointerException exc) {
+			return;
+		}
 	}
 
 	/**

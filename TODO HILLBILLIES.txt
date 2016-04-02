@@ -1,8 +1,6 @@
 World:
-- Faction namegen
-- Factiongen
-- Factionlist...
-- Unitspawn
+- Deftige constructor
+- CreatPositionList veralgemenen
 
 Unit:
 - Combat

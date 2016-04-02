@@ -2,6 +2,7 @@ package hillbillies.model;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -14,6 +15,8 @@ public class World {
 	
 	public World(Map<ArrayList<Integer>, Block> intialGameWorld){
 		this.setGameWorld(intialGameWorld);
+		this.createPositionList();
+		this.WORLD_BORDER = new ArrayList<Integer>(Arrays.asList(50, 50, 50));
 	}
 	public World(){
 		
@@ -60,7 +63,7 @@ public class World {
 		this.getChecked().clear();
 		ArrayList<ArrayList<Integer>> Adjacent = new ArrayList<ArrayList<Integer>>(this.getDirectlyAdjacent(V));
 		for (int i=0; i<6; i++){
-			if (this.getBlockAtPos(Adjacent.get(i)).getSolid()==true && this.inChecked(Adjacent.get(i)) == false && this.inCollapseSet(Adjacent.get(i))==false){
+			if (this.getBlockAtPos(Adjacent.get(i)).isSolid()==true && this.inChecked(Adjacent.get(i)) == false && this.inCollapseSet(Adjacent.get(i))==false){
 				this.getCurrentChecked().clear();
 				if (this.stillSuspended(Adjacent.get(i)) == false ){
 					for (ArrayList<Integer> item: getCurrentChecked()){
@@ -84,7 +87,7 @@ public class World {
 				if(this.inChecked(Adjacent.get(i))==true){
 					return true;
 				}
-				if (this.getBlockAtPos(Adjacent.get(i)).getSolid() == true && this.inCurrentChecked(Adjacent.get(i))==false){
+				if (this.getBlockAtPos(Adjacent.get(i)).isSolid() == true && this.inCurrentChecked(Adjacent.get(i))==false){
 					return stillSuspended(Adjacent.get(i));
 				}
 			}
@@ -122,6 +125,13 @@ public class World {
 	 */
 	public Block getBlockAtPos(ArrayList<Integer> pos){
 		return this.getGameWorld().get(pos);
+	}
+	
+	public Block getBlockAtPos(Vector pos){
+		ArrayList<Integer> key = new ArrayList<Integer>();
+		for(double coeff : pos.getCoeff())
+			key.add((int)(coeff));
+		return this.getGameWorld().get(key);
 	}
 	
 	/**
@@ -207,71 +217,7 @@ public class World {
 	public boolean inCurrentChecked(ArrayList<Integer> V){
 		return this.getCurrentChecked().contains(V);
 	}
-	
-	
-	/**
-	 * this checks the entire gameworld for collapses
-	 * NB: this takes a shit load of time to complete and might currently not work because I switched Vectors to ArrayList<Integer>
-	 * @return
-	 */
-	public ArrayList<Block> checkTotalSuspension2(){
-		this.emptyChecked();
-		for (Map.Entry<ArrayList<Integer>, Block> entry : this.getGameWorld().entrySet()){
-			entry.getValue().setSuspended(false);
-		}
-		for (Map.Entry<ArrayList<Integer>, Block> entry : this.getGameWorld().entrySet()){
-			this.emptyCurrentGroup();
-			if (this.inChecked(entry.getKey()) == false && this.getBlockAtPos(entry.getKey()).getSolid() == true){
-				this.makeGroup(entry.getKey());
-				this.checkSuspensionGroup();
-			}
-		}
-		ArrayList<Block> collapseList = new ArrayList<Block>();
-		for (Map.Entry<ArrayList<Integer>, Block> entry : this.getGameWorld().entrySet()){
-			if (this.getBlockAtPos(entry.getKey()).getSuspended() == false && this.getBlockAtPos(entry.getKey()).getSolid() == true){
-				collapseList.add(this.getBlockAtPos(entry.getKey()));
-			}
-		}
-		return collapseList;
-	}
-	
-	/**
-	 * this checks if the currentGroup is connected to the border or not, and if not adds the contents of currentgroup to collapseSet
-	 */
-	public void checkSuspensionGroup(){
-		boolean suspended = false;
-		for (int i=0; i<currentGroup.size(); i++){
-			ArrayList<ArrayList<Integer>> Adjacent = new ArrayList<ArrayList<Integer>>(this.getDirectlyAdjacent(currentGroup.get(i)));
-			for (int j=0; j<6; j++){
-				if (this.isValidPosition(Adjacent.get(j))==false){
-					suspended = true;
-				}
-			}
-		}
-		for (int i=0; i<currentGroup.size(); i++){
-			this.addToChecked(currentGroup.get(i));
-			if (suspended == true){
-				this.getBlockAtPos(currentGroup.get(i)).setSuspended(true);
-			}
-		}
-	}
 
-	/**
-	 * makes a group containing the positions of all blocks in connection with the block at position V
-	 * @param V
-	 */
-	public void makeGroup(ArrayList<Integer> V){
-		currentGroup.add(V);
-		ArrayList<ArrayList<Integer>> Adjacent = new ArrayList<ArrayList<Integer>>(this.getDirectlyAdjacent(V));
-		for (int i=0; i<6; i++){
-			if (this.isValidPosition(Adjacent.get(i)) == true){
-				if (this.getBlockAtPos(Adjacent.get(i)).getSolid() == true && this.currentGroupContains(Adjacent.get(i))==false){
-					makeGroup(Adjacent.get(i));
-				}
-			}
-		}
-		System.out.println(currentGroup);
-	}
 	
 	/**
 	 * 
@@ -293,11 +239,136 @@ public class World {
 		this.getCollapseSet().add(V);
 	}
 	
+	public Set<Unit> getUnits(){
+		return new HashSet<Unit>(this.units);
+	}
+	
+	public ArrayList<Faction> getFactions(){
+		return new ArrayList<Faction>(this.factions);
+	}
+	
+	private void createPositionList(){
+		for(int x=0 ; x< this.WORLD_BORDER.get(0) ; x++){
+			for(int y=0 ; y<this.WORLD_BORDER.get(1) ; y++){
+				for(int z=0 ; z<this.WORLD_BORDER.get(2) ; z++){
+					ArrayList<Integer> pos = new ArrayList<Integer>();
+					pos.add(x);
+					pos.add(y);
+					pos.add(z);
+					this.positionList.add(pos);
+				}
+			}
+		}
+	}
+	
+	public boolean isAtBorder(Block block){
+		Vector position = block.getLocation();
+		if(position.getX() == 0 || position.getX() == (this.WORLD_BORDER.get(0) - 1) )
+			return true;
+		if(position.getY() == 0 || position.getY() == (this.WORLD_BORDER.get(1) - 1) )
+			return true;
+		if(position.getZ() == 0 || position.getZ() == (this.WORLD_BORDER.get(2) - 1) )
+			return true;
+		return false;
+	}
+	
+	public boolean isWalkable(Block block){
+		if(block.isSolid())
+			return false;
+		if(this.isAtBorder(block))
+			return true;
+		boolean checker = false;
+		for(Block cube : this.getDirectlyAdjacent(block)){
+			if(cube.isSolid())
+				return true;
+		}
+		return false;
+	}
+	
+	public void spawnUnit(){
+		if(this.getUnits().size() == World.MAX_UNITS)
+			return;
+		Collections.shuffle(this.positionList);
+		int idx = 0;
+		while(!this.isWalkable(this.getBlockAtPos(this.positionList.get(idx)))){
+			idx += 1;
+			if(idx == this.positionList.size())
+				return;
+		}
+		ArrayList<Integer> position = this.positionList.get(idx);
+		int strength = (int)(Math.random()*75 + 25);
+		int weight = (int)(Math.random()*75 + 25);
+		int toughness = (int)(Math.random()*75 + 25);
+		int agility = (int)(Math.random()*75 + 25);
+		Unit unit = new Unit("Billie", position.get(0), position.get(1), position.get(2), strength, weight, agility, toughness);
+		this.units.add(unit);
+		if(this.getFactions().size() < World.MAX_FACTIONS)
+			unit.setFaction(new Faction(unit, "Faction" + Integer.toString(this.factions.size() + 1)));
+		else{
+			Faction smallestFaction = this.getFactions().get(0);
+			for(Faction faction : this.getFactions()){
+				if(faction.getUnits().size() < smallestFaction.getUnits().size())
+					smallestFaction = faction;
+			}
+			unit.setFaction(smallestFaction);
+			if(unit.getFaction() != this.getFactions().get(0))
+				unit.startDefault();
+		}
+	}
+	
+	protected Set<Boulder> getBoulders(){
+		return new HashSet<Boulder>(this.boulders);
+	}
+	
+	public void addBoulder(Boulder boulder){
+		try {
+			boulder.setWorld(this);
+			this.boulders.add(boulder);
+			this.getBlockAtPos(boulder.getPosition()).addBoulder(boulder);
+		} catch (IllegalArgumentException exc) {
+			return;
+		}
+	}
+	
+	public void removeBoulder(Boulder boulder){
+		this.boulders.remove(boulder);
+		boulder.removeWorld();
+		this.getBlockAtPos(boulder.getPosition()).removeBoulder(boulder);
+	}
+	
+	protected Set<Log> getLogs(){
+		return new HashSet<Log>(this.logs);
+	}
+	
+	public void addLog(Log log){
+		try {
+			log.setWorld(this);
+			this.logs.add(log);
+			this.getBlockAtPos(log.getPosition()).addLog(log);
+		} catch (IllegalArgumentException exc) {
+			return;
+		}
+	}
+	
+	public void removeLog(Log log){
+		this.logs.remove(log);
+		log.removeWorld();
+		this.getBlockAtPos(log.getPosition()).removeLog(log);
+	}
+	
 //	private ArrayList<ArrayList<Integer>> currentGroup = new ArrayList<ArrayList<Integer>>();
 	private Set<ArrayList<Integer>> collapseSet = new HashSet<ArrayList<Integer>>();
-	protected Map<ArrayList<Integer>, Block> gameWorld = new HashMap<ArrayList<Integer>, Block>();
+	private Map<ArrayList<Integer>, Block> gameWorld = new HashMap<ArrayList<Integer>, Block>();
 	private Set<ArrayList<Integer>> checked = new HashSet<ArrayList<Integer>>();
 	private Set<ArrayList<Integer>>  currentChecked = new HashSet<ArrayList<Integer>>();
+	private ArrayList<Faction> factions = new ArrayList<Faction>();
+	private Set<Unit> units = new HashSet<Unit>();
+	private static final int MAX_FACTIONS = 5;
+	private static final int MAX_UNITS = 100;
+	private ArrayList<ArrayList<Integer>> positionList = new ArrayList<ArrayList<Integer>>();
+	private final ArrayList<Integer> WORLD_BORDER;
+	private Set<Boulder> boulders = new HashSet<Boulder>();
+	private Set<Log> logs = new HashSet<Log>();
 	
 
 	

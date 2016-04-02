@@ -152,18 +152,16 @@ public class Boulder {
 	  * 		of this Boulder.
 	  * @post	If this Boulder can have the given Unit
 	  * 		as a carrier, the Unit is set as the carrier
-	  * 		of this Boulder and this Boulder is set as
-	  * 		the Boulder that the given Unit is carrying.
+	  * 		of this Boulder.
 	  * @throws	IllegalArgumentException
 	  * 		An exception is thrown if the given unit is an
 	  * 		invalid carrier.
 	  */
-	public void setCarrier(Unit unit) 
+	protected void setCarrier(Unit unit) 
 			throws IllegalArgumentException{
 		if(!canHaveAsCarrier(unit))
 			throw new IllegalArgumentException("Invalid carrier!");
 		this.carrier = unit;
-		unit.setBoulder(this);
 		return;
 	}
 	
@@ -186,7 +184,7 @@ public class Boulder {
 	 * 			of its carrier and remove the carrier of this Boulder.
 	 * 			If a NullPointerException is caught, nothing happens.
 	 */
-	public void removeCarrier(){
+	protected void removeCarrier(){
 		try {
 			setPosition(getCarrier().getPosition());
 			this.carrier = null;
@@ -198,6 +196,24 @@ public class Boulder {
 //		}
 	}
 	
+	public World getWorld(){
+		return this.world;
+	}
+	
+	public boolean canHaveAsWorld(World world){
+		return (this.getWorld() == null);
+	}
+	
+	protected void setWorld(World world)
+				throws IllegalArgumentException{
+		if(!canHaveAsWorld(world))
+			throw new IllegalArgumentException("Invalid world!");
+		this.world = world;
+	}
+	
+	protected void removeWorld(){
+		this.world = null;
+	}
 	/**
 	 * Variable registering the position of this Boulder.
 	 */
@@ -209,4 +225,6 @@ public class Boulder {
 	private int weight;
 	
 	private Unit carrier = null;
+	
+	private World world = null;
 }

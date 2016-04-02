@@ -1431,16 +1431,20 @@ public class Unit {
 	 * Set the faction of this unit a given faction.
 	 * @param 	faction
 	 * 			The given faction to be set to this unit's
-	 * 			faction.
+	 * 			faction and this unit is added as a member of
+	 * 			the given faction.
 	 * @effect	If this unit can belong to the given faction,
 	 * 			this unit's faction is set to the given faction.
 	 * 			| if (canHaveAsFaction(faction))
-	 * 			| 	then new.getFaction() == faction
-	 * 			| else newgetFaction() == getFaction()
+	 * 			| 	then new.getFaction() == faction &&
+	 * 			|	faction.getUnits.contains(this)
+	 * 			| else newgetFaction() == getFaction() &&
+	 * 			|	!faction.getUnits.contains(this)
 	 */
-	public void setFaction(Faction faction){
+	protected void setFaction(Faction faction){
 		if (!canHaveAsFaction(faction))
 			return;
+		faction.addUnit(this);
 		this.faction = faction;
 	}
 	
@@ -1486,21 +1490,28 @@ public class Unit {
 		return this.boulder;
 	}
 	
-	 /**
+	/**
 	  * Set the boulder the unit is carrying to a given boulder.
 	  * @param 	boulder
 	  * 		The given boulder to be set as the boulder this unit is carrying.
-	  * @effect	If the boulder can have this unit as a carrier, it is set to the
-	  * 		boulder that this unit is carrying and the its weight is set
-	  * 		as the carry weight.
-	  * 		| if(boulder.canHaveAsCarrier(this)
-	  * 		| 	then new.getBoulder() == boulder &&
+	  * @effect	Tries to set this unit as the carrier of the given boulder,
+	  * 		set the given boulder as the boulder this unit is currently carrying
+	  * 		and set the weight of the boulder as the carry weight. If an
+	  * 		IllegalArgumentException is caught, nothing happens.
+	  * 		| if(boulder.setCarrier(this) throws IllegalArgumentException)
+	  * 		| 	then return
+	  * 		| else new.getBoulder() == boulder &&
+	  * 		|	boulder.getCarrier() == this &&
 	  * 		|	new.getCarryWeight() == boulder.getWeight()
 	  */
 	protected void setBoulder(Boulder boulder) {
-		if(boulder.canHaveAsCarrier(this))
-			this.boulder = boulder;
-			this.setCarryWeight(boulder.getWeight());
+			try{
+				boulder.setCarrier(this);
+				this.boulder = boulder;
+				this.setCarryWeight(boulder.getWeight());
+			} catch (IllegalArgumentException exc){
+				return;
+			}
 	}
 	
 	/**
@@ -1515,17 +1526,24 @@ public class Unit {
 	  * Set the log the unit is carrying to a given log.
 	  * @param 	log
 	  * 		The given log to be set as the log this unit is carrying.
-	  * @effect	If the log can have this unit as a carrier, it is set to the
-	  * 		log that this unit is carrying and the its weight is set
-	  * 		as the carry weight.
-	  * 		| if(log.canHaveAsCarrier(this)
-	  * 		| 	then new.getLog() == log &&
+	  * @effect	Tries to set this unit as the carrier of the given log,
+	  * 		set the given log as the log this unit is currently carrying
+	  * 		and set the weight of the log as the carry weight. If an
+	  * 		IllegalArgumentException is caught, nothing happens.
+	  * 		| if(log.setCarrier(this) throws IllegalArgumentException)
+	  * 		| 	then return
+	  * 		| else new.getLog() == log &&
+	  * 		|	log.getCarrier() == this &&
 	  * 		|	new.getCarryWeight() == log.getWeight()
 	  */
 	protected void setLog(Log log) {
-		if(log.canHaveAsCarrier(this))
-			this.log = log;
-			this.setCarryWeight(log.getWeight());
+			try{
+				log.setCarrier(this);
+				this.log = log;
+				this.setCarryWeight(log.getWeight());
+			} catch (IllegalArgumentException exc){
+				return;
+			}
 	}
 	
 	/**
@@ -1535,15 +1553,19 @@ public class Unit {
 	 * 			anything.
 	 * 			| if(!isCarrying)
 	 * 			|	then return
-	 * @effect	If the unit is carrying a boulder, the boulder
-	 * 			this unit is carrying will be removed.
-	 * 			The boulder's carrier will be removed as well.
-	 * 			Otherwise the log this unit is carrying will
-	 * 			be removed together with the log's carrier.
+	 * @effect	If the unit is carrying a boulder, the boulder's
+	 * 			carrier will be removed and the boulder will be
+	 * 			added to the world. The boulder this unit is
+	 * 			carrying will also be removed.
+	 * 			Otherwise the log's carrier will be removed and
+	 * 			the log will be added to the world. The log this
+	 * 			unit is carrying will also be removed.
 	 * 			| if(getBoulder != null)
 	 * 			|	then getBoulder().removeCarrier() &&
-	 * 			|	new.getBoulder() == null
+	 * 			|	getWorld().addBoulder(getBoulder()) &&
+	 * 			|	new.getBoulder() == null &&
 	 * 			| else getLog().removeCarrier() &&
+	 * 			|	getWorld().addLog(getLog()) &&
 	 * 			|	new.getLog() == null
 	 * @post	The carry weight is set to zero.
 	 * 			| new.getCarryWeight() == 0
@@ -1553,10 +1575,12 @@ public class Unit {
 			return;
 		if(getBoulder() != null){
 			this.getBoulder().removeCarrier();
+			this.getWorld().addBoulder(this.getBoulder());
 			this.boulder = null;			
 		}
 		else{
 			this.getLog().removeCarrier();
+			this.getWorld().addLog(this.getLog());
 			this.log = null;
 		}
 		this.setCarryWeight(0);
@@ -1567,22 +1591,17 @@ public class Unit {
 	 * @param	boulder
 	 * 			The given boulder to be lifted.
 	 * @effect	If the given boulder and this unit occupy the
-	 * 			same cube, the boulder will try to set this
-	 * 			unit as its carrier. If an IllegalArgumentException
-	 * 			is caught, nothing happens.
+	 * 			same cube, the given boulder will be set as the
+	 * 			boulder this unit is currently carrying and the
+	 * 			boulder will be removed from the world.
 	 * 			| if(getBlockPosition() == boulder.getBlockPosition())
-	 * 			|	then if(boulder.setCarrier(this) throws
-	 * 			|			IllegalArgumentException)
-	 *			|			then return
-	 *			|		else boulder.setCarrier(this)
+	 * 			|	then setBoulder(boulder) &&
+	 * 			|	getWorld().removeBoulder(boulder)
 	 */
 	public void lift(Boulder boulder){
-		if(getBlockPosition() != boulder.getBlockPosition())
-			return;
-		try {
-			boulder.setCarrier(this);
-		} catch (IllegalArgumentException exc) {
-			return;
+		if(getBlockPosition() == boulder.getBlockPosition()){
+			this.setBoulder(boulder);
+			this.getWorld().removeBoulder(boulder);
 		}
 	}
 	
@@ -1591,22 +1610,17 @@ public class Unit {
 	 * @param	log
 	 * 			The given log to be lifted.
 	 * @effect	If the given log and this unit occupy the
-	 * 			same cube, the log will try to set this
-	 * 			unit as its carrier. If an IllegalArgumentException
-	 * 			is caught, nothing happens.
+	 * 			same cube, the given log will be set as the
+	 * 			log this unit is currently carrying and the
+	 * 			log will be removed from the world.
 	 * 			| if(getBlockPosition() == log.getBlockPosition())
-	 * 			|	then if(log.setCarrier(this) throws
-	 * 			|			IllegalArgumentException)
-	 *			|			then return
-	 *			|		else log.setCarrier(this)
+	 * 			|	then setLog(log) &&
+	 * 			|	getWorld().removeLog(log)
 	 */
 	public void lift(Log log){
-		if(getBlockPosition() != boulder.getBlockPosition())
-			return;
-		try {
-			log.setCarrier(this);
-		} catch (IllegalArgumentException exc) {
-			return;
+		if(getBlockPosition() == log.getBlockPosition()){
+			this.setLog(log);
+			this.getWorld().removeLog(log);
 		}
 	}
 	
@@ -1640,6 +1654,14 @@ public class Unit {
 	 */
 	public int getTotalWeight(){
 		return this.getPrimStats().get("wgt") + this.getCarryWeight();
+	}
+	
+	public World getWorld(){
+		return this.world;
+	}
+	
+	public void setWorld(World world){
+		this.world = world;
 	}
 	
 	private double theta;
@@ -1702,6 +1724,7 @@ public class Unit {
 	private Log log = null;
 	
 	private int carryWeight = 0;
-	
+
+	private World world;
 	
 }

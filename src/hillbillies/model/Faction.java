@@ -28,14 +28,14 @@ public class Faction {
 	 * @effect  If the given creator is a valid creator for any faction,
 	 *         	the creator is added as a member of the faction and the creator's
 	 *          faction is set to this faction. Otherwise, this faction is terminated.
-	 * @post	The name of the fection is set to the given name.
+	 * @post	The name of the faction is set to the given name.
 	 * 
 	 */
 	public Faction(Unit creator, String name) {
 		if (!isValidUnit(creator))
 			terminate();
 		else{
-			addUnit(creator);
+			creator.setFaction(this);
 			this.name = name;
 		}
 	}
@@ -53,7 +53,7 @@ public class Faction {
 		if (!isValidUnit(creator))
 			terminate();
 		else{
-			addUnit(creator);
+			creator.setFaction(this);;
 			this.name = "Faction";
 		}
 	}
@@ -71,13 +71,12 @@ public class Faction {
 	 * @post 	If the given unit is a valid unit
 	 * 			and number of units of this faction is less than
 	 * 			the maximum allowed number, the unit is added to
-	 * 			the faction and the unit's faction is set to this faction.
+	 * 			the faction.
 	 * 			
 	 */
-	public void addUnit(Unit unit){
+	protected void addUnit(Unit unit){
 		if (isValidUnit(unit) && getUnits().size() < Faction.MAX_UNITS)
 		this.unitSet.add(unit);
-		unit.setFaction(this);
 	}
 	/**
 	 * Returns a boolean stating whether or not the given unit is valid.

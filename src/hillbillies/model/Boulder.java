@@ -126,9 +126,9 @@ public class Boulder {
 	 * 
 	 * @param  	position
 	 *         	The new position for this Boulder.
-	 * @effect  Tries to remove this boulder from the block is was previously in,
-	 * 			set its position to the given position and add this boulder to the
-	 * 			new block it is in. If a NullPointerException is caught, nothing happens.
+	 * @effect  If this boulder belongs to a world, this boulder will be removed
+	 * 			from the block it was previously in and will be added to the
+	 * 			new block it is in. The new position is also a valid position.
 	 * @throws 	IllegalArgumentException
 	 *         	The given position is not a valid position for any
 	 *         	Boulder.
@@ -138,13 +138,10 @@ public class Boulder {
 			throws IllegalArgumentException {
 		if (!isValidPosition(position))
 			throw new IllegalArgumentException();
-		try {
+		if(this.getWorld() != null)
 			this.getWorld().getBlockAtPos(this.getPosition()).removeBoulder(this);
 			this.position = position;
 			this.getWorld().getBlockAtPos(this.getPosition()).addBoulder(this);
-		} catch (NullPointerException exc) {
-			return;
-		}
 	}
 	
 	/**

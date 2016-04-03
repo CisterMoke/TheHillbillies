@@ -23,6 +23,8 @@ public class World {
 		this.createPositionList();
 	}
 	
+	public World(int x, int y, int z, )
+	
 	/**
 	 * Returns whether or not the given position lies within the boundaries.
 	 * @param pos
@@ -176,13 +178,13 @@ public class World {
 					double x = entry.getLocation().getX()+0.5;
 					double y = entry.getLocation().getY()+0.5;
 					double z = entry.getLocation().getZ()+0.5;
-					Boulder boulder = new Boulder(x, y, z, weight);
+					this.addBoulder(new Boulder(x, y, z, weight));
 				}
 				if (entry.getBlockType()==BlockType.WOOD){
 					double x = entry.getLocation().getX()+0.5;
 					double y = entry.getLocation().getY()+0.5;
 					double z = entry.getLocation().getZ()+0.5;
-					Log log = new Log(x, y, z, weight);
+					this.addLog(new Log(x, y, z, weight));
 				}
 			}
 		}

@@ -19,8 +19,8 @@ public class World {
 	 */
 	public World(Map<ArrayList<Integer>, Block> intialGameWorld){
 		this.setGameWorld(intialGameWorld);
-		this.createPositionList();
 		this.WORLD_BORDER = new ArrayList<Integer>(Arrays.asList(50, 50, 50));
+		this.createPositionList();
 	}
 	
 	/**
@@ -61,76 +61,80 @@ public class World {
 	 * @post The BlockType of V is set to AIR and any block that should collapse is added to collapseSet
 	 */
 	public void setToPassable(Block V){
-		System.out.println(V.getLocation());
 		V.setBlockType(BlockType.AIR);
 		this.getStableSet().clear();
-		ArrayList<Block> Adjacent = new ArrayList<Block>(this.getDirectlyAdjacent(V));
-		for (Block element : Adjacent){
-			if (element.isSolid()==true && this.inStableSet(element) == false && this.inCollapseSet(element)==false){
-				this.getCheckedSet().clear();
-				if (this.stillSuspended(element) == false ){
-					for (Block item: getCheckedSet()){
-						this.addCollapseSet(item);
-					}
-				}
+		for(Block block : this.getDirectlyAdjacent(V))
+			if(block.isSolid() && !this.getStableSet().contains(block)){
+				this.updateCollapseAt(block);
 			}
-		}
+//		this.getStableSet().clear();
+//		ArrayList<Block> Adjacent = new ArrayList<Block>(this.getDirectlyAdjacent(V));
+//		for (Block element : Adjacent){
+//			if (element.isSolid()==true && this.inStableSet(element) == false && this.inCollapseSet(element)==false){
+//				this.getCheckedSet().clear();
+//				if (this.stillSuspended(element) == false ){
+//					for (Block item: getCheckedSet()){
+//						this.addCollapseSet(item);
+//					}
+//				}
+//			}
+//		}
 	//	this.collapse();
 	}
-	
-	public void checkWorldSuspension(){
-		this.getStableSet().clear();
-		Set<Block> solidBlocks = new HashSet<Block>();
-		for (Block element : this.getGameWorld().values()){
-			if (element.isSolid()){
-				solidBlocks.add(element);
-			}
-		}
-		for (Block entry : solidBlocks){
-			if (this.inStableSet(entry) == false && this.inCollapseSet(entry)==false){
-				this.getCheckedSet().clear();
-				if (this.stillSuspended(entry) == false ){
-					for (Block item: getCheckedSet()){
-						this.addCollapseSet(item);
-					}
-				}
-			}
-		}
+//	
+//	public void checkWorldSuspension(){
+//		this.getStableSet().clear();
+//		Set<Block> solidBlocks = new HashSet<Block>();
+//		for (Block element : this.getGameWorld().values()){
+//			if (element.isSolid()){
+//				solidBlocks.add(element);
+//			}
+//		}
+//		for (Block entry : solidBlocks){
+//			if (this.inStableSet(entry) == false && this.inCollapseSet(entry)==false){
+//				this.getCheckedSet().clear();
+//				if (this.stillSuspended(entry) == false ){
+//					for (Block item: getCheckedSet()){
+//						this.addCollapseSet(item);
+//					}
+//				}
+//			}
+//		}
 	//	this.collapse();
-	}
-	
-	/**
-	 * checks whether a given Block is connected to the edge of the world
-	 * @param V : Block for which the check must be done
-	 * returns true if V is connected to the border and false otherwise
-	 */
-	public boolean stillSuspended(Block V){
-		System.out.println(V.getLocation());
-		this.addToCheckedSet(V);
-		if ((this.maxBlockCoord(V)==49) == false && (this.minBlockCoord(V)==0) == false){
-			ArrayList<Block> Adjacent = new ArrayList<Block>(this.getDirectlyAdjacent(V));
-			for (Block element : Adjacent){
-				toBeChecked.add(element);
-				if(this.inStableSet(element)==true){
-					System.out.println("1 true");
-					return true;
-				}
-				if (element.isSolid() == true && this.inCheckedSet(element)==false){
-					boolean checker = stillSuspended(element);
-					if (toBeChecked.isEmpty()){
-						return checker;
-					}
-				}
-			}
-		}
-		if ((this.maxBlockCoord(V)==49) == true || (this.minBlockCoord(V)==0) == true){
-			System.out.println("2 true");
-			return true;
-		}
-		System.out.println("3 false");
-		toBeChecked.remove(V);
-		return false;
-	}
+//	}
+//	
+//	/**
+//	 * checks whether a given Block is connected to the edge of the world
+//	 * @param V : Block for which the check must be done
+//	 * returns true if V is connected to the border and false otherwise
+//	 */
+//	public boolean stillSuspended(Block V){
+//		System.out.println(V.getLocation());
+//		this.addToCheckedSet(V);
+//		if ((this.maxBlockCoord(V)==49) == false && (this.minBlockCoord(V)==0) == false){
+//			ArrayList<Block> Adjacent = new ArrayList<Block>(this.getDirectlyAdjacent(V));
+//			for (Block element : Adjacent){
+//				toBeChecked.add(element);
+//				if(this.inStableSet(element)==true){
+//					System.out.println("1 true");
+//					return true;
+//				}
+//				if (element.isSolid() == true && this.inCheckedSet(element)==false){
+//					boolean checker = stillSuspended(element);
+//					if (toBeChecked.isEmpty()){
+//						return checker;
+//					}
+//				}
+//			}
+//		}
+//		if ((this.maxBlockCoord(V)==49) == true || (this.minBlockCoord(V)==0) == true){
+//			System.out.println("2 true");
+//			return true;
+//		}
+//		System.out.println("3 false");
+//		toBeChecked.remove(V);
+//		return false;
+//	}
 	/**
 	 * Find the coordinate with the highest absolute value of a given block
 	 * @param V : Block for which the largest coordinate must be found
@@ -229,10 +233,12 @@ public class World {
 			clone1.set(i, clone1.get(i)+1);
 			if (this.isValidPosition(clone1)){
 				adjacent.add(this.getBlockAtPos(clone1));
+			clone1.set(i, clone1.get(i) -1);
 			}
 			clone2.set(i, clone2.get(i)-1);
 			if (this.isValidPosition(clone2)){
 				adjacent.add(this.getBlockAtPos(clone2));
+				clone2.set(i, clone2.get(i) + 1);
 			}
 
 		}
@@ -273,39 +279,6 @@ public class World {
 	 */
 	public boolean inStableSet(Block element){
 		return stableSet.contains(element);
-	}
-	
-	/**
-	 * 
-	 * returns a set with Blocks that have already been checked
-	 */
-	public Set<Block> getCheckedSet(){
-		return checkedSet;
-	}
-	
-	/**
-	 * changes checkedSet to the given set
-	 * @param newchecked : the new checkedSet
-	 * @post The new checkedSet will equal the given newchecked
-	 */
-	public void setCheckedSet(Set<Block> newchecked){
-		checkedSet = newchecked;
-	}
-	/**
-	  * Add given element to checkedSet
-	  * @param v : element to be added
-	  * @post checkedSet contains V
-	  */
-	public void addToCheckedSet(Block v){
-		this.getCheckedSet().add(v);
-	}
-	/**
-	 * checks whether a given element is in the set checkedSet or not
-	 * @param V : Block to be checked
-	 * returns true if V is in the set checkedSet and false if V is not in the set checkedSet
-	 */
-	public boolean inCheckedSet(Block V){
-		return this.getCheckedSet().contains(V);
 	}
 	
 	/**
@@ -379,7 +352,6 @@ public class World {
 			return false;
 		if(this.isAtBorder(block))
 			return true;
-		boolean checker = false;
 		for(Block cube : this.getDirectlyAdjacent(block)){
 			if(cube.isSolid())
 				return true;
@@ -462,23 +434,95 @@ public class World {
 		return new ArrayList<Integer>(this.WORLD_BORDER);
 	}
 	
+	
+	
+//	public void updateCollapseAt(Block startBlock){
+////		System.out.println("updatecollapse");
+//		this.checkedSet.add(startBlock);
+//		this.toBeChecked.remove(startBlock);
+//		if(this.isAtBorder(startBlock)){
+//			this.setStableSet(new HashSet<Block>(this.getCheckedSet()));
+//			return;
+//		}
+////		System.out.println(startBlock.getLocation().getCoeff());
+//		for(Block adjacent : this.getDirectlyAdjacent(startBlock)){
+//			if(adjacent.isSolid() && !this.checkedSet.contains(adjacent))
+//				this.toBeChecked.add(adjacent);
+//		}
+//		for(Block adjacent : this.getDirectlyAdjacent(startBlock)){
+//			if(this.isAtBorder(adjacent) && adjacent.isSolid()){
+////				System.out.println("Border");
+//				this.setStableSet(new HashSet<Block>(this.getCheckedSet()));
+//				return;
+//			}
+//			if(this.getCollapseSet().contains(adjacent)){
+////				System.out.println("Adjacent Collapse");
+//				this.addCollapseSet(startBlock);
+//				return;
+//			}
+//			if(!this.checkedSet.contains(adjacent) && adjacent.isSolid()){
+//				this.checkedSet.add(adjacent);
+//				this.updateCollapseAt(adjacent);
+////				System.out.println(this.getStableSet().contains(adjacent));
+//				if(this.getStableSet().contains(adjacent)){
+////					System.out.println("Adjacent Stable");
+//					this.getStableSet().add(startBlock);
+//					return;
+//				}
+//				if(this.getCollapseSet().contains(adjacent)){
+////					System.out.println("No Stable");
+//					this.addCollapseSet(startBlock);
+//					return;
+//				}
+//			}
+//		}
+//		if(this.toBeChecked.isEmpty()){
+////			System.out.println("LastBlock");
+//			this.setCollapseSet(new HashSet<Block>(this.checkedSet));
+//			return;
+//		}
+//		return;
+//	}
+	
 	public void updateCollapseAt(Block startBlock){
+//		if(this.getStableSet().contains(startBlock)){
+//			return;
+//		}
 		if(!startBlock.isSolid())
 			return;
-		ArrayList<Block> checked = new ArrayList<Block>();
-		this.
-		for(Block adjacent : this.getDirectlyAdjacent(startBlock)){
-			checked.add(adjacent);
-			this.updateCollapseAt(adjacent, );
-			
+		Set<Block> checked = new HashSet<Block>();
+		Set<Block> toBeChecked = new HashSet<Block>();
+		toBeChecked.add(startBlock);
+		while(!toBeChecked.isEmpty()){
+			boolean changed = false;
+			toBeChecked.remove(startBlock);
+			checked.add(startBlock);
+			if(this.isAtBorder(startBlock)){
+				this.setStableSet(new HashSet<Block>(checked));
+				return;
+			}
+			for(Block adjacent : this.getDirectlyAdjacent(startBlock)){
+				if(this.getStableSet().contains(adjacent)){
+					this.setStableSet(new HashSet<Block>(checked));
+					return;					
+				}
+				if(adjacent.isSolid() &&!checked.contains(adjacent)){
+					toBeChecked.add(adjacent);
+					startBlock = adjacent;
+					changed = true;
+				}
+			}
+			if(!changed && !toBeChecked.isEmpty()){
+				startBlock = toBeChecked.iterator().next();
+				changed = true;
+			}
 		}
+		this.setCollapseSet(new HashSet<Block>(checked));
 	}
 	
 	private Set<Block> collapseSet = new HashSet<Block>();
 	protected Map<ArrayList<Integer>, Block> gameWorld = new HashMap<ArrayList<Integer>, Block>();
 	private Set<Block> stableSet = new HashSet<Block>();
-	private Set<Block>  checkedSet = new HashSet<Block>();
-	private Set<Block>  toBeChecked = new HashSet<Block>();
 	private ArrayList<Faction> factions = new ArrayList<Faction>();
 	private Set<Unit> units = new HashSet<Unit>();
 	private static final int MAX_FACTIONS = 5;

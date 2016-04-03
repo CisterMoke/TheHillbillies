@@ -112,11 +112,11 @@ public class Boulder {
 	 * 			the world's boundary.
 	*/
 	public boolean isValidPosition(Vector position) {
-		if(position.getX() < 0 || position.getX() > this.getWorld().getBorders().get(0))
+		if(position.getX() < 0 || position.getX() >= this.getWorld().getBorders().get(0))
 			return false;
-		if(position.getY() < 0 || position.getY() > this.getWorld().getBorders().get(1))
+		if(position.getY() < 0 || position.getY() >= this.getWorld().getBorders().get(1))
 			return false;
-		if(position.getZ() < 0 || position.getZ() > this.getWorld().getBorders().get(2))
+		if(position.getZ() < 0 || position.getZ() >= this.getWorld().getBorders().get(2))
 			return false;
 		return true;
 	}
@@ -128,7 +128,9 @@ public class Boulder {
 	 *         	The new position for this Boulder.
 	 * @effect  If this boulder belongs to a world, this boulder will be removed
 	 * 			from the block it was previously in and will be added to the
-	 * 			new block it is in. The new position is also a valid position.
+	 * 			new block it is in.
+	 * @post	 The new position is a valid position.
+	 * 			| new.getPosition() == position && isValidPosition(new.getPosition())
 	 * @throws 	IllegalArgumentException
 	 *         	The given position is not a valid position for any
 	 *         	Boulder.
@@ -138,10 +140,12 @@ public class Boulder {
 			throws IllegalArgumentException {
 		if (!isValidPosition(position))
 			throw new IllegalArgumentException();
-		if(this.getWorld() != null)
+		if(this.getWorld() != null){
 			this.getWorld().getBlockAtPos(this.getPosition()).removeBoulder(this);
 			this.position = position;
 			this.getWorld().getBlockAtPos(this.getPosition()).addBoulder(this);
+		}
+		else this.position = position;
 	}
 	
 	/**

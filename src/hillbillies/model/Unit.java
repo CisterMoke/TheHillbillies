@@ -341,11 +341,12 @@ public class Unit {
 	 * 			| !isValidPosition(Vector(x, y, z))
 	 * @effect 	If the unit exists in a world, this unit will be removed
 	 * 			from the block it was previously in and will be added to the
-	 * 			new block it is in. The new position is also a valid position.
+	 * 			new block it is in.
 	 * 			| if(getWorld() != null)
 	 * 			|	then !getWorld().getBlockAtPos(old.getPosition()).getUnits().contains(this) &&
-	 * 			|	getWorld().getBlockAtPosition(new.getPosition()).getUnits().contains(this) &&
-	 * 			| 	new.getPosition() == Vector(x, y, z) && isValidPosition(new.getPosition())
+	 * 			|	getWorld().getBlockAtPosition(new.getPosition()).getUnits().contains(this)
+	 * @post	 The new position is a valid position.
+	 * 			| new.getPosition() == Vector(x, y, z) && isValidPosition(new.getPosition())
 	 * 
 	 */
 	public void setPosition(double x, double y, double z)throws IllegalArgumentException{
@@ -356,6 +357,7 @@ public class Unit {
 			this.pos = new Vector(x, y, z);
 			this.getWorld().getBlockAtPos(this.getPosition()).addUnit(this);
 		}
+		else this.pos = new Vector(x, y, z);
 	}
 	/**
 	 * Returns the vector representing the current position of the unit.
@@ -373,10 +375,12 @@ public class Unit {
 	 * 			| result == for each coefficient in pos.getCoeff() : (coefficient >= 0 && coefficient =< 50)
 	 */
 	private boolean isValidPosition(Vector pos){
+		if(this.getWorld() == null)
+			return true;
 		ArrayList<Double> coords = pos.getCoeff();
 		boolean checker = true;
 		for(int i=0; i<3; i++){
-			if (coords.get(i)>50 || coords.get(i)<0)
+			if (coords.get(i) >= this.getWorld().getBorders().get(i) || coords.get(i)<0)
 				checker = false;
 		}
 		return checker;
@@ -901,7 +905,6 @@ public class Unit {
 	 *			|	setHp(this.getHp() - damage)
 	 */
 	private void defend(Unit attacker){
-		System.out.println("DEFENDED");
 		this.setState(State.IDLE);
 		attacker.setState(State.IDLE);
 		double damage = ((double)(attacker.getPrimStats().get("str")))/10;
@@ -1583,13 +1586,13 @@ public class Unit {
 		if(!isCarrying())
 			return;
 		if(getBoulder() != null){
-			this.getBoulder().removeCarrier();
 			this.getWorld().addBoulder(this.getBoulder());
+			this.getBoulder().removeCarrier();
 			this.boulder = null;			
 		}
 		else{
-			this.getLog().removeCarrier();
 			this.getWorld().addLog(this.getLog());
+			this.getLog().removeCarrier();
 			this.log = null;
 		}
 		this.setCarryWeight(0);
@@ -1687,8 +1690,12 @@ public class Unit {
 		return this.world;
 	}
 	
-	public void setWorld(World world){
+	protected void setWorld(World world){
 		this.world = world;
+	}
+	
+	protected void removeWorld(){
+		this.world = null;
 	}
 	
 	private double theta;

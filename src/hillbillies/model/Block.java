@@ -40,8 +40,12 @@ public class Block{
 		return new HashSet<Unit>(this.unitsInCube);
 	}
 	
-	public void addUnits(Unit unit){
+	protected void addUnit(Unit unit){
 		this.unitsInCube.add(unit);
+	}
+	
+	protected void removeUnit(Unit unit){
+		this.unitsInCube.remove(unit);
 	}
 	
 	public BlockType getBlockType(){

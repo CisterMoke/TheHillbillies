@@ -23,7 +23,20 @@ public class World {
 		this.createPositionList();
 	}
 	
-	public World(int x, int y, int z, )
+	public World(int sizeX, int sizeY, int sizeZ, Map<ArrayList<Integer>, Block> terrain){
+		this.WORLD_BORDER = new ArrayList<Integer>(Arrays.asList(sizeX, sizeY, sizeZ));
+		this.setGameWorld(terrain);
+		this.createPositionList();
+	}
+	
+	public void advanceTime(double dt){
+		for(Unit unit : this.getUnits())
+			unit.advanceTime(dt);
+		for(Boulder boulder : this.getBoulders())
+			boulder.advanceTime(dt);
+		for(Log log : this.getLogs())
+			log.advanceTime(dt);
+	}
 	
 	/**
 	 * Returns whether or not the given position lies within the boundaries.
@@ -38,7 +51,7 @@ public class World {
 	public boolean isValidPosition(ArrayList<Integer> pos){
 		boolean checker = true;
 		for(int i=0; i<3; i++){
-			if (pos.get(i)>49 || pos.get(i)<0)
+			if (pos.get(i)>= this.WORLD_BORDER.get(i) || pos.get(i) <0)
 				checker = false;
 		}
 		return checker;
@@ -320,9 +333,62 @@ public class World {
 		return new HashSet<Unit>(this.units);
 	}
 	
+	public void addUnit(Unit unit){
+		unit.setWorld(this);
+		this.units.add(unit);
+		if(this.getFactions().size() < World.MAX_FACTIONS && unit.getFaction() == null){
+			unit.setFaction(new Faction(unit, "Faction " + Integer.toString(this.factions.size() + 1)));
+			this.addFaction(unit.getFaction());
+		}
+		else{
+			Faction smallestFaction = this.getFactions().get(0);
+			for(Faction faction : this.getFactions()){
+				if(faction.getUnits().size() < smallestFaction.getUnits().size())
+					smallestFaction = faction;
+			}
+			unit.setFaction(smallestFaction);
+			if(unit.getFaction() != this.getFactions().get(0))
+				unit.startDefault();
+		}
+	}
+	
+	public void setUnits(Set<Unit> newSet){
+		this.units.clear();
+		for(Unit unit : newSet)
+			this.addUnit(unit);
+	}
+	
+	public void removeUnit(Unit unit){
+		unit.removeWorld();
+		this.units.remove(unit);
+	}
+	
 	public ArrayList<Faction> getFactions(){
 		return new ArrayList<Faction>(this.factions);
 	}
+	
+	public void addFaction(Faction faction){
+		if(this.getFactions().size() == World.MAX_FACTIONS)
+			return;
+		this.factions.add(faction);
+		faction.setWorld(this);
+		for(Unit unit : faction.getUnits())
+			this.addUnit(unit);
+	}
+	
+	public void setFactions(ArrayList<Faction> newList){
+		this.factions.clear();
+		for(Faction faction : newList)
+			this.addFaction(faction);
+	}
+	
+	public void removeFaction(Faction faction){
+		for(Unit unit : faction.getUnits())
+			this.removeUnit(unit);
+		faction.removeWorld();
+		this.removeFaction(faction);
+	}
+	
 	
 	private void createPositionList(){
 		for(int x=0 ; x< this.WORLD_BORDER.get(0) ; x++){
@@ -361,38 +427,28 @@ public class World {
 		return false;
 	}
 	
-	public void spawnUnit(){
+	public Unit spawnUnit(){
 		if(this.getUnits().size() == World.MAX_UNITS)
-			return;
+			return null;
 		Collections.shuffle(this.positionList);
 		int idx = 0;
 		while(!this.isWalkable(this.getBlockAtPos(this.positionList.get(idx)))){
 			idx += 1;
 			if(idx == this.positionList.size())
-				return;
+				return null;
 		}
 		ArrayList<Integer> position = this.positionList.get(idx);
 		int strength = (int)(Math.random()*75 + 25);
 		int weight = (int)(Math.random()*75 + 25);
 		int toughness = (int)(Math.random()*75 + 25);
 		int agility = (int)(Math.random()*75 + 25);
-		Unit unit = new Unit("Billie", position.get(0), position.get(1), position.get(2), strength, weight, agility, toughness);
-		this.units.add(unit);
-		if(this.getFactions().size() < World.MAX_FACTIONS)
-			unit.setFaction(new Faction(unit, "Faction" + Integer.toString(this.factions.size() + 1)));
-		else{
-			Faction smallestFaction = this.getFactions().get(0);
-			for(Faction faction : this.getFactions()){
-				if(faction.getUnits().size() < smallestFaction.getUnits().size())
-					smallestFaction = faction;
-			}
-			unit.setFaction(smallestFaction);
-			if(unit.getFaction() != this.getFactions().get(0))
-				unit.startDefault();
-		}
+		Unit unit = new Unit("Billie", position.get(0) + 0.5, position.get(1) + 0.5, position.get(2) + 0.5,
+				strength, weight, agility, toughness);
+		this.addUnit(unit);
+		return unit;
 	}
 	
-	protected Set<Boulder> getBoulders(){
+	public Set<Boulder> getBoulders(){
 		return new HashSet<Boulder>(this.boulders);
 	}
 	
@@ -406,13 +462,19 @@ public class World {
 		}
 	}
 	
+	protected void setBoulders(Set<Boulder> newSet){
+		this.boulders.clear();
+		for(Boulder boulder : newSet)
+			this.addBoulder(boulder);
+	}
+	
 	public void removeBoulder(Boulder boulder){
 		this.boulders.remove(boulder);
 		boulder.removeWorld();
 		this.getBlockAtPos(boulder.getPosition()).removeBoulder(boulder);
 	}
 	
-	protected Set<Log> getLogs(){
+	public Set<Log> getLogs(){
 		return new HashSet<Log>(this.logs);
 	}
 	
@@ -424,6 +486,11 @@ public class World {
 		} catch (IllegalArgumentException exc) {
 			return;
 		}
+	}
+	protected void setLogs(Set<Log> newSet){
+		this.logs.clear();
+		for(Log log : newSet)
+			this.addLog(log);
 	}
 	
 	public void removeLog(Log log){

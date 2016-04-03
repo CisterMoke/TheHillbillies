@@ -139,6 +139,18 @@ public class Faction {
 	public boolean canBeRemoved(Unit unit){
 		return unit.getFaction() != this;
 	}
+	
+	public World getWorld(){
+		return this.world;
+	}
+	
+	protected void setWorld(World world){
+		this.world = world;
+	}
+	
+	protected void removeWorld(){
+		this.world = null;
+	}
 	/**
 	 * Return a boolean stating whether or not this faction is terminated.
 	 */
@@ -161,4 +173,5 @@ public class Faction {
 	private static final int MAX_UNITS = 50;
 	private String name;
 	private boolean terminated = false;
+	private World world = null;
 	}

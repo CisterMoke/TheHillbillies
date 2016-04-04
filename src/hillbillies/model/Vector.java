@@ -68,6 +68,13 @@ public class Vector {
 		return coeff;
 	}
 	
+	public double distance(Vector target){
+		Vector thisvector = new Vector(this);
+		thisvector.add(target.getOpposite());
+		double distance = thisvector.getLength();
+		return distance;
+	}
+	
 	/**
 	 * Set the coefficients of this vector to the given coefficients.
 	 * @param 	x

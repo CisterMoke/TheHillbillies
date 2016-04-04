@@ -77,7 +77,7 @@ public class Unit {
 		this.setPrimStats(firstStats);
 		this.setHp(this.getMaxHp());	
 		this.setStam(this.getMaxStam());
-		this.setPosition(x, y, z);
+		this.setPosition(new Vector(x, y, z));
 		this.setTheta(Math.PI/2);
 		this.setTarget(this.getPosition());
 		this.setBaseSpeed(1.5*((double)(this.getPrimStats().get("str")+this.getPrimStats().get("agl")))
@@ -139,6 +139,21 @@ public class Unit {
 		if (this.getAttackCooldown() > 0){
 			this.setAttackCooldown(this.getAttackCooldown() - dt);
 		}
+		if(this.getState() == State.FALLING){
+			Vector newPos = this.getPosition();
+			Vector distance = this.getV_Vector();
+			distance.multiply(dt);
+			newPos.add(distance);
+			this.setPosition(newPos);
+			if(!this.shouldFall())
+				this.land();
+			return;
+		}
+		if(this.shouldFall()){
+			this.fall();
+			return;
+		}
+		
 		if(this.getState() == State.COMBAT){
 			Set<Unit> combatantsCopy = new HashSet<Unit>(this.combatants);
 			for (Unit unit : combatantsCopy){
@@ -151,7 +166,9 @@ public class Unit {
 			int idx = this.randInt()+1;
 			if (Unit.stateList.get(idx) == State.WALKING){
 				this.setState(State.WALKING);
-				this.move2(Math.random()*50, Math.random()*50, Math.random()*50);
+				this.move2(new Vector(Math.random()*this.getWorld().getBorders().get(0),
+						Math.random()*this.getWorld().getBorders().get(1),
+						Math.random()*this.getWorld().getBorders().get(2)));
 			}
 			if (Unit.stateList.get(idx)== State.WORKING){
 				this.work();
@@ -213,9 +230,13 @@ public class Unit {
 				
 			
 		}
-		if (this.getState() == State.IDLE && !this.getTarget().equals(this.getPosition())){
-			this.setState(State.WALKING);
-			this.setTheta(Math.atan2(v_vector.getY(),v_vector.getX()));
+		if (this.getState() == State.IDLE){
+			if(this.getFinTarget() != null)
+				move2(this.getFinTarget());
+			if(!this.getTarget().equals(this.getPosition())){
+				this.setState(State.WALKING);
+				this.setTheta(Math.atan2(v_vector.getY(),v_vector.getX()));
+			}
 		}
 		if (this.getTarget().equals(this.getPosition()) && this.getFinTarget() == null && this.getState() != State.IDLE){
 			this.setState(State.IDLE);
@@ -247,15 +268,15 @@ public class Unit {
 			distance.add(currentDirection.getOpposite());
 			boolean moved = false;
 			if(distance.getLength() > 0.5){
-				this.setPosition(this.getTarget().getX(), this.getTarget().getY(), this.getTarget().getZ());
+				this.setPosition(this.getTarget());
 				moved = true;
 				if (this.getFinTarget() != null){
-					this.move2(this.getFinTarget().getX(), this.getFinTarget().getY(), this.getFinTarget().getZ());
+					this.move2(this.getFinTarget());
 				}
 			}
 			if (!moved){
 				try{
-					this.setPosition(nextPos.getX(), nextPos.getY(), nextPos.getZ());
+					this.setPosition(nextPos);
 				}
 				catch (IllegalArgumentException exc){
 					this.setTarget(this.getPosition());
@@ -350,15 +371,15 @@ public class Unit {
 	 * 			| new.getPosition() == Vector(x, y, z) && isValidPosition(new.getPosition())
 	 * 
 	 */
-	public void setPosition(double x, double y, double z)throws IllegalArgumentException{
-		if (!isValidPosition(new Vector(x, y, z)))
+	public void setPosition(Vector position)throws IllegalArgumentException{
+		if (!isValidPosition(position))
 			throw new IllegalArgumentException("Out of bounds");
 		if(this.getWorld() != null){
-			this.getWorld().getBlockAtPos(this.getPosition()).removeUnit(this);;
-			this.pos = new Vector(x, y, z);
-			this.getWorld().getBlockAtPos(this.getPosition()).addUnit(this);
+			this.getBlock().removeUnit(this);;
+			this.pos = position;
+			this.getBlock().addUnit(this);
 		}
-		else this.pos = new Vector(x, y, z);
+		else this.pos = position;
 	}
 	/**
 	 * Returns the vector representing the current position of the unit.
@@ -379,12 +400,13 @@ public class Unit {
 		if(this.getWorld() == null)
 			return true;
 		ArrayList<Double> coords = pos.getCoeff();
-		boolean checker = true;
 		for(int i=0; i<3; i++){
 			if (coords.get(i) >= this.getWorld().getBorders().get(i) || coords.get(i)<0)
-				checker = false;
+				return false;
 		}
-		return checker;
+		if(this.getBlock().isSolid())
+			return false;
+		return true;
 	}
 	/**
 	 * 
@@ -526,8 +548,9 @@ public class Unit {
 	 *			|	then throw new IllegalArgumentException
 	 */
 	public void moveToAdjacent(int dx, int dy, int dz)throws IllegalArgumentException{
-		if (this.isMoving() && !this.getTarget().equals(this.getPosition()))
+		if (this.isMoving() && !this.getTarget().equals(this.getPosition())){
 			return;
+		}
 		if (Math.abs(dx) > 1 || Math.abs(dy) > 1 || Math.abs(dz) > 1){
 			throw new IllegalArgumentException("parameters must lie between -1 and 1!");
 		}
@@ -555,6 +578,8 @@ public class Unit {
 			this.setTarget(target);
 			this.setV_Vector();
 			this.setTheta(Math.atan2(v_vector.getY(),v_vector.getX()));
+			if (!this.Path.isEmpty())
+				this.Path.remove(0);
 		}
 	}
 	/**
@@ -610,12 +635,16 @@ public class Unit {
 	 * 			|	then return
 	 * 			| else moveToAdjacent(newx, newy, newz)
 	 */
-	public void moveTo(double x, double y, double z){
-		if (this.getPosition().equals(this.getFinTarget())){
+	public void moveTo(Vector position){
+//		if(this.getState() == State.COMBAT || this.getState() == State.FALLING)
+//			return;
+		if (this.getPosition().equals(position)){
 			this.finTarget = null;
 			return;
 		}
-		Vector newBlockCentre = new Vector(Math.floor(x)+0.5, Math.floor(y)+0.5, Math.floor(z)+0.5);
+		Vector newBlockCentre = new Vector(Math.floor(position.getX()),
+				Math.floor(position.getY()), Math.floor(position.getZ()));
+		newBlockCentre.add(0.5, 0.5, 0.5);
 		if (!newBlockCentre.equals(this.getFinTarget())){
 			try{
 				this.setFinTarget(newBlockCentre);
@@ -624,31 +653,34 @@ public class Unit {
 				return;
 			}
 		}
+		int dx = 0;
+		int dy = 0;
+		int dz = 0;
 		Vector currentBlockCentre = this.getBlockPosition();
 		currentBlockCentre.add(0.5, 0.5, 0.5);
 		if (currentBlockCentre.getX() > newBlockCentre.getX())
-			x = -1;
+			dx = -1;
 		else{
 			if (currentBlockCentre.getX() < newBlockCentre.getX())
-				x = 1;
-			else x = 0;
+				dx = 1;
+			else dx = 0;
 		}
 		if (currentBlockCentre.getY() > newBlockCentre.getY())
-			y = -1;
+			dy = -1;
 		else{
 			if (currentBlockCentre.getY() < newBlockCentre.getY())
-				y = 1;
-			else y = 0;
+				dy = 1;
+			else dy = 0;
 		}
 		if (currentBlockCentre.getZ() > newBlockCentre.getZ())
-			z = -1;
+			dz = -1;
 		else{
 			if (currentBlockCentre.getZ() < newBlockCentre.getZ())
-				z = 1;
-			else z = 0;
+				dz = 1;
+			else dz = 0;
 		}
 		try{
-			this.moveToAdjacent((int)(x),(int) (y),(int) (z));
+			this.moveToAdjacent(dx, dy, dz);
 		}
 		catch(IllegalArgumentException exc){
 			System.out.println("??????");
@@ -658,12 +690,18 @@ public class Unit {
 	
 	
 	
-	public void move2(double x, double y, double z){
+	
+	
+	
+	
+	public void move2(Vector pos){
 		if (this.getPosition().equals(this.getFinTarget())){
 			this.finTarget = null;
 			return;
 		}
-		Vector newBlockCentre = new Vector(Math.floor(x)+0.5, Math.floor(y)+0.5, Math.floor(z)+0.5);
+		Vector newBlockCentre = new Vector(Math.floor(pos.getX()),
+				Math.floor(pos.getY()), Math.floor(pos.getZ()));
+		newBlockCentre.add(0.5, 0.5, 0.5);
 		if (!newBlockCentre.equals(this.getFinTarget())){
 			try{
 				this.setFinTarget(newBlockCentre);
@@ -685,8 +723,6 @@ public class Unit {
 			System.out.println("??????");
 			return;
 		}
-		if (!this.Path.isEmpty())
-			this.Path.remove(0);
 	}
 	
 	
@@ -703,6 +739,10 @@ public class Unit {
 	 * 			| new.getV_Vector() == tempV_Vector
 	 */
 	private void setV_Vector(){
+		if(this.getState() == State.FALLING){
+			this.v_vector = new Vector(0, 0, -3);
+			return;
+		}
 		this.v_vector = this.getTarget();
 		this.v_vector.add(this.getPosition().getOpposite());
 		this.v_vector.normalize();
@@ -812,7 +852,9 @@ public class Unit {
 	 * 			| defender.defend(this)
 	 */
 	public void attack(Unit defender){
-		if(getFaction() == defender.getFaction())
+		if(this.getState() == State.FALLING)
+			return;
+		if(getFaction() == defender.getFaction() && this.getFaction() != null)
 			return;
 		if(!this.isAttackInitiated()){
 			this.initiateAttack(defender);
@@ -870,7 +912,7 @@ public class Unit {
 	 * 			| new.getTarget() == getPosition()
 	 * @effect The unit will move to its final target if the unit hasn't reached it yet.
 	 * 			| if (getFinTarget() != null)
-	 *			|	then moveTo(getFinTarget().getX(), getFinTarget().getY(), getFinTarget().getZ())
+	 *			|	then moveTo(getFinTarget())
 	 */
 	private void dodge(Unit attacker){
 		int dx = 0;
@@ -882,7 +924,7 @@ public class Unit {
 			try{
 				Vector newPos = this.getPosition();
 				newPos.add(dx, dy, 0);
-				this.setPosition(newPos.getX(),newPos.getY() , newPos.getZ());
+				this.setPosition(newPos);
 				checker  = false;
 			}
 			catch (IllegalArgumentException exc){
@@ -891,8 +933,9 @@ public class Unit {
 		}
 		
 		this.setTarget(this.getPosition());
+		
 		if (this.getFinTarget() != null)
-			this.move2(this.getFinTarget().getX(), this.getFinTarget().getY(), this.getFinTarget().getZ());
+			this.move2(this.getFinTarget());
 	}
 	
 	/**
@@ -1151,9 +1194,12 @@ public class Unit {
 	 * 				|!isValidPosition(target)
 	 */
 	public void setFinTarget(Vector target) throws IllegalArgumentException{
-		if (!this.isValidPosition(target))
-			throw new IllegalArgumentException("Target out of bounds!");
-		this.finTarget = new Vector(target);
+		System.out.println("target " + target.getCoeff());
+		if(target.equals(this.getTarget()))
+			return;
+		if (!this.isValidPosition(target) && !this.getWorld().isWalkable(this.getWorld().getBlockAtPos(target)))
+			throw new IllegalArgumentException("Invalid Target!");
+		this.finTarget = target;
 		this.pathFinding();
 	}
 	
@@ -1244,6 +1290,8 @@ public class Unit {
 	 *			|	result == 0
 	 */
 	public double getSpeed(){
+		if (this.getState() == State.FALLING)
+			return 3;
 		if (this.getState() == State.WALKING)
 			return this.v;
 		if (this.getState() == State.SPRINTING)
@@ -1289,7 +1337,7 @@ public class Unit {
 	 *
 	 */
 	public enum State{
-		IDLE, COMBAT, WALKING, WORKING, RESTING, SPRINTING		
+		IDLE, COMBAT, WALKING, WORKING, RESTING, SPRINTING, FALLING		
 	}
 	/**
 	 * Sets the state of the unit to the given state.
@@ -1361,7 +1409,7 @@ public class Unit {
 	 * 
 	 */
 	public void work(){
-		if (this.isMoving() || this.getState() == State.COMBAT)
+		if (this.isMoving() || this.getState() == State.COMBAT || this.getState() == State.FALLING)
 			return;
 		if (this.getState() != State.WORKING){
 			this.setState(State.WORKING);
@@ -1453,7 +1501,7 @@ public class Unit {
 	 * 			|	setMinRestTime(40.0/getPrimStats().get("tgh"))
 	 */
 	public void rest(){
-		if ((this.isMoving() || this.getState() == State.COMBAT) && (this.restTime < 180) )
+		if ((this.isMoving() || this.getState() == State.COMBAT || this.getState() == State.FALLING) && (this.restTime < 180) )
 			return;
 		if(this.getState() != State.RESTING && (this.getHp() != this.getMaxHp() || this.getStam() != this.getMaxStam())){
 			this.setState(State.RESTING);
@@ -1739,13 +1787,39 @@ public class Unit {
 		this.world = null;
 	}
 	
+	private void fall(){
+		this.setState(State.FALLING);
+		this.fallHeight = (int)(this.getPosition().getZ());
+	}
+	
+	private void land(){
+		this.setState(State.IDLE);
+		this.setTarget(this.getPosition());
+		int damage = this.fallHeight - (int) (this.getPosition().getZ());
+		if(!isValidHp(this.getHp() - damage *10))
+			setHp(0);
+		else this.setHp(this.getHp() - damage * 10);
+	}
+	
+	public boolean shouldFall(){
+		if(this.getWorld() == null)
+			return false;
+		if(!this.getWorld().isWalkable(this.getBlock()) && !this.getBlock().isSolid())
+				return true;
+		return false;
+	}
+	
+	public Block getBlock(){
+		return this.getWorld().getBlockAtPos(this.getPosition());
+	}
 	
 	public void pathFinding(){
+//		this.setTarget(this.getPosition());
 		if (this.getFinTarget()==null){
 			System.out.println("here");
 			return;
 		}
-		Block current = this.getWorld().getBlockAtPos(this.getBlockPosition()); 
+		Block current = this.getWorld().getBlockAtPos(this.getTarget()); 
 		Block end = getWorld().getBlockAtPos((this.getFinTarget()));
 		System.out.println("start" + current.getLocation().getCoeff());
 		System.out.println("end" + end.getLocation().getCoeff());
@@ -1781,8 +1855,13 @@ public class Unit {
 		ArrayList<Block> finalPath = new ArrayList<Block>(shortestPath.get(current));
 		if(current != end){
 			finalPath = null;
+			this.finTarget = null;
 		}
 		this.Path= finalPath;
+		if(finalPath != null){
+			for(Block block : finalPath)
+				System.out.println(block.getLocation().getCoeff());
+		}
 	}
 	
 	public Set<Block> getNext(Block current, Map<Block, Double> finalCost){
@@ -1802,12 +1881,6 @@ public class Unit {
 	public ArrayList<Block> getPath(){
 		return this.Path;
 	}
-	
-	
-	
-	
-	
-	
 	
 	private double theta;
 	
@@ -1874,4 +1947,5 @@ public class Unit {
 
 	private World world;
 	
+	private int fallHeight;
 }

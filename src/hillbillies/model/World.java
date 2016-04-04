@@ -56,6 +56,15 @@ public class World {
 		}
 		return checker;
 	}
+	
+	public boolean isValidPosition(Vector pos){
+		boolean checker = true;
+		for(int i=0; i<3; i++){
+			if (pos.getCoeff().get(i)>= this.WORLD_BORDER.get(i) || pos.getCoeff().get(i) <0)
+				checker = false;
+		}
+		return checker;
+	}
 
 	/**
 	 * 
@@ -215,8 +224,13 @@ public class World {
 	
 	public Block getBlockAtPos(Vector pos){
 		ArrayList<Integer> key = new ArrayList<Integer>();
-		for(double coeff : pos.getCoeff())
+//		System.out.println("pos " + pos.getCoeff());
+		for(double coeff : pos.getCoeff()){
 			key.add((int)(coeff));
+//			System.out.println("coeff " + coeff);
+//			System.out.println("Int coeff " + (int)(coeff));
+		}
+//		System.out.println("key" + key);
 		return this.getGameWorld().get(key);
 	}
 	
@@ -256,6 +270,23 @@ public class World {
 				clone2.set(i, clone2.get(i) + 1);
 			}
 
+		}
+		return adjacent;
+	}
+	
+	public ArrayList<Block> getAdjacent(Block V){
+		ArrayList<Block> adjacent = new ArrayList<Block>();
+		for (int i=-1; i<2; i++){
+			for (int j=-1; j<2; j++){
+				for (int k=-1; k<2; k++){
+					Vector check = new Vector((double)i, (double)j, (double)k);
+					Vector pos = V.getLocation();
+					pos.add(check);
+					if(!(i==0 && j==0 && k==0) && this.isValidPosition(pos)){
+						adjacent.add(this.getBlockAtPos(pos));
+					}
+				}
+			}
 		}
 		return adjacent;
 	}
@@ -416,13 +447,22 @@ public class World {
 	}
 	
 	public boolean isWalkable(Block block){
-		if(block.isSolid())
+		if(block.isSolid()){
 			return false;
-		if(this.isAtBorder(block))
+		}
+		if(block.getLocation().getZ() == 0)
 			return true;
-		for(Block cube : this.getDirectlyAdjacent(block)){
-			if(cube.isSolid())
-				return true;
+		for(int dx = -1; dx<2; dx++){
+			for(int dy = -1; dy<2; dy++){
+				for(int dz = -1; dz<2; dz++){
+					Vector adjacent = block.getLocation();
+					adjacent.add(dx, dy, dz);
+					if(isValidPosition(adjacent)){
+						if(this.getBlockAtPos(adjacent).isSolid())
+							return true;
+					}
+				}
+			}
 		}
 		return false;
 	}

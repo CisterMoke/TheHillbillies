@@ -141,9 +141,9 @@ public class Boulder {
 		if (!isValidPosition(position))
 			throw new IllegalArgumentException();
 		if(this.getWorld() != null){
-			this.getWorld().getBlockAtPos(this.getPosition()).removeBoulder(this);
+			this.getBlock().removeBoulder(this);
 			this.position = position;
-			this.getWorld().getBlockAtPos(this.getPosition()).addBoulder(this);
+			this.getBlock().addBoulder(this);
 		}
 		else this.position = position;
 	}
@@ -224,6 +224,11 @@ public class Boulder {
 	protected void removeWorld(){
 		this.world = null;
 	}
+	
+	public Block getBlock(){
+		return this.getWorld().getBlockAtPos(this.getPosition());
+	}
+	 
 	
 	/**
 	 * Variable registering the position of this Boulder.

@@ -140,9 +140,9 @@ public class Log {
 		if (!isValidPosition(position))
 			throw new IllegalArgumentException();
 		if(this.getWorld() != null){
-			this.getWorld().getBlockAtPos(this.getPosition()).removeLog(this);
+			this.getBlock().removeLog(this);
 			this.position = position;
-			this.getWorld().getBlockAtPos(this.getPosition()).addLog(this);
+			this.getBlock().addLog(this);
 		}
 		else this.position = position;
 	}
@@ -223,6 +223,11 @@ public class Log {
 	public void removeWorld(){
 		this.world = null;
 	}
+	
+	public Block getBlock(){
+		return this.getWorld().getBlockAtPos(this.getPosition());
+	}
+	
 	/**
 	 * Variable registering the position of this Log.
 	 */

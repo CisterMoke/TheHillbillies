@@ -25,7 +25,7 @@ public class Block{
 	 * returns location of this block
 	 */
 	public Vector getLocation(){
-		return this.location;
+		return new Vector(this.location);
 	}
 		
 	public boolean isSolid(){

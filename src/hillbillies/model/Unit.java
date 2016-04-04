@@ -151,7 +151,7 @@ public class Unit {
 			int idx = this.randInt()+1;
 			if (Unit.stateList.get(idx) == State.WALKING){
 				this.setState(State.WALKING);
-				this.moveTo(Math.random()*50, Math.random()*50, Math.random()*50);
+				this.move2(Math.random()*50, Math.random()*50, Math.random()*50);
 			}
 			if (Unit.stateList.get(idx)== State.WORKING){
 				this.work();
@@ -249,8 +249,9 @@ public class Unit {
 			if(distance.getLength() > 0.5){
 				this.setPosition(this.getTarget().getX(), this.getTarget().getY(), this.getTarget().getZ());
 				moved = true;
-				if (this.getFinTarget() != null)
-					this.moveTo(this.getFinTarget().getX(), this.getFinTarget().getY(), this.getFinTarget().getZ());
+				if (this.getFinTarget() != null){
+					this.move2(this.getFinTarget().getX(), this.getFinTarget().getY(), this.getFinTarget().getZ());
+				}
 			}
 			if (!moved){
 				try{
@@ -353,7 +354,7 @@ public class Unit {
 		if (!isValidPosition(new Vector(x, y, z)))
 			throw new IllegalArgumentException("Out of bounds");
 		if(this.getWorld() != null){
-			this.getWorld().getBlockAtPos(this.getPosition()).removeUnit(this);
+			this.getWorld().getBlockAtPos(this.getPosition()).removeUnit(this);;
 			this.pos = new Vector(x, y, z);
 			this.getWorld().getBlockAtPos(this.getPosition()).addUnit(this);
 		}
@@ -548,12 +549,13 @@ public class Unit {
 			if (dz == 1)
 				this.setWalkSpeed(-v_base*0.5);
 		}
-		
 		Vector target = this.getBlockPosition();
 		target.add(dx + 0.5, dy + 0.5, dz + 0.5);
-		this.setTarget(target);
-		this.setV_Vector();
-		this.setTheta(Math.atan2(v_vector.getY(),v_vector.getX()));
+		if (this.getWorld().isWalkable(this.getWorld().getBlockAtPos(target))){
+			this.setTarget(target);
+			this.setV_Vector();
+			this.setTheta(Math.atan2(v_vector.getY(),v_vector.getX()));
+		}
 	}
 	/**
 	 * Initiates the movement of a unit to a given position.
@@ -653,6 +655,44 @@ public class Unit {
 			return;
 		}
 	}
+	
+	
+	
+	public void move2(double x, double y, double z){
+		if (this.getPosition().equals(this.getFinTarget())){
+			this.finTarget = null;
+			return;
+		}
+		Vector newBlockCentre = new Vector(Math.floor(x)+0.5, Math.floor(y)+0.5, Math.floor(z)+0.5);
+		if (!newBlockCentre.equals(this.getFinTarget())){
+			try{
+				this.setFinTarget(newBlockCentre);
+			}
+			catch(IllegalArgumentException exc){
+				return;
+			}
+		}
+		if (this.getPath() == null || this.getPath().isEmpty()){
+			System.out.println("hi");
+			return;
+		}
+		Vector newpos = new Vector(this.getPath().get(0).getLocation());
+		newpos.add(this.getBlockPosition().getOpposite());
+		try{
+			this.moveToAdjacent((int)(newpos.getX()),(int) (newpos.getY()),(int) (newpos.getZ()));
+		}
+		catch(IllegalArgumentException exc){
+			System.out.println("??????");
+			return;
+		}
+		if (!this.Path.isEmpty())
+			this.Path.remove(0);
+	}
+	
+	
+	
+	
+	
 	/**
 	 * Updates the unit's velocity vector.
 	 * @effect 	A velocity vector is created pointing in the direction of the target.
@@ -852,7 +892,7 @@ public class Unit {
 		
 		this.setTarget(this.getPosition());
 		if (this.getFinTarget() != null)
-		this.moveTo(this.getFinTarget().getX(), this.getFinTarget().getY(), this.getFinTarget().getZ());
+			this.move2(this.getFinTarget().getX(), this.getFinTarget().getY(), this.getFinTarget().getZ());
 	}
 	
 	/**
@@ -1110,10 +1150,11 @@ public class Unit {
 	 * 			Throws and exception if the target is an invalid position.
 	 * 				|!isValidPosition(target)
 	 */
-	private void setFinTarget(Vector target) throws IllegalArgumentException{
+	public void setFinTarget(Vector target) throws IllegalArgumentException{
 		if (!this.isValidPosition(target))
 			throw new IllegalArgumentException("Target out of bounds!");
 		this.finTarget = new Vector(target);
+		this.pathFinding();
 	}
 	
 	/**
@@ -1698,7 +1739,79 @@ public class Unit {
 		this.world = null;
 	}
 	
+	
+	public void pathFinding(){
+		if (this.getFinTarget()==null){
+			System.out.println("here");
+			return;
+		}
+		Block current = this.getWorld().getBlockAtPos(this.getBlockPosition()); 
+		Block end = getWorld().getBlockAtPos((this.getFinTarget()));
+		System.out.println("start" + current.getLocation().getCoeff());
+		System.out.println("end" + end.getLocation().getCoeff());
+		Map<Block, ArrayList<Block>> shortestPath = new HashMap<Block, ArrayList<Block>>();
+		shortestPath.put(current, new ArrayList<Block>(Arrays.asList(current)));
+		Map<Block, Double> finalCost = new HashMap<Block, Double>();
+		Set<Block> toBeChecked = new HashSet<Block>();
+		for (Block block : this.getNext(current, finalCost)){
+			toBeChecked.add(block);
+			double newcost = current.getLocation().distance(block.getLocation());
+			finalCost.put(block, newcost);
+			ArrayList<Block> path = new ArrayList<Block>(Arrays.asList(block));
+			shortestPath.put(block, path);
+		}
+		while (!((current==end) || (toBeChecked.isEmpty()))){
+			toBeChecked.remove(current);
+			double lowestCost = 9999999;
+			for (Block block : toBeChecked){
+				if (finalCost.get(block)< lowestCost){
+					lowestCost = finalCost.get(block);
+					current = block;
+				}
+			}				
+			for (Block block : this.getNext(current, finalCost)){
+				toBeChecked.add(block);
+				double newcost = lowestCost + current.getLocation().distance(block.getLocation());
+				finalCost.put(block, newcost);
+				ArrayList<Block> path = new ArrayList<Block>(shortestPath.get(current));
+				path.add(block);
+				shortestPath.put(block, path);
+			}
+		}
+		ArrayList<Block> finalPath = new ArrayList<Block>(shortestPath.get(current));
+		if(current != end){
+			finalPath = null;
+		}
+		this.Path= finalPath;
+	}
+	
+	public Set<Block> getNext(Block current, Map<Block, Double> finalCost){
+		Set<Block> next = new HashSet<Block>();
+		for (Block block : this.getWorld().getAdjacent(current)){
+			if (this.getWorld().isWalkable(block) && !finalCost.containsKey(block)){
+				next.add(block);
+			}
+		}
+//		for (Block el : next){
+//			System.out.println(el.getLocation().getCoeff());
+//		}
+		return next;
+	}
+	
+	
+	public ArrayList<Block> getPath(){
+		return this.Path;
+	}
+	
+	
+	
+	
+	
+	
+	
 	private double theta;
+	
+	private ArrayList<Block> Path = null;
 	
 	private Map<String, Integer> primStats = new HashMap<String, Integer>();
 	

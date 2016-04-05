@@ -162,29 +162,8 @@ public class Unit {
 			return;
 		}
 		
-		if (this.getState() == State.IDLE && this.DefaultOn()){
-			int idx = this.randInt()+1;
-			if (Unit.stateList.get(idx) == State.WALKING){
-				this.setState(State.WALKING);
-				this.move2(new Vector(Math.random()*this.getWorld().getBorders().get(0),
-						Math.random()*this.getWorld().getBorders().get(1),
-						Math.random()*this.getWorld().getBorders().get(2)));
-			}
-			if (Unit.stateList.get(idx)== State.WORKING){
-				this.work();
-			}
-			if (Unit.stateList.get(idx) == State.RESTING){
-				this.rest();
-			}
-		}
-		
-		if (this.DefaultOn() && this.getState() == State.WALKING){
-			double sprintRoll = Math.random();
-			double sprintChance = 0.001;
-			if (sprintRoll < sprintChance){
-				this.setState(State.SPRINTING);
-			}
-		}
+		if(this.DefaultOn())
+			this.defaultBehaviour();
 			
 		if (this.restTime >= 180){
 			this.rest();
@@ -279,7 +258,10 @@ public class Unit {
 					this.setPosition(nextPos);
 				}
 				catch (IllegalArgumentException exc){
-					this.setTarget(this.getPosition());
+					Vector newTarget = this.getBlockPosition();
+					newTarget.add(0.5, 0.5, 0.5);
+					this.setTarget(newTarget);
+					
 				}
 				moved = true;
 			}
@@ -404,7 +386,7 @@ public class Unit {
 			if (coords.get(i) >= this.getWorld().getBorders().get(i) || coords.get(i)<0)
 				return false;
 		}
-		if(this.getBlock().isSolid())
+		if(this.getWorld().getBlockAtPos(pos).isSolid())
 			return false;
 		return true;
 	}
@@ -574,13 +556,7 @@ public class Unit {
 		}
 		Vector target = this.getBlockPosition();
 		target.add(dx + 0.5, dy + 0.5, dz + 0.5);
-		if (this.getWorld().isWalkable(this.getWorld().getBlockAtPos(target))){
-			this.setTarget(target);
-			this.setV_Vector();
-			this.setTheta(Math.atan2(v_vector.getY(),v_vector.getX()));
-			if (!this.Path.isEmpty())
-				this.Path.remove(0);
-		}
+		this.setTarget(target);
 	}
 	/**
 	 * Initiates the movement of a unit to a given position.
@@ -710,8 +686,10 @@ public class Unit {
 				return;
 			}
 		}
-		if (this.getPath() == null || this.getPath().isEmpty()){
-			System.out.println("hi");
+		if (this.getPath() == null || this.getPath().isEmpty())
+			return;
+		if(this.getPath().get(0) == this.getWorld().getBlockAtPos(this.getTarget())){
+			this.Path.remove(0);
 			return;
 		}
 		Vector newpos = new Vector(this.getPath().get(0).getLocation());
@@ -721,6 +699,8 @@ public class Unit {
 		}
 		catch(IllegalArgumentException exc){
 			System.out.println("??????");
+			System.out.println(this.getPath().get(0).getLocation().getCoeff());
+			System.out.println(this.getBlockPosition().getCoeff());
 			return;
 		}
 	}
@@ -883,7 +863,7 @@ public class Unit {
 	 * 			|result == 0.2*this.getPrimStats().get("agl")/attacker.getPrimStats().get("agl")
 	 */
 	private double getDodgeProb(Unit attacker){
-		return ((double)(0.2*this.getPrimStats().get("agl")))/attacker.getPrimStats().get("agl");
+		return ((double)(10*this.getPrimStats().get("agl")))/attacker.getPrimStats().get("agl");
 	}
 	/**
 	 * Returns whether or not then unit successfully dodged the attack.
@@ -915,27 +895,30 @@ public class Unit {
 	 *			|	then moveTo(getFinTarget())
 	 */
 	private void dodge(Unit attacker){
-		int dx = 0;
-		int dy = 0;
-		boolean checker = true;
-		while (dx == 0 && dy == 0 && checker){
-			dx = this.randInt();
-			dy = this.randInt();
-			try{
-				Vector newPos = this.getPosition();
-				newPos.add(dx, dy, 0);
-				this.setPosition(newPos);
-				checker  = false;
-			}
-			catch (IllegalArgumentException exc){
-				checker = true;
-			}
+		ArrayList<Block> dodgeBlocks = new ArrayList<Block>();
+		for(Block block : this.getWorld().getAdjacent(this.getBlock())){
+			if(block.getLocation().getZ() == this.getBlockPosition().getZ())
+				dodgeBlocks.add(block);
 		}
-		
+		Collections.shuffle(dodgeBlocks);
+		boolean moved = false;
+		while(!dodgeBlocks.isEmpty() && !moved){
+			if(this.getWorld().isWalkable(dodgeBlocks.get(0))){
+				Vector distance = new Vector(dodgeBlocks.get(0).getLocation());
+				distance.add(this.getBlockPosition().getOpposite());
+				Vector nextPos = this.getPosition();
+				nextPos.add(distance);
+				this.setPosition(nextPos);
+				moved = true;
+			}
+			dodgeBlocks.remove(0);
+		}
 		this.setTarget(this.getPosition());
 		
-		if (this.getFinTarget() != null)
+		if (this.getFinTarget() != null){
+			this.pathFinding();
 			this.move2(this.getFinTarget());
+		}
 	}
 	
 	/**
@@ -1169,6 +1152,10 @@ public class Unit {
 	 */
 	private void setTarget(Vector target){
 		this.target = target;
+		if(!target.equals(this.getPosition())){
+			this.setV_Vector();
+			this.setTheta(Math.atan2(v_vector.getY(),v_vector.getX()));
+		}
 	}
 	/**
 	 * 
@@ -1194,7 +1181,6 @@ public class Unit {
 	 * 				|!isValidPosition(target)
 	 */
 	public void setFinTarget(Vector target) throws IllegalArgumentException{
-		System.out.println("target " + target.getCoeff());
 		if(target.equals(this.getTarget()))
 			return;
 		if (!this.isValidPosition(target) && !this.getWorld().isWalkable(this.getWorld().getBlockAtPos(target)))
@@ -1815,14 +1801,12 @@ public class Unit {
 	
 	public void pathFinding(){
 //		this.setTarget(this.getPosition());
-		if (this.getFinTarget()==null){
-			System.out.println("here");
+		if (this.getFinTarget()==null)
 			return;
-		}
 		Block current = this.getWorld().getBlockAtPos(this.getTarget()); 
 		Block end = getWorld().getBlockAtPos((this.getFinTarget()));
-		System.out.println("start" + current.getLocation().getCoeff());
-		System.out.println("end" + end.getLocation().getCoeff());
+		System.out.println("start " + this.getTarget().getCoeff());
+		System.out.println("end " + this.getFinTarget().getCoeff());
 		Map<Block, ArrayList<Block>> shortestPath = new HashMap<Block, ArrayList<Block>>();
 		shortestPath.put(current, new ArrayList<Block>(Arrays.asList(current)));
 		Map<Block, Double> finalCost = new HashMap<Block, Double>();
@@ -1858,10 +1842,6 @@ public class Unit {
 			this.finTarget = null;
 		}
 		this.Path= finalPath;
-		if(finalPath != null){
-			for(Block block : finalPath)
-				System.out.println(block.getLocation().getCoeff());
-		}
 	}
 	
 	public Set<Block> getNext(Block current, Map<Block, Double> finalCost){
@@ -1871,15 +1851,61 @@ public class Unit {
 				next.add(block);
 			}
 		}
-//		for (Block el : next){
-//			System.out.println(el.getLocation().getCoeff());
-//		}
 		return next;
 	}
 	
 	
 	public ArrayList<Block> getPath(){
 		return this.Path;
+	}
+	
+	public Set<Unit> getAdjacentUnits(){
+		Set<Unit> adjacentUnits = new HashSet<Unit>();
+		for(Block block : this.getWorld().getAdjacent(this.getBlock()))
+			adjacentUnits.addAll(block.getUnitsInCube());
+		return adjacentUnits;
+	}
+	
+	public void defaultBehaviour(){
+		if(this.getState() == State.WALKING){
+			double sprintRoll = Math.random();
+			double sprintChance = 0.001;
+			if (sprintRoll < sprintChance){
+				this.setState(State.SPRINTING);
+			}
+			return;
+		}
+		if(this.getState() != State.IDLE)
+			return;
+		ArrayList<State> stateList = new ArrayList<State>(Unit.stateList);
+		if(this.getEnemyInRange() == null)
+			return;
+//			stateList.remove(3);
+		Collections.shuffle(stateList);
+		State state = stateList.get(0);
+//		if (state == State.WALKING){
+//			this.setState(State.WALKING);
+//			this.move2(new Vector(Math.random()*this.getWorld().getBorders().get(0),
+//					Math.random()*this.getWorld().getBorders().get(1),
+//					Math.random()*this.getWorld().getBorders().get(2)));
+//		}
+//		if (state== State.WORKING){
+//			this.work();
+//		}
+//		if (state == State.RESTING){
+//			this.rest();
+//		}
+		if(state == State.COMBAT){
+			this.attack(this.getEnemyInRange());
+			}
+	}
+	
+	public Unit getEnemyInRange(){
+		for(Unit enemy : this.getAdjacentUnits()){
+			if(enemy.getFaction() != this.getFaction())
+				return enemy;
+		}
+		return null;
 	}
 	
 	private double theta;
@@ -1930,7 +1956,7 @@ public class Unit {
 
 	private Faction faction = null;
 	
-	private static final ArrayList<State> stateList = new ArrayList<State>(Arrays.asList(State.WALKING, State.RESTING, State.WORKING));
+	private static final ArrayList<State> stateList = new ArrayList<State>(Arrays.asList(State.COMBAT));//State.WALKING, State.RESTING, State.WORKING, State.COMBAT));
 //	{
 //		Unit.stateList = new ArrayList<State>();
 //		Unit.stateList.add(State.WALKING);

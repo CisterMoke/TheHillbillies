@@ -367,6 +367,7 @@ public class World {
 	public void addUnit(Unit unit){
 		unit.setWorld(this);
 		this.units.add(unit);
+		this.getBlockAtPos(unit.getPosition()).addUnit(unit);
 		if(this.getFactions().size() < World.MAX_FACTIONS && unit.getFaction() == null){
 			unit.setFaction(new Faction(unit, "Faction " + Integer.toString(this.factions.size() + 1)));
 			this.addFaction(unit.getFaction());

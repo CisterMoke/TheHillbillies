@@ -154,6 +154,10 @@ public class Unit {
 			return;
 		}
 		
+		if(this.DefaultOn())
+			this.defaultBehaviour();
+			
+		
 		if(this.getState() == State.COMBAT){
 			Set<Unit> combatantsCopy = new HashSet<Unit>(this.combatants);
 			for (Unit unit : combatantsCopy){
@@ -161,10 +165,6 @@ public class Unit {
 			}
 			return;
 		}
-		
-		if(this.DefaultOn())
-			this.defaultBehaviour();
-			
 		if (this.restTime >= 180){
 			this.rest();
 		}
@@ -671,36 +671,41 @@ public class Unit {
 	
 	
 	public void move2(Vector pos){
+		Vector newBlock = new Vector(Math.floor(pos.getX()),
+				Math.floor(pos.getY()), Math.floor(pos.getZ()));
+		try{
+			Vector newTarget = new Vector(newBlock);
+			newTarget.add(0.5, 0.5, 0.5);
+			this.setFinTarget(newTarget);
+		}
+		catch(IllegalArgumentException exc){
+			return;
+		}
 		if (this.getPosition().equals(this.getFinTarget())){
 			this.finTarget = null;
 			return;
 		}
-		Vector newBlockCentre = new Vector(Math.floor(pos.getX()),
-				Math.floor(pos.getY()), Math.floor(pos.getZ()));
-		newBlockCentre.add(0.5, 0.5, 0.5);
-		if (!newBlockCentre.equals(this.getFinTarget())){
-			try{
-				this.setFinTarget(newBlockCentre);
-			}
-			catch(IllegalArgumentException exc){
-				return;
-			}
+		if (this.getPosition().equals(this.getTarget())){
+			if (this.getPath() == null || this.getPath().isEmpty() ||
+					!newBlock.equals(this.getPath().get(this.getPath().size() -1).getLocation()))
+				this.pathFinding();
 		}
 		if (this.getPath() == null || this.getPath().isEmpty())
 			return;
-		if(this.getPath().get(0) == this.getWorld().getBlockAtPos(this.getTarget())){
+		if(this.getPath().get(0) == this.getBlock() && this.getBlock() == this.getWorld().getBlockAtPos(this.getTarget())){
+			this.test = this.Path.get(0);
+			this.testPosition = this.getPosition();
+			this.testTarget = this.getTarget();
 			this.Path.remove(0);
 			return;
 		}
 		Vector newpos = new Vector(this.getPath().get(0).getLocation());
-		newpos.add(this.getBlockPosition().getOpposite());
+		newpos.add(this.getWorld().getBlockAtPos(this.getTarget()).getLocation().getOpposite());
 		try{
 			this.moveToAdjacent((int)(newpos.getX()),(int) (newpos.getY()),(int) (newpos.getZ()));
 		}
 		catch(IllegalArgumentException exc){
 			System.out.println("??????");
-			System.out.println(this.getPath().get(0).getLocation().getCoeff());
-			System.out.println(this.getBlockPosition().getCoeff());
 			return;
 		}
 	}
@@ -834,7 +839,7 @@ public class Unit {
 	public void attack(Unit defender){
 		if(this.getState() == State.FALLING)
 			return;
-		if(getFaction() == defender.getFaction() && this.getFaction() != null)
+		if(this.getFaction() == defender.getFaction() && this.getFaction() != null)
 			return;
 		if(!this.isAttackInitiated()){
 			this.initiateAttack(defender);
@@ -863,7 +868,7 @@ public class Unit {
 	 * 			|result == 0.2*this.getPrimStats().get("agl")/attacker.getPrimStats().get("agl")
 	 */
 	private double getDodgeProb(Unit attacker){
-		return ((double)(10*this.getPrimStats().get("agl")))/attacker.getPrimStats().get("agl");
+		return ((double)(0.2*this.getPrimStats().get("agl")))/attacker.getPrimStats().get("agl");
 	}
 	/**
 	 * Returns whether or not then unit successfully dodged the attack.
@@ -915,8 +920,9 @@ public class Unit {
 		}
 		this.setTarget(this.getPosition());
 		
+
+		this.pathFinding();
 		if (this.getFinTarget() != null){
-			this.pathFinding();
 			this.move2(this.getFinTarget());
 		}
 	}
@@ -1186,7 +1192,6 @@ public class Unit {
 		if (!this.isValidPosition(target) && !this.getWorld().isWalkable(this.getWorld().getBlockAtPos(target)))
 			throw new IllegalArgumentException("Invalid Target!");
 		this.finTarget = target;
-		this.pathFinding();
 	}
 	
 	/**
@@ -1796,17 +1801,17 @@ public class Unit {
 	}
 	
 	public Block getBlock(){
-		return this.getWorld().getBlockAtPos(this.getPosition());
+		return this.getWorld().getBlockAtPos(this.getBlockPosition());
 	}
 	
 	public void pathFinding(){
-//		this.setTarget(this.getPosition());
+//		Vector centreBlock = this.getBlockPosition();
+//		centreBlock.add(0.5, 0.5, 0.5);
+//		this.setTarget(centreBlock);
 		if (this.getFinTarget()==null)
 			return;
-		Block current = this.getWorld().getBlockAtPos(this.getTarget()); 
+		Block current = this.getBlock(); 
 		Block end = getWorld().getBlockAtPos((this.getFinTarget()));
-		System.out.println("start " + this.getTarget().getCoeff());
-		System.out.println("end " + this.getFinTarget().getCoeff());
 		Map<Block, ArrayList<Block>> shortestPath = new HashMap<Block, ArrayList<Block>>();
 		shortestPath.put(current, new ArrayList<Block>(Arrays.asList(current)));
 		Map<Block, Double> finalCost = new HashMap<Block, Double>();
@@ -1867,6 +1872,8 @@ public class Unit {
 	}
 	
 	public void defaultBehaviour(){
+		if(this.getFinTarget() != null)
+			return;
 		if(this.getState() == State.WALKING){
 			double sprintRoll = Math.random();
 			double sprintChance = 0.001;
@@ -1878,30 +1885,44 @@ public class Unit {
 		if(this.getState() != State.IDLE)
 			return;
 		ArrayList<State> stateList = new ArrayList<State>(Unit.stateList);
-		if(this.getEnemyInRange() == null)
-			return;
-//			stateList.remove(3);
+		if(this.getEnemyInRange()== null)
+			stateList.remove(stateList.indexOf(State.COMBAT));
+		if(this.getHp() == this.getMaxHp() && this.getStam() == this.getMaxStam())
+			stateList.remove(stateList.indexOf(State.RESTING));			
 		Collections.shuffle(stateList);
 		State state = stateList.get(0);
-//		if (state == State.WALKING){
-//			this.setState(State.WALKING);
-//			this.move2(new Vector(Math.random()*this.getWorld().getBorders().get(0),
-//					Math.random()*this.getWorld().getBorders().get(1),
-//					Math.random()*this.getWorld().getBorders().get(2)));
-//		}
-//		if (state== State.WORKING){
-//			this.work();
-//		}
-//		if (state == State.RESTING){
-//			this.rest();
-//		}
+		if (state == State.WALKING){
+			this.setState(State.WALKING);
+			ArrayList<ArrayList<Integer>> positions = this.getWorld().getPositionList();
+			Collections.shuffle(positions);
+			int idx = 0;
+			Block finTarget = this.getWorld().getBlockAtPos(positions.get(idx));
+			while(this.getPath() == null){
+				boolean flag = true;
+				while((!this.getWorld().isWalkable(finTarget) || flag) && idx < positions.size() - 1){
+					idx += 1;
+					finTarget = this.getWorld().getBlockAtPos(positions.get(idx));
+					flag = false;
+				}
+				this.move2(finTarget.getLocation());
+			}
+		}
+		if (state== State.WORKING){
+			this.work();
+		}
+		if (state == State.RESTING){
+			this.rest();
+		}
 		if(state == State.COMBAT){
-			this.attack(this.getEnemyInRange());
+			this.initiateAttack(this.getEnemyInRange());
 			}
 	}
 	
 	public Unit getEnemyInRange(){
-		for(Unit enemy : this.getAdjacentUnits()){
+		Set<Unit> unitsInRange = new HashSet<Unit>(this.getAdjacentUnits());
+		unitsInRange.addAll(this.getBlock().getUnitsInCube());
+		unitsInRange.remove(this);
+		for(Unit enemy : unitsInRange){
 			if(enemy.getFaction() != this.getFaction())
 				return enemy;
 		}
@@ -1956,7 +1977,7 @@ public class Unit {
 
 	private Faction faction = null;
 	
-	private static final ArrayList<State> stateList = new ArrayList<State>(Arrays.asList(State.COMBAT));//State.WALKING, State.RESTING, State.WORKING, State.COMBAT));
+	private static final ArrayList<State> stateList = new ArrayList<State>(Arrays.asList(State.COMBAT, State.WALKING, State.RESTING, State.WORKING));
 //	{
 //		Unit.stateList = new ArrayList<State>();
 //		Unit.stateList.add(State.WALKING);
@@ -1974,4 +1995,11 @@ public class Unit {
 	private World world;
 	
 	private int fallHeight;
+	
+	private Block test = null;
+	
+	private Vector testTarget = null;
+	
+	private Vector testPosition = null;
+	
 }

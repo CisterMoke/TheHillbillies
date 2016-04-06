@@ -37,7 +37,13 @@ public class Log {
 	}
 	
 	public void advanceTime(double dt){
-		
+		if(shouldFall()){
+			Vector velocity = new Vector(0, 0, -3);
+			velocity.multiply(dt);
+			Vector newPos = this.getPosition();
+			newPos.add(velocity);
+			this.setPosition(newPos);			
+		}
 	}
 	
 	/**
@@ -226,6 +232,14 @@ public class Log {
 	
 	public Block getBlock(){
 		return this.getWorld().getBlockAtPos(this.getPosition());
+	}
+	
+	public boolean shouldFall(){
+		if(this.getWorld() == null)
+			return false;
+		if(!this.getWorld().isWalkable(this.getBlock()) && !this.getBlock().isSolid())
+				return true;
+		return false;
 	}
 	
 	/**

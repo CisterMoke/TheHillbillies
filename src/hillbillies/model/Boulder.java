@@ -37,7 +37,13 @@ public class Boulder {
 	}
 	
 	public void advanceTime(double dt){
-		
+		if(shouldFall()){
+			Vector velocity = new Vector(0, 0, -3);
+			velocity.multiply(dt);
+			Vector newPos = this.getPosition();
+			newPos.add(velocity);
+			this.setPosition(newPos);			
+		}
 	}
 	
 	/**
@@ -109,7 +115,8 @@ public class Boulder {
 	 * @param  	position
 	 *         	The position to check.
 	 * @return 	True if and only if every coordinate lies within
-	 * 			the world's boundary.
+	 * 			the world's boundary or the block according to the given
+	 * 			position is walkable.
 	*/
 	public boolean isValidPosition(Vector position) {
 		if(position.getX() < 0 || position.getX() >= this.getWorld().getBorders().get(0))
@@ -117,6 +124,8 @@ public class Boulder {
 		if(position.getY() < 0 || position.getY() >= this.getWorld().getBorders().get(1))
 			return false;
 		if(position.getZ() < 0 || position.getZ() >= this.getWorld().getBorders().get(2))
+			return false;
+		if(!this.getWorld().isWalkable(this.getWorld().getBlockAtPos(position)))
 			return false;
 		return true;
 	}
@@ -229,6 +238,13 @@ public class Boulder {
 		return this.getWorld().getBlockAtPos(this.getPosition());
 	}
 	 
+	public boolean shouldFall(){
+		if(this.getWorld() == null)
+			return false;
+		if(!this.getWorld().isWalkable(this.getBlock()) && !this.getBlock().isSolid())
+				return true;
+		return false;
+	}
 	
 	/**
 	 * Variable registering the position of this Boulder.

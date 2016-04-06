@@ -483,7 +483,7 @@ public class World {
 		int weight = (int)(Math.random()*75 + 25);
 		int toughness = (int)(Math.random()*75 + 25);
 		int agility = (int)(Math.random()*75 + 25);
-		Unit unit = new Unit("Billie", position.get(0) + 0.9, position.get(1) + 0.9, position.get(2) + 0.9,
+		Unit unit = new Unit("Billie", position.get(0) + 0.5, position.get(1) + 0.5, position.get(2) + 0.5,
 				strength, weight, agility, toughness);
 		this.addUnit(unit);
 		return unit;

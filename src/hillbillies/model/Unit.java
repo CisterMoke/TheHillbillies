@@ -81,8 +81,6 @@ public class Unit {
 		this.setPosition(new Vector(x, y, z));
 		this.setTheta(Math.PI/2);
 		this.setTarget(this.getPosition());
-		this.setBaseSpeed(1.5*((double)(this.getPrimStats().get("str")+this.getPrimStats().get("agl")))
-				/(2*this.getTotalWeight()));
 		this.setState(State.IDLE);
 		
 	}
@@ -266,8 +264,7 @@ public class Unit {
 					this.setPosition(nextPos);
 				}
 				catch (IllegalArgumentException exc){
-					Vector newTarget = this.getBlockPosition();
-					newTarget.add(0.5, 0.5, 0.5);
+					Vector newTarget = this.getBlockCentre();
 					this.setTarget(newTarget);
 					
 				}
@@ -484,10 +481,10 @@ public class Unit {
 	 * Returns the vector of the center of the block in which the unit is located.
 	 * 
 	 */
-	public Vector getBlockPosition(){
-		double blockX = Math.floor(this.pos.getX());
-		double blockY = Math.floor(this.pos.getY());
-		double blockZ = Math.floor(this.pos.getZ());
+	public Vector getBlockCentre(){
+		double blockX = Math.floor(this.pos.getX()) + 0.5;
+		double blockY = Math.floor(this.pos.getY()) + 0.5;
+		double blockZ = Math.floor(this.pos.getZ()) + 0.5;
 			
 		return  new Vector(blockX, blockY, blockZ);
 	}
@@ -548,21 +545,21 @@ public class Unit {
 		if(this.getState() != State.SPRINTING)
 			this.setState(State.WALKING);
 		try{
-			this.setWalkSpeed(v_base);
+			this.setWalkSpeed(this.getBaseSpeed());
 			if (dz == -1)
-				this.setWalkSpeed(v_base*1.2);
+				this.setWalkSpeed(this.getBaseSpeed()*1.2);
 			if (dz == 1)
-				this.setWalkSpeed(v_base*0.5);
+				this.setWalkSpeed(this.getBaseSpeed()*0.5);
 		}
 		catch (IllegalArgumentException exc){
-			this.setWalkSpeed(-v_base);
+			this.setWalkSpeed(-this.getBaseSpeed());
 			if (dz == -1)
-				this.setWalkSpeed(-v_base*1.2);
+				this.setWalkSpeed(-this.getBaseSpeed()*1.2);
 			if (dz == 1)
-				this.setWalkSpeed(-v_base*0.5);
+				this.setWalkSpeed(-this.getBaseSpeed()*0.5);
 		}
-		Vector target = this.getBlockPosition();
-		target.add(dx + 0.5, dy + 0.5, dz + 0.5);
+		Vector target = this.getBlockCentre();
+		target.add(dx, dy, dz);
 		this.setTarget(target);
 	}
 	/**
@@ -830,7 +827,7 @@ public class Unit {
 	private void dodge(Unit attacker){
 		ArrayList<Block> dodgeBlocks = new ArrayList<Block>();
 		for(Block block : this.getWorld().getAdjacent(this.getBlock())){
-			if(block.getLocation().getZ() == this.getBlockPosition().getZ())
+			if(block.getLocation().getZ() == this.getBlock().getLocation().getZ())
 				dodgeBlocks.add(block);
 		}
 		Collections.shuffle(dodgeBlocks);
@@ -838,7 +835,7 @@ public class Unit {
 		while(!dodgeBlocks.isEmpty() && !moved){
 			if(this.getWorld().isWalkable(dodgeBlocks.get(0))){
 				Vector distance = new Vector(dodgeBlocks.get(0).getLocation());
-				distance.add(this.getBlockPosition().getOpposite());
+				distance.add(this.getBlock().getLocation().getOpposite());
 				Vector nextPos = this.getPosition();
 				nextPos.add(distance);
 				this.setPosition(nextPos);
@@ -847,9 +844,7 @@ public class Unit {
 			dodgeBlocks.remove(0);
 		}
 		this.setTarget(this.getPosition());
-		
-
-		this.pathFinding();
+		this.Path.clear();
 		if (this.getFinTarget() != null){
 			this.move2(this.getFinTarget());
 		}
@@ -1100,23 +1095,7 @@ public class Unit {
 	 */
 	@Basic
 	public double getBaseSpeed(){
-		return this.v_base;
-	}
-	/**
-	 * Sets the base speed of the unit to the given speed.
-	 * @param speed
-	 * 			The new speed of the unit.
-	 * @post	The base speed of the unit is set to the given speed.
-	 * 			|new.getBaseSpeed() == speed
-	 * @throws	IllegalArgumentException
-	 * 			Throws an exception if the given speed is not equal to
-	 * 			1.5*(strength + agility)/(2*totalWeigth).
-	 * 			|speed != 1.5*(getPrimStats().get("str")+getPrimStats().get("agl")))/(2*getTotalWeight())
-	 */
-	private void setBaseSpeed(double speed)throws IllegalArgumentException{
-		if (speed != 1.5*((double)(this.getPrimStats().get("str")+this.getPrimStats().get("agl")))/(2*this.getTotalWeight()))
-			throw new IllegalArgumentException("Invalid basespeed!");
-		this.v_base = speed;
+		return 1.5*((double)(this.getPrimStats().get("str")+this.getPrimStats().get("agl")))/(2*this.getTotalWeight());
 	}
 	
 	/**
@@ -1173,9 +1152,9 @@ public class Unit {
 		if (this.getState() == State.FALLING)
 			return 3;
 		if (this.getState() == State.WALKING)
-			return this.v;
+			return this.getWalkSpeed();
 		if (this.getState() == State.SPRINTING)
-			return this.v * 2;
+			return this.getWalkSpeed() * 2;
 		return 0;
 	}
 	/**
@@ -1303,8 +1282,8 @@ public class Unit {
 		Vector centerTarget = new Vector((double)Math.floor(target.getX()), (double)Math.floor(target.getY()), (double)Math.floor(target.getZ()));
 		centerTarget.add(0.5, 0.5, 0.5);
 		Vector distance = new Vector(centerTarget);
-		distance.add(this.getBlockPosition().getOpposite());
-		if (distance.getLength()>2){
+		distance.add(this.getBlockCentre().getOpposite());
+		if (distance.getLength() > 1.8){
 			return;
 		}
 		Block targetBlock = this.getWorld().getBlockAtPos(centerTarget);
@@ -1312,6 +1291,7 @@ public class Unit {
 		if (this.getState() != State.WORKING){
 			this.setState(State.WORKING);
 			this.setWorkTime(100/this.getPrimStats().get("str"));
+			this.setTheta(Math.atan2(distance.getY(), distance.getX()));
 		}
 		
 	}
@@ -1320,7 +1300,7 @@ public class Unit {
 		System.out.println("done");
 		boolean worked = false;
 		if (this.getWorkBlock().getBlockType()==BlockType.WORKSHOP){
-			if (!this.getWorkBlock().getBouldersInCube().isEmpty() || !this.getWorkBlock().getLogsInCube().isEmpty()){
+			if (!this.getWorkBlock().getBouldersInCube().isEmpty() && !this.getWorkBlock().getLogsInCube().isEmpty()){
 				System.out.println("workshop");
 				this.operateWorkshop(this.getWorkBlock());
 				worked = true;
@@ -1345,7 +1325,8 @@ public class Unit {
 		}
 		System.out.println("end");
 		this.setWorkBlock(null);
-		this.addExp(10);
+		if (worked == true)
+			this.addExp(10);
 		this.setState(State.IDLE);
 	}
 	
@@ -1354,7 +1335,6 @@ public class Unit {
 		int counter = 0;
 		for (Boulder boulder : targetBlock.getBouldersInCube()){
 			if (counter == random){
-				targetBlock.removeBoulder(boulder);
 				this.setBoulder(boulder);;
 				this.getWorld().removeBoulder(boulder);
 			}
@@ -1365,7 +1345,6 @@ public class Unit {
 		int counter2 = 0;
 		for (Log log : targetBlock.getLogsInCube()){
 			if (counter2 == random2){
-				targetBlock.removeLog(log);
 				this.setLog(log);
 				this.getWorld().removeLog(log);
 
@@ -1377,18 +1356,18 @@ public class Unit {
 	
 	public void operateWorkshop(Block targetBlock){
 		int random = (int) (Math.random()*targetBlock.getBouldersInCube().size());
-		int counter = 1;
+		int counter = 0;
 		for (Boulder boulder : targetBlock.getBouldersInCube()){
 			if (counter == random){
-				targetBlock.removeBoulder(boulder);
+				this.getWorld().removeBoulder(boulder);
 			}
 			counter++;
 		}
 		int random2 = (int) (Math.random()*targetBlock.getBouldersInCube().size());
-		int counter2 = 1;
+		int counter2 = 0;
 		for (Log log : targetBlock.getLogsInCube()){
 			if (counter2 == random2){
-				targetBlock.removeLog(log);
+				this.getWorld().removeLog(log);
 			}
 			counter2++;
 		}
@@ -1439,9 +1418,9 @@ public class Unit {
 	 */
 	public boolean inRange(Unit unit){
 		boolean inRange = false;
-		Vector distance = this.getBlockPosition();
-		distance.add(unit.getBlockPosition().getOpposite());
-		if (distance.getLength() < 2)
+		Vector distance = this.getBlockCentre();
+		distance.add(unit.getBlockCentre().getOpposite());
+		if (distance.getLength() < 1.8)
 			inRange = true;
 		return inRange;
 	}
@@ -1523,15 +1502,15 @@ public class Unit {
 	/**
 	 * The unit starts sprinting.
 	 */
-	public void sprint(){
-		this.setState(State.SPRINTING);
+	public void toggleSprint(){
+		if(this.getState() == State.WALKING){
+			this.setState(State.SPRINTING);
+			return;
+		}
+		if(this.getState() == State.SPRINTING)
+			this.setState(State.WALKING);
 	}
-	/**
-	 * The unit's state is set to IDLE.
-	 */
-	public void idle(){
-		this.setState(State.IDLE);
-	}
+	
 	/**
 	 * Return the faction to which this unit belongs.
 	 */
@@ -1709,14 +1688,14 @@ public class Unit {
 	 * 			set as the boulder that this unit is carrying and the
 	 * 			boulder will be removed from the world. Otherwise nothing
 	 * 			happens
-	 * 			| if(getBlockPosition() == boulder.getBlockPosition() &&
+	 * 			| if(getBlockCentre() == boulder.getBlockCentre() &&
 	 * 			|		!(setBoulder(boulder) throws IllegalArgumentException))
 	 * 			|	then setBoulder(boulder) &&
 	 * 			|	getWorld().removeBoulder(boulder)
 	 * 			| else return
 	 */
 	public void lift(Boulder boulder){
-		if(getBlockPosition() == boulder.getBlockPosition()){
+		if(getBlockCentre() == boulder.getBlockCentre()){
 			try {
 				this.setBoulder(boulder);
 				this.getWorld().removeBoulder(boulder);
@@ -1737,14 +1716,14 @@ public class Unit {
 	 * 			set as the log that this unit is carrying and the
 	 * 			log will be removed from the world. Otherwise nothing
 	 * 			happens
-	 * 			| if(getBlockPosition() == log.getBlockPosition() &&
+	 * 			| if(getBlockCentre() == log.getBlockCentre() &&
 	 * 			|		!(setLog(log) throws IllegalArgumentException))
 	 * 			|	then setLog(log) &&
 	 * 			|	getWorld().removeLog(log)
 	 * 			| else return
 	 */
 	public void lift(Log log){
-		if(getBlockPosition() == log.getBlockPosition()){
+		if(getBlockCentre() == log.getBlockCentre()){
 			try {
 				this.setLog(log);
 				this.getWorld().removeLog(log);
@@ -1806,6 +1785,11 @@ public class Unit {
 	private void land(){
 		this.setState(State.IDLE);
 		this.setTarget(this.getPosition());
+		if(this.getFinTarget() != null){
+			this.Path.clear();
+			this.setState(State.WALKING);
+			this.move2(this.getFinTarget());
+		}
 		int damage = this.fallHeight - (int) (this.getPosition().getZ());
 		if(!isValidHp(this.getHp() - damage *10))
 			setHp(0);
@@ -1821,7 +1805,7 @@ public class Unit {
 	}
 	
 	public Block getBlock(){
-		return this.getWorld().getBlockAtPos(this.getBlockPosition());
+		return this.getWorld().getBlockAtPos(this.getBlockCentre());
 	}
 	/**
 	 * Finds the shortest path from the position it is going to be after the current moveToAdjacent, to the FinalTarget, sets this as Path. 
@@ -1942,7 +1926,13 @@ public class Unit {
 			}
 		}
 		if (state== State.WORKING){
-			this.work();
+			ArrayList<Block> surrounding = new ArrayList<Block>();
+			for (Block block : this.getWorld().getAdjacent(this.getBlock())){
+				surrounding.add(block);
+			}
+			int random = (int) Math.floor(Math.random()*surrounding.size());
+			Block selected = surrounding.get(random);
+			this.workAt(selected.getLocation());
 		}
 		if (state == State.RESTING){
 			this.rest();
@@ -1951,6 +1941,9 @@ public class Unit {
 			this.initiateAttack(this.getEnemyInRange());
 			}
 	}
+	
+	
+	
 	
 	public Unit getEnemyInRange(){
 		Set<Unit> unitsInRange = new HashSet<Unit>(this.getAdjacentUnits());
@@ -2006,6 +1999,13 @@ public class Unit {
 		return true;
 	}
 	
+	public void updateFinTarget(){
+		if(!this.getWorld().isWalkable(this.getWorld().getBlockAtPos(this.getFinTarget()))){
+			this.finTarget = null;
+			this.Path.clear();
+		}
+	}
+	
 	private double theta;
 	
 	private ArrayList<Block> Path = new ArrayList<Block>();
@@ -2019,8 +2019,6 @@ public class Unit {
 	private Vector finTarget = null;
 	
 	private String name;
-		
-	private double v_base;
 	
 	private double v;
 	

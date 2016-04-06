@@ -35,14 +35,26 @@ public class Boulder {
 		this.setWeight(weight);
 		this.setPosition(new Vector(x, y, z));
 	}
-	
+	/**
+	 * Updates the boulder's position according to the given
+	 * 	time interval.
+	 * @param 	dt
+	 * 			The given time interval.
+	 * @effect	If the boulder should be falling, a new position is
+	 * 			being calculated with the given time interval and
+	 * 			the position is set to that position.
+	 */
 	public void advanceTime(double dt){
 		if(shouldFall()){
 			Vector velocity = new Vector(0, 0, -3);
 			velocity.multiply(dt);
 			Vector newPos = this.getPosition();
 			newPos.add(velocity);
-			this.setPosition(newPos);			
+			try {
+				this.setPosition(newPos);				
+			} catch (IllegalArgumentException exc) {
+				// TODO: handle exception
+			}			
 		}
 	}
 	
@@ -98,13 +110,13 @@ public class Boulder {
 	}
 	
 	/**
-	 * Return the coordinates of the cube
-	 * 	this Boulder is currently in.
+	 * Return the coordinates of the centre
+	 * 	of the cube this Boulder is currently in.
 	 */
-	public Vector getBlockPosition(){
-		double blockX = Math.floor(getPosition().getX());
-		double blockY = Math.floor(getPosition().getY());
-		double blockZ = Math.floor(getPosition().getZ());
+	public Vector getBlockCentre(){
+		double blockX = Math.floor(getPosition().getX()) + 0.5;
+		double blockY = Math.floor(getPosition().getY()) + 0.5;
+		double blockZ = Math.floor(getPosition().getZ()) + 0.5;
 		return new Vector(blockX, blockY, blockZ);
 	}
 	
@@ -116,7 +128,7 @@ public class Boulder {
 	 *         	The position to check.
 	 * @return 	True if and only if every coordinate lies within
 	 * 			the world's boundary or the block according to the given
-	 * 			position is walkable.
+	 * 			position is solid.
 	*/
 	public boolean isValidPosition(Vector position) {
 		if(this.getWorld() == null) return true;
@@ -195,8 +207,6 @@ public class Boulder {
 	 * 			carrying anything.
 	 */
 	public boolean canHaveAsCarrier(Unit unit){
-		System.out.println(this.carrier);
-		System.out.println(!unit.isCarrying());
 		return((this.carrier == null) && !unit.isCarrying());
 	}
 	
@@ -244,7 +254,9 @@ public class Boulder {
 	public boolean shouldFall(){
 		if(this.getWorld() == null)
 			return false;
-		if(!this.getWorld().isWalkable(this.getBlock()) && !this.getBlock().isSolid())
+		Vector floorPos = this.getBlockCentre();
+		floorPos.add(0, 0, -1);
+		if(!isValidPosition(floorPos))
 				return true;
 		return false;
 	}

@@ -32,7 +32,7 @@ public class Facade implements IFacade {
 
 	@Override
 	public int[] getCubeCoordinate(Unit unit) throws ModelException {
-		int[] cubepos = new int[]{(int) (unit.getBlockPosition().getX()), (int) (unit.getBlockPosition().getY()), (int)(unit.getBlockPosition().getZ())};
+		int[] cubepos = new int[]{(int) (unit.getBlockCentre().getX()), (int) (unit.getBlockCentre().getY()), (int)(unit.getBlockCentre().getZ())};
 		return cubepos;
 	}
 
@@ -156,13 +156,13 @@ public class Facade implements IFacade {
 	@Override
 	public void startSprinting(Unit unit) throws ModelException {
 		if (unit.getState() == State.WALKING)
-			unit.sprint();
+			unit.toggleSprint();
 	}
 
 	@Override
 	public void stopSprinting(Unit unit) throws ModelException {
 		if(unit.getState() == State.SPRINTING)
-			unit.idle();
+			unit.toggleSprint();
 		
 	}
 

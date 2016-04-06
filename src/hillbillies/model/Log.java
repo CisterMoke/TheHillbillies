@@ -35,7 +35,15 @@ public class Log {
 		this.setWeight(weight);
 		this.setPosition(new Vector(x, y, z));
 	}
-	
+	/**
+	 * Updates the log's position according to the given
+	 * 	time interval.
+	 * @param 	dt
+	 * 			The given time interval.
+	 * @effect	If the log should be falling, a new position is
+	 * 			being calculated with the given time interval and
+	 * 			the position is set to that position.
+	 */
 	public void advanceTime(double dt){
 		if(shouldFall()){
 			Vector velocity = new Vector(0, 0, -3);
@@ -101,10 +109,10 @@ public class Log {
 	 * Return the coordinates of the cube
 	 * 	this Log is currently in.
 	 */
-	public Vector getBlockPosition(){
-		double blockX = Math.floor(getPosition().getX());
-		double blockY = Math.floor(getPosition().getY());
-		double blockZ = Math.floor(getPosition().getZ());
+	public Vector getBlockCentre(){
+		double blockX = Math.floor(getPosition().getX()) + 0.5;
+		double blockY = Math.floor(getPosition().getY()) + 0.5;
+		double blockZ = Math.floor(getPosition().getZ()) + 0.5;
 		return new Vector(blockX, blockY, blockZ);
 	}
 	
@@ -116,7 +124,7 @@ public class Log {
 	 *         	The position to check.
 	 * @return 	True if and only if every coordinate lies within
 	 * 			the world's boundary or the block according to the given
-	 * 			position is walkable.
+	 * 			position is solid.
 	*/
 	public boolean isValidPosition(Vector position) {
 		if(this.getWorld() == null) return true;
@@ -242,7 +250,9 @@ public class Log {
 	public boolean shouldFall(){
 		if(this.getWorld() == null)
 			return false;
-		if(!this.getWorld().isWalkable(this.getBlock()) && !this.getBlock().isSolid())
+		Vector floorPos = this.getBlockCentre();
+		floorPos.add(0, 0, -1);
+		if(!isValidPosition(floorPos))
 				return true;
 		return false;
 	}

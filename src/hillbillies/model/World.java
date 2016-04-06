@@ -18,16 +18,28 @@ public class World {
 	 * Creates a new World
 	 * @param intialGameWorld : Map containing the Blocks of each position in the to be created world
 	 */
-	public World(Map<ArrayList<Integer>, Block> intialGameWorld, TerrainChangeListener listener){
-		this.setGameWorld(intialGameWorld);
+	public World(Map<ArrayList<Integer>, Block> initialGameWorld, TerrainChangeListener listener){
+		this.setGameWorld(initialGameWorld);
 		this.WORLD_BORDER = new ArrayList<Integer>(Arrays.asList(50, 50, 50));
+		for(ArrayList<Integer> key : initialGameWorld.keySet()){
+			if(initialGameWorld.get(key).isSolid())
+				this.addSolidBlock(initialGameWorld.get(key));
+		}
+		this.checkWorldForCollapse();
 		this.createPositionList();
 		this.modelListener=listener;
 	}
 	
 	public World(int sizeX, int sizeY, int sizeZ, Map<ArrayList<Integer>, Block> terrain, TerrainChangeListener modelListener2){
-		this.WORLD_BORDER = new ArrayList<Integer>(Arrays.asList(sizeX, sizeY, sizeZ));
 		this.setGameWorld(terrain);
+		this.WORLD_BORDER = new ArrayList<Integer>(Arrays.asList(sizeX, sizeY, sizeZ));
+		for(ArrayList<Integer> key : terrain.keySet()){
+			if(terrain.get(key).isSolid())
+				this.addSolidBlock(terrain.get(key));
+			if(this.isWalkable(terrain.get(key)))
+				this.addWalkableBlock(terrain.get(key));
+		}
+		this.checkWorldForCollapse();
 		this.createPositionList();
 		this.modelListener=modelListener2;
 	}
@@ -89,13 +101,17 @@ public class World {
 	 */
 	public void setToPassable(Block V){
 		V.setBlockType(BlockType.AIR);
-		this.modelListener.notifyTerrainChanged((int)Math.floor(V.getLocation().getX()), (int)Math.floor(V.getLocation().getY()), (int)Math.floor(V.getLocation().getZ()));
+		this.modelListener.notifyTerrainChanged((int)(V.getLocation().getX()), (int)(V.getLocation().getY()), (int)(V.getLocation().getZ()));
 		this.getStableSet().clear();
 		for(Block block : this.getDirectlyAdjacent(V)){
 			if(block.isSolid() && !this.getStableSet().contains(block)){
 				this.updateCollapseAt(block);
 			}
 		}
+		System.out.println(this.collapseSet);
+		Set<Block> newStableSet = this.getSolidBlocks();
+		newStableSet.removeAll(this.getCollapseSet());
+		this.setStableSet(newStableSet);
 		this.collapse();
 	}
 	/**
@@ -130,7 +146,6 @@ public class World {
 	public void collapse(){
 		double spawnChance = 0.25;
 		for (Block entry : collapseSet){
-			this.modelListener.notifyTerrainChanged((int)Math.floor(entry.getLocation().getX()), (int)Math.floor(entry.getLocation().getY()), (int)Math.floor(entry.getLocation().getZ()));
 			double spawnRoll = Math.random();
 			if (spawnRoll<spawnChance){
 				this.spawnObject(entry);
@@ -140,7 +155,9 @@ public class World {
 				if(unit.getPath().contains(entry)){
 					unit.pathFinding();
 				}
-			}	
+			}
+			this.modelListener.notifyTerrainChanged(
+					(int)(entry.getLocation().getX()), (int)(entry.getLocation().getY()), (int)(entry.getLocation().getZ()));	
 		}
 		this.getCollapseSet().clear();
 	}
@@ -224,7 +241,7 @@ public class World {
 		for (int i=-1; i<2; i++){
 			for (int j=-1; j<2; j++){
 				for (int k=-1; k<2; k++){
-					Vector check = new Vector((double)i, (double)j, (double)k);
+					Vector check = new Vector(i, j, k);
 					Vector pos = V.getLocation();
 					pos.add(check);
 					if(!(i==0 && j==0 && k==0) && this.isValidPosition(pos)){
@@ -403,10 +420,8 @@ public class World {
 				for(int dz = -1; dz<2; dz++){
 					Vector adjacent = block.getLocation();
 					adjacent.add(dx, dy, dz);
-					if(isValidPosition(adjacent)){
-						if(this.getBlockAtPos(adjacent).isSolid())
-							return true;
-					}
+					if(isValidPosition(adjacent) && this.getBlockAtPos(adjacent).isSolid())
+						return true;
 				}
 			}
 		}
@@ -543,13 +558,63 @@ public class World {
 		}
 		this.setCollapseSet(new HashSet<Block>(checked));
 	}
+	
 	public ArrayList<ArrayList<Integer>> getPositionList(){
 		return new ArrayList<ArrayList<Integer>>(this.positionList);
+	}
+		
+	public Set<Block> getSolidBlocks(){
+		return new HashSet<Block>(this.solidBlocks);
+	}
+	
+	public void addSolidBlock(Block block) throws IllegalArgumentException{
+		if(!block.isSolid())
+			throw new IllegalArgumentException("Non-solid block!");
+		this.solidBlocks.add(block);
+	}
+	
+	public void removeSolidBlock(Block block){
+		this.solidBlocks.remove(block);
+	}
+	
+	public void setSolidBlocks(Set<Block> newSet){
+		this.walkableBlocks = new HashSet<Block>(newSet);
+		
+	}public Set<Block> getWalkableBlocks(){
+		return new HashSet<Block>(this.walkableBlocks);
+	}
+	
+	public void addWalkableBlock(Block block) throws IllegalArgumentException{
+		if(!this.isWalkable(block))
+			throw new IllegalArgumentException("Non-walkable block!");
+		this.walkableBlocks.add(block);
+	}
+	
+	public void removeWalkableBlock(Block block){
+		this.walkableBlocks.remove(block);
+	}
+	
+	public void setWalkableBlocks(Set<Block> newSet){
+		this.walkableBlocks = new HashSet<Block>(newSet);
+	}
+	
+	public void checkWorldForCollapse(){
+		for(Block block : this.getWalkableBlocks()){
+			for(Block adjacent : this.getDirectlyAdjacent(block)){
+				if(adjacent.isSolid()){
+					if(!this.getCollapseSet().contains(adjacent) && !this.getStableSet().contains(adjacent))
+						this.updateCollapseAt(adjacent);
+				}
+			}
+		}
+		Set<Block> newStableSet = this.getSolidBlocks();
+		newStableSet.removeAll(this.getCollapseSet());
+		this.setStableSet(newStableSet);
 	}
 	
 	private TerrainChangeListener modelListener;
 	private Set<Block> collapseSet = new HashSet<Block>();
-	protected Map<ArrayList<Integer>, Block> gameWorld = new HashMap<ArrayList<Integer>, Block>();
+	private Map<ArrayList<Integer>, Block> gameWorld = new HashMap<ArrayList<Integer>, Block>();
 	private Set<Block> stableSet = new HashSet<Block>();
 	private ArrayList<Faction> factions = new ArrayList<Faction>();
 	private Set<Unit> units = new HashSet<Unit>();
@@ -559,6 +624,8 @@ public class World {
 	private final ArrayList<Integer> WORLD_BORDER;
 	private Set<Boulder> boulders = new HashSet<Boulder>();
 	private Set<Log> logs = new HashSet<Log>();
+	private Set<Block> solidBlocks = new HashSet<Block>();
+	private Set<Block> walkableBlocks = new HashSet<Block>();
 	
 
 	

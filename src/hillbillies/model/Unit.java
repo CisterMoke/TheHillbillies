@@ -3,6 +3,7 @@ package hillbillies.model;
 import java.util.*;
 
 import be.kuleuven.cs.som.annotate.*;
+import hillbillies.model.Block.BlockType;
 /**
  * Class respresenting a Hillbilly unit of the game.
  * @author Joost Croonen & Ruben Dedoncker
@@ -133,6 +134,11 @@ public class Unit {
 	public void advanceTime(double dt)throws IllegalArgumentException{
 		if (dt<0 || dt>0.2)
 			throw new IllegalArgumentException("Invalid time interval!");
+		if (this.isDead()){
+			this.drop();
+			this.getWorld().removeUnit(this);
+			return;
+		}
 		if (this.getMinRestTime() > 0){
 			this.setMinRestTime(this.getMinRestTime()- dt);
 		}
@@ -204,8 +210,7 @@ public class Unit {
 				return;
 			}
 			else{
-				this.addExp(10);
-				this.setState(State.IDLE);
+				this.workCompleted();
 			}
 				
 			
@@ -573,105 +578,11 @@ public class Unit {
 	 * 
 	 * @post	The final target is removed if the unit's position equals
 	 * 			the position of the final target. The method then ends here
-	 * 			|if(getPosition().equals(getFinTarget))
-	 * 			|	then new.getFinTarget() == null && return
 	 * @effect	Tries to create a new final target using the given coordinates.
 	 * 			If it fails to create one, nothing happens.
-	 * 			| newTarget == Vector(floor(x) + 0.5, floor(y) + 0.5, floor(z) + 0.5)
-	 * 			| if (setFinTarget(newTarget)
-	 * 			|		throws IllegalArgumentException)
-	 * 			|	then return
-	 * 			| else setFinTarget(newTarget)
-	 * @effect	Tries to move to the centre of an adjacent block that is closer to
-	 * 			the final target than the current block centre.
+	 * @effect	Tries to move to the centre of an adjacent block that is on the path towards the Final Target.
 	 * 			If it fails, nothing happens.
-	 * 			| blockx == this.getBlockPosition().getX() + 0.5
-	 * 			| blocky == this.getBlockPosition().getY() + 0.5
-	 * 			| blockz == this.getBlockPosition().getZ() + 0.5
-	 * 			| x'== floor(x) + 0.5
-	 * 			| y'== floor(y) + 0.5
-	 * 			| z'== floor(z) + 0.5
-	 * 			| if (blockx > x')
-	 * 			|	then newx == -1
-	 * 			| else if (blockx < x')
-	 * 			|	then newx == 1
-	 * 			| else 
-	 * 			|	then newx == 0
-	 * 			| if (blocky > y')
-	 * 			|	then newy == -1
-	 * 			| else if (blocky < y')
-	 * 			|	then newy == 1
-	 * 			| else 
-	 * 			|	then newy == 0
-	 * 			| if (blockz > z')
-	 * 			|	then newz == -1
-	 * 			| else if (blockz < z')
-	 * 			|	then newz == 1
-	 * 			| else 
-	 * 			|	then newz == 0
-	 * 			| if (moveToAdjacent(newx, newy, newz) throws IllegalArgumentException)
-	 * 			|	then return
-	 * 			| else moveToAdjacent(newx, newy, newz)
 	 */
-	public void moveTo(Vector position){
-//		if(this.getState() == State.COMBAT || this.getState() == State.FALLING)
-//			return;
-		if (this.getPosition().equals(position)){
-			this.finTarget = null;
-			return;
-		}
-		Vector newBlockCentre = new Vector(Math.floor(position.getX()),
-				Math.floor(position.getY()), Math.floor(position.getZ()));
-		newBlockCentre.add(0.5, 0.5, 0.5);
-		if (!newBlockCentre.equals(this.getFinTarget())){
-			try{
-				this.setFinTarget(newBlockCentre);
-			}
-			catch(IllegalArgumentException exc){
-				return;
-			}
-		}
-		int dx = 0;
-		int dy = 0;
-		int dz = 0;
-		Vector currentBlockCentre = this.getBlockPosition();
-		currentBlockCentre.add(0.5, 0.5, 0.5);
-		if (currentBlockCentre.getX() > newBlockCentre.getX())
-			dx = -1;
-		else{
-			if (currentBlockCentre.getX() < newBlockCentre.getX())
-				dx = 1;
-			else dx = 0;
-		}
-		if (currentBlockCentre.getY() > newBlockCentre.getY())
-			dy = -1;
-		else{
-			if (currentBlockCentre.getY() < newBlockCentre.getY())
-				dy = 1;
-			else dy = 0;
-		}
-		if (currentBlockCentre.getZ() > newBlockCentre.getZ())
-			dz = -1;
-		else{
-			if (currentBlockCentre.getZ() < newBlockCentre.getZ())
-				dz = 1;
-			else dz = 0;
-		}
-		try{
-			this.moveToAdjacent(dx, dy, dz);
-		}
-		catch(IllegalArgumentException exc){
-			System.out.println("??????");
-			return;
-		}
-	}
-	
-	
-	
-	
-	
-	
-	
 	public void move2(Vector pos){
 		if (this.getPosition().equals(this.getFinTarget())){
 			this.finTarget = null;
@@ -819,6 +730,10 @@ public class Unit {
 	 * @post	Nothing happens if the unit hasn't finished its attack yet.
 	 * 			| if(this.getAttackCooldown() > 0)
 	 * 			|	return
+	 * @post	Unit is set to Idle if the defender is dead, and nothing else happens.
+	 * 			| if(defender.isDead())
+	 * 			| 	this.setState(IDLE)
+	 * 			|	return
 	 * @effect	If the defender is out of range, the defender is removed from
 	 * 			the set of combatants, this unit's state is set to IDLE
 	 * 			and the value of isAttackInitiated is set to false.
@@ -836,6 +751,10 @@ public class Unit {
 	 * 			| defender.defend(this)
 	 */
 	public void attack(Unit defender){
+		if (defender == null || defender.isDead()){
+			this.setState(State.IDLE);
+			return;
+		}
 		if(this.getState() == State.FALLING || defender.getState() == State.FALLING)
 			return;
 		if(this.getFaction() == defender.getFaction() && this.getFaction() != null)
@@ -858,6 +777,16 @@ public class Unit {
 		this.toggleAttackInitiated();
 		this.removeCombatant(defender);
 		defender.defend(this);
+	}
+	/**
+	 * 
+	 * returns true if a unit's Hp is 0, meaning it is dead, and false otherwise.
+	 */
+	public boolean isDead(){
+		if (Math.ceil(this.getHp())==0){
+			return true;
+		}
+		return false;
 	}
 	/**
 	 * Returns the probability of dodging an attack.
@@ -1101,21 +1030,6 @@ public class Unit {
 	public int getMaxHp(){
 		return (int)(Math.ceil((double)(this.getPrimStats().get("str") * this.getPrimStats().get("wgt"))/50));
 	}
-//	/**
-//	 * Sets the maximum amount of hitpoints to the given amount.
-//	 * @param maxHp
-//	 * 			The given maximum allowed amount of hitpoints.
-//	 * @pre  The maximum allowed amount of hitpoints needs to be (strength * weight / 50).
-//	 * 			|maxHp == (getPrimStats().get("str") * getPrimStats().get("wgt"))/50
-//	 * @post The maximum allowed amount of hitpoints is set to the given amount.
-//	 * 			|new.getMaxHp() == maxHp
-//	 * 
-//	 */
-//	public void setMaxHp(int maxHp){
-//		assert(maxHp == (int)(Math.ceil((double)(this.getPrimStats().get("str") * this.getPrimStats().get("wgt"))/50)));
-//		this.maxHp = maxHp;
-//	}
-
 	/**
 	 * 
 	 * Returns the maximum allowed amount of stamina points of this unit.
@@ -1125,21 +1039,6 @@ public class Unit {
 	public int getMaxStam(){
 		return (int)(Math.ceil((double)(this.getPrimStats().get("str") * this.getPrimStats().get("wgt"))/50));
 	}
-//	/**
-//	 * Sets the maximum amount of stamina points to the given amount.
-//	 * @param maxStam
-//	 * 			The given maximum allowed amount of stamina points.
-//	 * @pre  The maximum allowed amount of stamina points needs to be (strength * weight / 50).
-//	 * 			|maxStam == (getPrimStats().get("str") * getPrimStats().get("wgt"))/50
-//	 * @post The maximum allowed amount of stamina points is set to the given amount.
-//	 * 			|new.getMaxStam() == maxStam
-//	 * 
-//	 */
-//	public void setMaxStam(int maxStam){
-//		assert(maxStam == (int)(Math.ceil((double)(this.getPrimStats().get("str") * this.getPrimStats().get("wgt"))/50)));
-//		this.maxStam = maxStam;
-//	}
-	
 	/**
 	 * 
 	 * Returns the current target of the unit.
@@ -1397,6 +1296,137 @@ public class Unit {
 			this.setWorkTime(500/this.getPrimStats().get("str"));
 		}
 	}
+	
+	public void workAt(Vector target){
+		if (this.isMoving() || this.getState() == State.COMBAT || this.getState() == State.FALLING)
+			return;
+		Vector centerTarget = new Vector((double)Math.floor(target.getX()), (double)Math.floor(target.getY()), (double)Math.floor(target.getZ()));
+		centerTarget.add(0.5, 0.5, 0.5);
+		Vector distance = new Vector(centerTarget);
+		distance.add(this.getBlockPosition().getOpposite());
+		if (distance.getLength()>2){
+			return;
+		}
+		Block targetBlock = this.getWorld().getBlockAtPos(centerTarget);
+		this.setWorkBlock(targetBlock);
+		if (this.getState() != State.WORKING){
+			this.setState(State.WORKING);
+			this.setWorkTime(100/this.getPrimStats().get("str"));
+		}
+		
+	}
+	
+	public void workCompleted(){
+		System.out.println("done");
+		boolean worked = false;
+		if (this.getWorkBlock().getBlockType()==BlockType.WORKSHOP){
+			if (!this.getWorkBlock().getBouldersInCube().isEmpty() || !this.getWorkBlock().getLogsInCube().isEmpty()){
+				System.out.println("workshop");
+				this.operateWorkshop(this.getWorkBlock());
+				worked = true;
+			}
+		}
+		if ((this.getWorkBlock().getBlockType()==BlockType.ROCK || this.getWorkBlock().getBlockType()==BlockType.WOOD) && worked==false){
+			System.out.println("dig");
+			this.getWorld().spawnObject(this.getWorkBlock());
+			this.getWorld().setToPassable(this.getWorkBlock());
+			worked = true;
+		}
+		if (this.isCarrying() && worked==false){
+			System.out.println("drop");
+			this.dropAt(this.getWorkBlock().getLocation());
+			worked = true;
+		}
+		System.out.println(this.getWorkBlock().getBouldersInCube().size());
+		if ((!this.getWorkBlock().getBouldersInCube().isEmpty() || !this.getWorkBlock().getLogsInCube().isEmpty())&& worked==false){
+			System.out.println("pickup");
+			this.pickup(this.getWorkBlock());
+			worked = true;
+		}
+		System.out.println("end");
+		this.setWorkBlock(null);
+		this.addExp(10);
+		this.setState(State.IDLE);
+	}
+	
+	public void pickup(Block targetBlock){
+		int random = (int) (Math.random()*targetBlock.getBouldersInCube().size());
+		int counter = 0;
+		for (Boulder boulder : targetBlock.getBouldersInCube()){
+			if (counter == random){
+				targetBlock.removeBoulder(boulder);
+				this.setBoulder(boulder);;
+				this.getWorld().removeBoulder(boulder);
+			}
+			counter++;
+		}
+		
+		int random2 = (int) (Math.random()*targetBlock.getBouldersInCube().size());
+		int counter2 = 0;
+		for (Log log : targetBlock.getLogsInCube()){
+			if (counter2 == random2){
+				targetBlock.removeLog(log);
+				this.setLog(log);
+				this.getWorld().removeLog(log);
+
+			}
+			counter2++;
+		}
+		
+	}
+	
+	public void operateWorkshop(Block targetBlock){
+		int random = (int) (Math.random()*targetBlock.getBouldersInCube().size());
+		int counter = 1;
+		for (Boulder boulder : targetBlock.getBouldersInCube()){
+			if (counter == random){
+				targetBlock.removeBoulder(boulder);
+			}
+			counter++;
+		}
+		int random2 = (int) (Math.random()*targetBlock.getBouldersInCube().size());
+		int counter2 = 1;
+		for (Log log : targetBlock.getLogsInCube()){
+			if (counter2 == random2){
+				targetBlock.removeLog(log);
+			}
+			counter2++;
+		}
+		ArrayList<String> statList = new ArrayList<String>(Arrays.asList("wgt", "tgh"));
+		Collections.shuffle(statList);
+		Map<String, Integer> newStats = this.getPrimStats();
+		double hpRatio = this.getHp()/this.getMaxHp();
+		double stamRatio = this.getStam()/this.getMaxStam();
+		for(String stat : statList){
+			if(this.getPrimStats().get(stat) != 200 ){
+				newStats.put(stat, newStats.get(stat) + 5);
+			}
+		}
+		if(!isValidWeight(newStats)){
+			newStats.put("wgt", (int) Math.ceil(((double)(primStats.get("str"))+(double)(primStats.get("agl"))) / 2));
+		}
+		this.setPrimStats(newStats);
+		this.setHp(hpRatio*this.getMaxHp());
+		this.setStam(stamRatio*this.getMaxStam());
+	}
+	
+	public void dropAt(Vector blockTarget){
+		blockTarget.add(new Vector(0.5, 0.5, 0.5));
+		if(getBoulder() != null){
+			this.getBoulder().setPosition(blockTarget);
+			this.getBoulder().removeCarrier();
+			this.getWorld().addBoulderAt(this.getWorkBlock(), this.getBoulder());
+			this.boulder = null;			
+		}
+		else{
+			this.getLog().setPosition(blockTarget);
+			this.getLog().removeCarrier();
+			this.getWorld().addLogAt(this.getWorkBlock(), this.getLog());
+			this.log = null;
+		}
+		this.setCarryWeight(0);
+	}
+	
 	/**
 	 * Returns whether or not the given unit is in range. Two units are in range if they
 	 *	occupy the same block or a block adjacent to the other block.
@@ -1793,7 +1823,9 @@ public class Unit {
 	public Block getBlock(){
 		return this.getWorld().getBlockAtPos(this.getBlockPosition());
 	}
-	
+	/**
+	 * Finds the shortest path from the position it is going to be after the current moveToAdjacent, to the FinalTarget, sets this as Path. 
+	 */
 	public void pathFinding(){
 		if (this.getFinTarget()==null)
 			return;
@@ -1835,7 +1867,13 @@ public class Unit {
 		}
 		this.Path= finalPath;
 	}
-	
+	/**
+	 * Finds the set of blocks that must be checked surrounding the current block.
+	 * @param current : Block for which the next blocks must be found.
+	 * @param finalCost : Map containing the cost of all Blocks that have already been given the cost required to move to them. 
+	 * 						This Map can therefore also be used to check whether a block has already been checked.
+	 * @return A set containing all the blocks that are walkable, adjacent to current and not yet in finalCost. 
+	 */
 	public Set<Block> getNext(Block current, Map<Block, Double> finalCost){
 		Set<Block> next = new HashSet<Block>();
 		for (Block block : this.getWorld().getAdjacent(current)){
@@ -1846,6 +1884,13 @@ public class Unit {
 		return next;
 	}
 	
+	public void setWorkBlock(Block block){
+		this.workBlock = block;
+	}
+	
+	public Block getWorkBlock(){
+		return this.workBlock;
+	}
 	
 	public ArrayList<Block> getPath(){
 		return this.Path;
@@ -2010,14 +2055,7 @@ public class Unit {
 	private Faction faction = null;
 	
 	private static final ArrayList<State> stateList = new ArrayList<State>(Arrays.asList(State.COMBAT, State.WALKING, State.RESTING, State.WORKING));
-//	{
-//		Unit.stateList = new ArrayList<State>();
-//		Unit.stateList.add(State.WALKING);
-//		Unit.stateList.add(State.RESTING);
-//		Unit.stateList.add(State.WORKING);
-//		
-//	}
-	
+
 	private Boulder boulder = null;
 	
 	private Log log = null;
@@ -2029,4 +2067,6 @@ public class Unit {
 	private int fallHeight;
 	
 	private int experience = 0;
+	
+	private Block workBlock=null;
 }

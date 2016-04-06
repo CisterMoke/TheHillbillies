@@ -249,7 +249,7 @@ public class Facade implements IFacade {
 				}
 			}
 		}
-		return new World(terrainTypes.length, terrainTypes[0].length, terrainTypes[0][0].length, terrain);
+		return new World(terrainTypes.length, terrainTypes[0].length, terrainTypes[0][0].length, terrain, modelListener);
 	}
 
 	@Override
@@ -319,8 +319,7 @@ public class Facade implements IFacade {
 
 	@Override
 	public boolean isAlive(Unit unit) throws ModelException {
-		// TODO Auto-generated method stub
-		return true;
+		return !(unit.isDead());
 	}
 
 	@Override
@@ -330,7 +329,9 @@ public class Facade implements IFacade {
 
 	@Override
 	public void workAt(Unit unit, int x, int y, int z) throws ModelException {
-		unit.work();
+		Vector pos = new Vector(x, y, z);
+		pos.add(new Vector(0.5, 0.5, 0.5));
+		unit.workAt(pos);
 
 	}
 

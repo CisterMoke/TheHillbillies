@@ -115,15 +115,20 @@ public class Log {
 	 * @param  	position
 	 *         	The position to check.
 	 * @return 	True if and only if every coordinate lies within
-	 * 			the world's boundary.
+	 * 			the world's boundary or the block according to the given
+	 * 			position is walkable.
 	*/
-	public static boolean isValidPosition(Vector position) {
-		boolean checker = true;
-		for(double coord : position.getCoeff()){
-			if((coord < 0) || (coord > 50))
-				checker = false;
-		}
-		return checker;
+	public boolean isValidPosition(Vector position) {
+		if(this.getWorld() == null) return true;
+		if(position.getX() < 0 || position.getX() >= this.getWorld().getBorders().get(0))
+			return false;
+		if(position.getY() < 0 || position.getY() >= this.getWorld().getBorders().get(1))
+			return false;
+		if(position.getZ() < 0 || position.getZ() >= this.getWorld().getBorders().get(2))
+			return false;
+		if(this.getWorld().getBlockAtPos(position).isSolid())
+			return false;
+		return true;
 	}
 	
 	/**
@@ -201,7 +206,7 @@ public class Log {
 	 */
 	protected void removeCarrier(){
 		try {
-			setPosition(getCarrier().getPosition());
+//			setPosition(getCarrier().getPosition());
 			this.carrier = null;
 		} catch (NullPointerException exc) {
 			return;

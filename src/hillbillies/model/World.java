@@ -10,6 +10,7 @@ import java.util.Set;
 
 import be.kuleuven.cs.som.annotate.*;
 import hillbillies.model.Block.BlockType;
+import hillbillies.part2.listener.TerrainChangeListener;
 
 public class World {
 	
@@ -17,16 +18,18 @@ public class World {
 	 * Creates a new World
 	 * @param intialGameWorld : Map containing the Blocks of each position in the to be created world
 	 */
-	public World(Map<ArrayList<Integer>, Block> intialGameWorld){
+	public World(Map<ArrayList<Integer>, Block> intialGameWorld, TerrainChangeListener listener){
 		this.setGameWorld(intialGameWorld);
 		this.WORLD_BORDER = new ArrayList<Integer>(Arrays.asList(50, 50, 50));
 		this.createPositionList();
+		this.modelListener=listener;
 	}
 	
-	public World(int sizeX, int sizeY, int sizeZ, Map<ArrayList<Integer>, Block> terrain){
+	public World(int sizeX, int sizeY, int sizeZ, Map<ArrayList<Integer>, Block> terrain, TerrainChangeListener modelListener2){
 		this.WORLD_BORDER = new ArrayList<Integer>(Arrays.asList(sizeX, sizeY, sizeZ));
 		this.setGameWorld(terrain);
 		this.createPositionList();
+		this.modelListener=modelListener2;
 	}
 	
 	public void advanceTime(double dt){
@@ -86,79 +89,15 @@ public class World {
 	 */
 	public void setToPassable(Block V){
 		V.setBlockType(BlockType.AIR);
+		this.modelListener.notifyTerrainChanged((int)Math.floor(V.getLocation().getX()), (int)Math.floor(V.getLocation().getY()), (int)Math.floor(V.getLocation().getZ()));
 		this.getStableSet().clear();
-		for(Block block : this.getDirectlyAdjacent(V))
+		for(Block block : this.getDirectlyAdjacent(V)){
 			if(block.isSolid() && !this.getStableSet().contains(block)){
 				this.updateCollapseAt(block);
 			}
-//		this.getStableSet().clear();
-//		ArrayList<Block> Adjacent = new ArrayList<Block>(this.getDirectlyAdjacent(V));
-//		for (Block element : Adjacent){
-//			if (element.isSolid()==true && this.inStableSet(element) == false && this.inCollapseSet(element)==false){
-//				this.getCheckedSet().clear();
-//				if (this.stillSuspended(element) == false ){
-//					for (Block item: getCheckedSet()){
-//						this.addCollapseSet(item);
-//					}
-//				}
-//			}
-//		}
-	//	this.collapse();
+		}
+		this.collapse();
 	}
-//	
-//	public void checkWorldSuspension(){
-//		this.getStableSet().clear();
-//		Set<Block> solidBlocks = new HashSet<Block>();
-//		for (Block element : this.getGameWorld().values()){
-//			if (element.isSolid()){
-//				solidBlocks.add(element);
-//			}
-//		}
-//		for (Block entry : solidBlocks){
-//			if (this.inStableSet(entry) == false && this.inCollapseSet(entry)==false){
-//				this.getCheckedSet().clear();
-//				if (this.stillSuspended(entry) == false ){
-//					for (Block item: getCheckedSet()){
-//						this.addCollapseSet(item);
-//					}
-//				}
-//			}
-//		}
-	//	this.collapse();
-//	}
-//	
-//	/**
-//	 * checks whether a given Block is connected to the edge of the world
-//	 * @param V : Block for which the check must be done
-//	 * returns true if V is connected to the border and false otherwise
-//	 */
-//	public boolean stillSuspended(Block V){
-//		System.out.println(V.getLocation());
-//		this.addToCheckedSet(V);
-//		if ((this.maxBlockCoord(V)==49) == false && (this.minBlockCoord(V)==0) == false){
-//			ArrayList<Block> Adjacent = new ArrayList<Block>(this.getDirectlyAdjacent(V));
-//			for (Block element : Adjacent){
-//				toBeChecked.add(element);
-//				if(this.inStableSet(element)==true){
-//					System.out.println("1 true");
-//					return true;
-//				}
-//				if (element.isSolid() == true && this.inCheckedSet(element)==false){
-//					boolean checker = stillSuspended(element);
-//					if (toBeChecked.isEmpty()){
-//						return checker;
-//					}
-//				}
-//			}
-//		}
-//		if ((this.maxBlockCoord(V)==49) == true || (this.minBlockCoord(V)==0) == true){
-//			System.out.println("2 true");
-//			return true;
-//		}
-//		System.out.println("3 false");
-//		toBeChecked.remove(V);
-//		return false;
-//	}
 	/**
 	 * Find the coordinate with the highest absolute value of a given block
 	 * @param V : Block for which the largest coordinate must be found
@@ -190,28 +129,38 @@ public class World {
 	
 	public void collapse(){
 		double spawnChance = 0.25;
-//		duration function
 		for (Block entry : collapseSet){
-			entry.setBlockType(BlockType.AIR);
+			this.modelListener.notifyTerrainChanged((int)Math.floor(entry.getLocation().getX()), (int)Math.floor(entry.getLocation().getY()), (int)Math.floor(entry.getLocation().getZ()));
 			double spawnRoll = Math.random();
 			if (spawnRoll<spawnChance){
-				int weight = (int) (40*Math.random()) + 10;
-				if (entry.getBlockType()==BlockType.ROCK){
-					double x = entry.getLocation().getX()+0.5;
-					double y = entry.getLocation().getY()+0.5;
-					double z = entry.getLocation().getZ()+0.5;
-					this.addBoulder(new Boulder(x, y, z, weight));
-				}
-				if (entry.getBlockType()==BlockType.WOOD){
-					double x = entry.getLocation().getX()+0.5;
-					double y = entry.getLocation().getY()+0.5;
-					double z = entry.getLocation().getZ()+0.5;
-					this.addLog(new Log(x, y, z, weight));
-				}
+				this.spawnObject(entry);
 			}
+			entry.setBlockType(BlockType.AIR);
+			for (Unit unit : this.getUnits()){
+				if(unit.getPath().contains(entry)){
+					unit.pathFinding();
+				}
+			}	
 		}
 		this.getCollapseSet().clear();
 	}
+	
+	public void spawnObject(Block block){
+		int weight = (int) (40*Math.random()) + 10;
+		if (block.getBlockType()==BlockType.ROCK){
+			double x = block.getLocation().getX()+0.5;
+			double y = block.getLocation().getY()+0.5;
+			double z = block.getLocation().getZ()+0.5;
+			this.addBoulder(new Boulder(x, y, z, weight));
+		}
+		if (block.getBlockType()==BlockType.WOOD){
+			double x = block.getLocation().getX()+0.5;
+			double y = block.getLocation().getY()+0.5;
+			double z = block.getLocation().getZ()+0.5;
+			this.addLog(new Log(x, y, z, weight));
+		}
+	}
+	
 	
 	/**
 	 * 
@@ -224,13 +173,9 @@ public class World {
 	
 	public Block getBlockAtPos(Vector pos){
 		ArrayList<Integer> key = new ArrayList<Integer>();
-//		System.out.println("pos " + pos.getCoeff());
 		for(double coeff : pos.getCoeff()){
 			key.add((int)(coeff));
-//			System.out.println("coeff " + coeff);
-//			System.out.println("Int coeff " + (int)(coeff));
 		}
-//		System.out.println("key" + key);
 		return this.getGameWorld().get(key);
 	}
 	
@@ -503,6 +448,16 @@ public class World {
 		}
 	}
 	
+	public void addBoulderAt(Block block, Boulder boulder){
+		try {
+			boulder.setWorld(this);
+			this.boulders.add(boulder);
+			block.addBoulder(boulder);
+		} catch (IllegalArgumentException exc) {
+			return;
+		}
+	}
+	
 	protected void setBoulders(Set<Boulder> newSet){
 		this.boulders.clear();
 		for(Boulder boulder : newSet)
@@ -528,6 +483,17 @@ public class World {
 			return;
 		}
 	}
+	
+	public void addLogAt(Block block, Log log){
+		try {
+			log.setWorld(this);
+			this.logs.add(log);
+			block.addLog(log);
+		} catch (IllegalArgumentException exc) {
+			return;
+		}
+	}
+	
 	protected void setLogs(Set<Log> newSet){
 		this.logs.clear();
 		for(Log log : newSet)
@@ -545,59 +511,7 @@ public class World {
 	}
 	
 	
-	
-//	public void updateCollapseAt(Block startBlock){
-////		System.out.println("updatecollapse");
-//		this.checkedSet.add(startBlock);
-//		this.toBeChecked.remove(startBlock);
-//		if(this.isAtBorder(startBlock)){
-//			this.setStableSet(new HashSet<Block>(this.getCheckedSet()));
-//			return;
-//		}
-////		System.out.println(startBlock.getLocation().getCoeff());
-//		for(Block adjacent : this.getDirectlyAdjacent(startBlock)){
-//			if(adjacent.isSolid() && !this.checkedSet.contains(adjacent))
-//				this.toBeChecked.add(adjacent);
-//		}
-//		for(Block adjacent : this.getDirectlyAdjacent(startBlock)){
-//			if(this.isAtBorder(adjacent) && adjacent.isSolid()){
-////				System.out.println("Border");
-//				this.setStableSet(new HashSet<Block>(this.getCheckedSet()));
-//				return;
-//			}
-//			if(this.getCollapseSet().contains(adjacent)){
-////				System.out.println("Adjacent Collapse");
-//				this.addCollapseSet(startBlock);
-//				return;
-//			}
-//			if(!this.checkedSet.contains(adjacent) && adjacent.isSolid()){
-//				this.checkedSet.add(adjacent);
-//				this.updateCollapseAt(adjacent);
-////				System.out.println(this.getStableSet().contains(adjacent));
-//				if(this.getStableSet().contains(adjacent)){
-////					System.out.println("Adjacent Stable");
-//					this.getStableSet().add(startBlock);
-//					return;
-//				}
-//				if(this.getCollapseSet().contains(adjacent)){
-////					System.out.println("No Stable");
-//					this.addCollapseSet(startBlock);
-//					return;
-//				}
-//			}
-//		}
-//		if(this.toBeChecked.isEmpty()){
-////			System.out.println("LastBlock");
-//			this.setCollapseSet(new HashSet<Block>(this.checkedSet));
-//			return;
-//		}
-//		return;
-//	}
-	
 	public void updateCollapseAt(Block startBlock){
-//		if(this.getStableSet().contains(startBlock)){
-//			return;
-//		}
 		if(!startBlock.isSolid())
 			return;
 		Set<Block> checked = new HashSet<Block>();
@@ -632,6 +546,8 @@ public class World {
 	public ArrayList<ArrayList<Integer>> getPositionList(){
 		return new ArrayList<ArrayList<Integer>>(this.positionList);
 	}
+	
+	private TerrainChangeListener modelListener;
 	private Set<Block> collapseSet = new HashSet<Block>();
 	protected Map<ArrayList<Integer>, Block> gameWorld = new HashMap<ArrayList<Integer>, Block>();
 	private Set<Block> stableSet = new HashSet<Block>();

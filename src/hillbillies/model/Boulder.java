@@ -119,13 +119,14 @@ public class Boulder {
 	 * 			position is walkable.
 	*/
 	public boolean isValidPosition(Vector position) {
+		if(this.getWorld() == null) return true;
 		if(position.getX() < 0 || position.getX() >= this.getWorld().getBorders().get(0))
 			return false;
 		if(position.getY() < 0 || position.getY() >= this.getWorld().getBorders().get(1))
 			return false;
 		if(position.getZ() < 0 || position.getZ() >= this.getWorld().getBorders().get(2))
 			return false;
-		if(!this.getWorld().isWalkable(this.getWorld().getBlockAtPos(position)))
+		if(this.getWorld().getBlockAtPos(position).isSolid())
 			return false;
 		return true;
 	}
@@ -194,6 +195,8 @@ public class Boulder {
 	 * 			carrying anything.
 	 */
 	public boolean canHaveAsCarrier(Unit unit){
+		System.out.println(this.carrier);
+		System.out.println(!unit.isCarrying());
 		return((this.carrier == null) && !unit.isCarrying());
 	}
 	
@@ -205,7 +208,7 @@ public class Boulder {
 	 */
 	protected void removeCarrier(){
 		try {
-			setPosition(getCarrier().getPosition());
+			//setPosition(getCarrier().getPosition());
 			this.carrier = null;
 		} catch (NullPointerException exc) {
 			return;

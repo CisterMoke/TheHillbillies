@@ -50,11 +50,9 @@ public class Boulder {
 			velocity.multiply(dt);
 			Vector newPos = this.getPosition();
 			newPos.add(velocity);
-			try {
-				this.setPosition(newPos);				
-			} catch (IllegalArgumentException exc) {
-				// TODO: handle exception
-			}			
+			System.out.println(this.getBlock().getLocation().getCoeff());
+			System.out.println(newPos.getCoeff());
+			this.setPosition(newPos);			
 		}
 	}
 	
@@ -256,9 +254,11 @@ public class Boulder {
 			return false;
 		Vector floorPos = this.getBlockCentre();
 		floorPos.add(0, 0, -1);
-		if(!isValidPosition(floorPos))
-				return true;
-		return false;
+		if(!isValidPosition(floorPos)){
+			this.setPosition(this.getBlockCentre());
+			return false;
+		}
+		return true;
 	}
 	
 	/**

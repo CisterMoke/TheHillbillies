@@ -33,12 +33,16 @@ public class World {
 	public World(int sizeX, int sizeY, int sizeZ, Map<ArrayList<Integer>, Block> terrain, TerrainChangeListener modelListener2){
 		this.setGameWorld(terrain);
 		this.WORLD_BORDER = new ArrayList<Integer>(Arrays.asList(sizeX, sizeY, sizeZ));
+		System.out.println("for start");
 		for(ArrayList<Integer> key : terrain.keySet()){
 			if(terrain.get(key).isSolid())
 				this.addSolidBlock(terrain.get(key));
-			if(this.isWalkable(terrain.get(key)))
+			else {
+				if(this.isWalkable(terrain.get(key)))
 				this.addWalkableBlock(terrain.get(key));
+			}
 		}
+		System.out.println("for stop");
 		this.checkWorldForCollapse();
 		this.createPositionList();
 		this.modelListener=modelListener2;
@@ -101,16 +105,17 @@ public class World {
 	 */
 	public void setToPassable(Block V){
 		V.setBlockType(BlockType.AIR);
+		this.removeSolidBlock(V);
 		this.modelListener.notifyTerrainChanged((int)(V.getLocation().getX()), (int)(V.getLocation().getY()), (int)(V.getLocation().getZ()));
-		this.getStableSet().clear();
+		this.stableSet.clear();
 		for(Block block : this.getDirectlyAdjacent(V)){
-			if(block.isSolid() && !this.getStableSet().contains(block)){
+			if(block.isSolid() && !this.stableSet.contains(block)){
 				this.updateCollapseAt(block);
 			}
 		}
 		System.out.println(this.collapseSet);
 		Set<Block> newStableSet = this.getSolidBlocks();
-		newStableSet.removeAll(this.getCollapseSet());
+		newStableSet.removeAll(this.collapseSet);
 		this.setStableSet(newStableSet);
 		this.collapse();
 	}
@@ -153,13 +158,16 @@ public class World {
 			entry.setBlockType(BlockType.AIR);
 			for (Unit unit : this.getUnits()){
 				if(unit.getPath().contains(entry)){
-					unit.pathFinding();
+					unit.clearPath();
+					unit.move2(unit.getFinTarget());
 				}
 			}
 			this.modelListener.notifyTerrainChanged(
 					(int)(entry.getLocation().getX()), (int)(entry.getLocation().getY()), (int)(entry.getLocation().getZ()));	
 		}
-		this.getCollapseSet().clear();
+		this.solidBlocks.removeAll(collapseSet);
+		this.walkableBlocks.removeAll(collapseSet);
+		this.collapseSet.clear();
 	}
 	
 	public void spawnObject(Block block){
@@ -258,7 +266,7 @@ public class World {
 	 * returns a set with Blocks that are known to be connected to the border
 	 */
 	public Set<Block> getStableSet(){
-		return this.stableSet;
+		return new HashSet<Block>(this.stableSet);
 	}
 	
 	/**
@@ -276,7 +284,7 @@ public class World {
 	  */
 	public void addToStableSet(Block v){
 		if(this.inStableSet(v)==false){
-			this.getStableSet().add(v);
+			this.stableSet.add(v);
 		}
 	}
 	
@@ -294,7 +302,7 @@ public class World {
 	 * returns a set with Blocks that are not connected to the border and therefore must collapse
 	 */
 	public Set<Block> getCollapseSet(){
-		return this.collapseSet;
+		return new HashSet<Block>(this.collapseSet);
 	}
 	/**
 	 * changes collapseSet to the given set
@@ -310,7 +318,7 @@ public class World {
 	  * @post collapseSet contains V
 	  */
 	public void addCollapseSet(Block V){
-		this.getCollapseSet().add(V);
+		this.collapseSet.add(V);
 	}
 	/**
 	 * checks whether a given element is in the set collapseSet or not
@@ -413,6 +421,8 @@ public class World {
 		if(block.isSolid()){
 			return false;
 		}
+		if(this.walkableBlocks.contains(block))
+			return true;
 		if(block.getLocation().getZ() == 0)
 			return true;
 		for(int dx = -1; dx<2; dx++){
@@ -541,7 +551,7 @@ public class World {
 				return;
 			}
 			for(Block adjacent : this.getDirectlyAdjacent(startBlock)){
-				if(this.getStableSet().contains(adjacent)){
+				if(this.stableSet.contains(adjacent)){
 					this.setStableSet(new HashSet<Block>(checked));
 					return;					
 				}
@@ -599,16 +609,17 @@ public class World {
 	}
 	
 	public void checkWorldForCollapse(){
+		System.out.println("check start");
 		for(Block block : this.getWalkableBlocks()){
 			for(Block adjacent : this.getDirectlyAdjacent(block)){
 				if(adjacent.isSolid()){
-					if(!this.getCollapseSet().contains(adjacent) && !this.getStableSet().contains(adjacent))
+					if(!this.collapseSet.contains(adjacent) && !this.stableSet.contains(adjacent))
 						this.updateCollapseAt(adjacent);
 				}
 			}
 		}
 		Set<Block> newStableSet = this.getSolidBlocks();
-		newStableSet.removeAll(this.getCollapseSet());
+		newStableSet.removeAll(this.collapseSet);
 		this.setStableSet(newStableSet);
 	}
 	

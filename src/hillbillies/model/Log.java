@@ -252,9 +252,11 @@ public class Log {
 			return false;
 		Vector floorPos = this.getBlockCentre();
 		floorPos.add(0, 0, -1);
-		if(!isValidPosition(floorPos))
-				return true;
-		return false;
+		if(!isValidPosition(floorPos)){
+			this.setPosition(this.getBlockCentre());
+			return false;
+		}
+		return true;
 	}
 	
 	/**

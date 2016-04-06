@@ -969,6 +969,8 @@ public class Unit {
 	public void setHp(double hp){
 		assert isValidHp(hp);
 		this.hp = hp;
+		if (this.isDead())
+			this.terminate();
 	}
 	/**
 	 * 
@@ -1290,7 +1292,7 @@ public class Unit {
 		this.setWorkBlock(targetBlock);
 		if (this.getState() != State.WORKING){
 			this.setState(State.WORKING);
-			this.setWorkTime(100/this.getPrimStats().get("str"));
+			this.setWorkTime(500/this.getPrimStats().get("str"));
 			this.setTheta(Math.atan2(distance.getY(), distance.getX()));
 		}
 		
@@ -1331,12 +1333,13 @@ public class Unit {
 	}
 	
 	public void pickup(Block targetBlock){
+		boolean lifted = false;
 		int random = (int) (Math.random()*targetBlock.getBouldersInCube().size());
 		int counter = 0;
 		for (Boulder boulder : targetBlock.getBouldersInCube()){
 			if (counter == random){
-				this.setBoulder(boulder);;
-				this.getWorld().removeBoulder(boulder);
+				this.lift(boulder);
+				lifted = true;
 			}
 			counter++;
 		}
@@ -1344,14 +1347,12 @@ public class Unit {
 		int random2 = (int) (Math.random()*targetBlock.getBouldersInCube().size());
 		int counter2 = 0;
 		for (Log log : targetBlock.getLogsInCube()){
-			if (counter2 == random2){
-				this.setLog(log);
-				this.getWorld().removeLog(log);
+			if (counter2 == random2 && !lifted){
+				this.lift(log);
 
 			}
 			counter2++;
 		}
-		
 	}
 	
 	public void operateWorkshop(Block targetBlock){
@@ -1695,13 +1696,11 @@ public class Unit {
 	 * 			| else return
 	 */
 	public void lift(Boulder boulder){
-		if(getBlockCentre() == boulder.getBlockCentre()){
-			try {
-				this.setBoulder(boulder);
-				this.getWorld().removeBoulder(boulder);
-			} catch (IllegalArgumentException exc) {
-				return;
-			}
+		try {
+			this.setBoulder(boulder);
+			this.getWorld().removeBoulder(boulder);
+		} catch (IllegalArgumentException exc) {
+			return;
 		}
 	}
 	
@@ -1723,13 +1722,11 @@ public class Unit {
 	 * 			| else return
 	 */
 	public void lift(Log log){
-		if(getBlockCentre() == log.getBlockCentre()){
-			try {
-				this.setLog(log);
-				this.getWorld().removeLog(log);
-			} catch (IllegalArgumentException exc) {
-				return;
-			}
+		try {
+			this.setLog(log);
+			this.getWorld().removeLog(log);
+		} catch (IllegalArgumentException exc) {
+			return;
 		}
 	}
 	
@@ -1877,7 +1874,11 @@ public class Unit {
 	}
 	
 	public ArrayList<Block> getPath(){
-		return this.Path;
+		return new ArrayList<Block>(this.Path);
+	}
+	
+	public void clearPath(){
+		this.Path.clear();
 	}
 	
 	public Set<Unit> getAdjacentUnits(){
@@ -2004,6 +2005,12 @@ public class Unit {
 			this.finTarget = null;
 			this.Path.clear();
 		}
+	}
+	
+	public void terminate(){
+		this.drop();
+		this.getWorld().removeUnit(this);
+		this.removeFaction();
 	}
 	
 	private double theta;

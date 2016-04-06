@@ -16,3 +16,7 @@ Boulder/Log:
 - Documentatie (associatiestuff, vallenstuff)
 - Meer exceptions?
 - Erven van klasse Prop?
+
+getcollapseset
+getgameworld
+getStableSet

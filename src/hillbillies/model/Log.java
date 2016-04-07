@@ -173,7 +173,7 @@ public class Log {
 	public Unit getCarrier(){
 		return this.carrier;
 	}
-	/**
+	 /**
 	  * Set the carrier of this Log to a given Unit.
 	  * @param	unit
 	  * 		The given Unit to be set as the carrier
@@ -214,39 +214,73 @@ public class Log {
 	 */
 	protected void removeCarrier(){
 		try {
-//			setPosition(getCarrier().getPosition());
 			this.carrier = null;
 		} catch (NullPointerException exc) {
 			return;
-		} 
-//		catch (IllegalArgumentException exc){
-//			System.out.println("??????");
-//		}
+		}
 	}
-	
+	/**
+	 * Return the World this Log is currently in.
+	 */
+	@Basic
 	public World getWorld(){
 		return this.world;
 	}
-	
+	/**
+	 * Return a boolean stating whether or not the
+	 * 	given World can be set as this Log's world.
+	 * @param 	world
+	 * 			The given World to be checked.
+	 * @return	True if and only if this Log's current
+	 * 			World is null.
+	 */
 	public boolean canHaveAsWorld(World world){
 		return (this.getWorld() == null);
 	}
-	
-	public void setWorld(World world)
+	/**
+	 * Set the world of this Log to the given
+	 * 	World.
+	 * @param 	world
+	 * 			The given World to be checked.
+	 * @throws 	IllegalArgumentException
+	 * 			An exception is thrown if this Log
+	 * 			can't have the given World as its World.
+	 */
+	protected void setWorld(World world)
 				throws IllegalArgumentException{
 		if(!canHaveAsWorld(world))
 			throw new IllegalArgumentException("Invalid world!");
 		this.world = world;
 	}
-	
-	public void removeWorld(){
+	/**
+	 * Remove the current World of this Log.
+	 */
+	@Basic
+	protected void removeWorld(){
 		this.world = null;
 	}
-	
-	public Block getBlock(){
-		return this.getWorld().getBlockAtPos(this.getPosition());
+	/**
+	 * Return the Block this Log is currently in.
+	 * @throws 	NullPointerException
+	 * 			An exception is thrown if the World
+	 * 			of this unit is null.
+	 */
+	public Block getBlock() throws NullPointerException{
+		try{
+			return this.getWorld().getBlockAtPos(this.getPosition());
+		}
+		catch(NullPointerException exc){
+			throw exc;
+		}
 	}
-	
+	 /**
+	  * Return a boolean stating whether the given
+	  *		Log should fall or not.
+	  *	@return	False if the current World of this
+	  *			Log is null or if the position of
+	  *			the block directly underneath is invalid.
+	  *			True otherwise.
+	  */
 	public boolean shouldFall(){
 		if(this.getWorld() == null)
 			return false;

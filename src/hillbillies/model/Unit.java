@@ -160,14 +160,6 @@ public class Unit {
 			
 		
 		if(this.getState() == State.COMBAT){
-			if(this.getName() != "Billie"){
-				System.out.println(this.getAttackers());
-				System.out.println(this.getVictim());
-				for(Unit attacker : this.getAttackers()){
-					System.out.println(attacker.getPosition());
-					System.out.println(attacker.isTerminated());
-				}
-			}
 			if(this.victim == null){
 				if (this.getAttackers().isEmpty())
 				this.setState(State.IDLE);
@@ -1154,6 +1146,8 @@ public class Unit {
 	public void setVictim(Unit victim){
 		if(victim == this)
 			throw new IllegalArgumentException("You can't attack yourself!");
+		if(this.victim != null)
+			throw new IllegalArgumentException("You're already attacking someone!");
 		this.victim = victim;
 	}
 	/**

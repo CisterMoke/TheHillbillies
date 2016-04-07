@@ -214,39 +214,73 @@ public class Boulder {
 	 */
 	protected void removeCarrier(){
 		try {
-			//setPosition(getCarrier().getPosition());
 			this.carrier = null;
 		} catch (NullPointerException exc) {
 			return;
-		} 
-//		catch (IllegalArgumentException exc){
-//			System.out.println("??????");
-//		}
+		}
 	}
-	
+	/**
+	 * Return the World this Boulder is currently in.
+	 */
+	@Basic
 	public World getWorld(){
 		return this.world;
 	}
-	
+	/**
+	 * Return a boolean stating whether or not the
+	 * 	given World can be set as this Boulder's world.
+	 * @param 	world
+	 * 			The given World to be checked.
+	 * @return	True if and only if this Boulder's current
+	 * 			World is null.
+	 */
 	public boolean canHaveAsWorld(World world){
 		return (this.getWorld() == null);
 	}
-	
+	/**
+	 * Set the world of this Boulder to the given
+	 * 	World.
+	 * @param 	world
+	 * 			The given World to be checked.
+	 * @throws 	IllegalArgumentException
+	 * 			An exception is thrown if this Boulder
+	 * 			can't have the given World as its World.
+	 */
 	protected void setWorld(World world)
 				throws IllegalArgumentException{
 		if(!canHaveAsWorld(world))
 			throw new IllegalArgumentException("Invalid world!");
 		this.world = world;
 	}
-	
+	/**
+	 * Remove the current World of this Boulder.
+	 */
+	@Basic
 	protected void removeWorld(){
 		this.world = null;
 	}
-	
-	public Block getBlock(){
-		return this.getWorld().getBlockAtPos(this.getPosition());
+	/**
+	 * Return the Block this Boulder is currently in.
+	 * @throws 	NullPointerException
+	 * 			An exception is thrown if the World
+	 * 			of this unit is null.
+	 */
+	public Block getBlock() throws NullPointerException{
+		try{
+			return this.getWorld().getBlockAtPos(this.getPosition());
+		}
+		catch(NullPointerException exc){
+			throw exc;
+		}
 	}
-	 
+	 /**
+	  * Return a boolean stating whether the given
+	  *		Boulder should fall or not.
+	  *	@return	False if the current World of this
+	  *			Boulder is null or if the position of
+	  *			the block directly underneath is invalid.
+	  *			True otherwise.
+	  */
 	public boolean shouldFall(){
 		if(this.getWorld() == null)
 			return false;

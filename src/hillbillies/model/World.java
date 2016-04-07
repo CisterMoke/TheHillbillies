@@ -43,11 +43,14 @@ public class World {
 					this.addToStableSet(block);
 			}
 			else {
-				if(this.isWalkable(block))
-					checkSet.add(block);
+				for(Block adjacent : this.getDirectlyAdjacent(block)){
+					if(adjacent.isSolid())
+						checkSet.add(adjacent);
+				}
 			}
 		}
 		System.out.println("for stop");
+		checkSet.removeAll(this.getStableSet());
 		this.checkWorldForCollapse(checkSet);
 		this.createPositionList();
 		this.modelListener=modelListener2;
@@ -548,15 +551,15 @@ public class World {
 			toBeChecked.remove(startBlock);
 			checked.add(startBlock);
 			if(this.isAtBorder(startBlock)){
-				this.setStableSet(new HashSet<Block>(checked));
+				this.stableSet.addAll(checked);
 				return;
 			}
 			for(Block adjacent : this.getDirectlyAdjacent(startBlock)){
 				if(this.stableSet.contains(adjacent)){
-					this.setStableSet(new HashSet<Block>(checked));
+					this.stableSet.addAll(checked);
 					return;					
 				}
-				if(adjacent.isSolid() &&!checked.contains(adjacent)){
+				if(adjacent.isSolid() && !checked.contains(adjacent)){
 					toBeChecked.add(adjacent);
 					startBlock = adjacent;
 					changed = true;
@@ -567,7 +570,7 @@ public class World {
 				changed = true;
 			}
 		}
-		this.setCollapseSet(new HashSet<Block>(checked));
+		this.collapseSet.addAll(checked);
 	}
 	
 	public ArrayList<ArrayList<Integer>> getPositionList(){
@@ -596,8 +599,10 @@ public class World {
 		System.out.println("check start");
 		System.out.println(checkSet.size());
 		for(Block block : checkSet){
-			for(Block adjacent : this.getDirectlyAdjacent(block)){
-				if(adjacent.isSolid()){
+			if(block.isSolid())
+				this.updateCollapseAt(block);
+			else{
+				for(Block adjacent : this.getDirectlyAdjacent(block)){
 					if(!this.collapseSet.contains(adjacent) && !this.stableSet.contains(adjacent))
 						this.updateCollapseAt(adjacent);
 				}

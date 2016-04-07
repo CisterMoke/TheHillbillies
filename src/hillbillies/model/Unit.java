@@ -132,10 +132,6 @@ public class Unit {
 	public void advanceTime(double dt)throws IllegalArgumentException{
 		if(this.isTerminated())
 			return;
-		if (this.getHp() == 0){
-			this.terminate();
-			return;
-		}
 		if (dt<0 || dt>0.2)
 			throw new IllegalArgumentException("Invalid time interval!");
 		if (this.getMinRestTime() > 0){
@@ -164,6 +160,14 @@ public class Unit {
 			
 		
 		if(this.getState() == State.COMBAT){
+			if(this.getName() != "Billie"){
+				System.out.println(this.getAttackers());
+				System.out.println(this.getVictim());
+				for(Unit attacker : this.getAttackers()){
+					System.out.println(attacker.getPosition());
+					System.out.println(attacker.isTerminated());
+				}
+			}
 			if(this.victim == null){
 				if (this.getAttackers().isEmpty())
 				this.setState(State.IDLE);
@@ -205,7 +209,7 @@ public class Unit {
 		}
 		if (this.getState() == State.WORKING){
 			if(this.getWorkTime() > 0){
-				this.work();
+//				this.work();
 				this.setWorkTime(this.getWorkTime() - dt);
 				return;
 			}
@@ -973,6 +977,8 @@ public class Unit {
 	public void setHp(double hp){
 		assert isValidHp(hp);
 		this.hp = hp;
+		if (this.getHp() == 0)
+			this.terminate();
 	}
 	/**
 	 * 
@@ -1281,14 +1287,14 @@ public class Unit {
 	 *			|	setWorkTime(500/getPrimStats().get("str"));
 	 * 
 	 */
-	public void work(){
-		if (this.isMoving() || this.getState() == State.COMBAT || this.getState() == State.FALLING)
-			return;
-		if (this.getState() != State.WORKING){
-			this.setState(State.WORKING);
-			this.setWorkTime(500/this.getPrimStats().get("str"));
-		}
-	}
+//	public void work(){
+//		if (this.isMoving() || this.getState() == State.COMBAT || this.getState() == State.FALLING)
+//			return;
+//		if (this.getState() != State.WORKING){
+//			this.setState(State.WORKING);
+//			this.setWorkTime(500/this.getPrimStats().get("str"));
+//		}
+//	}
 	
 	public void workAt(Vector target){
 		if (this.isMoving() || this.getState() == State.COMBAT || this.getState() == State.FALLING)
@@ -1304,7 +1310,7 @@ public class Unit {
 		this.setWorkBlock(targetBlock);
 		if (this.getState() != State.WORKING){
 			this.setState(State.WORKING);
-			this.setWorkTime(500/this.getPrimStats().get("str"));
+			this.setWorkTime(10/this.getPrimStats().get("str"));
 			this.setTheta(Math.atan2(distance.getY(), distance.getX()));
 		}
 		
@@ -1927,7 +1933,6 @@ public class Unit {
 			Collections.shuffle(positions);
 			int idx = 0;
 			Block finTarget = this.getWorld().getBlockAtPos(positions.get(idx));
-			if(!this.getPath().isEmpty())
 			while(this.getPath().isEmpty()){
 				boolean flag = true;
 				while((!this.getWorld().isWalkable(finTarget) || flag) && idx < positions.size() - 1){

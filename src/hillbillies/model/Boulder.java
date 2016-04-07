@@ -50,8 +50,6 @@ public class Boulder {
 			velocity.multiply(dt);
 			Vector newPos = this.getPosition();
 			newPos.add(velocity);
-			System.out.println(this.getBlock().getLocation().getCoeff());
-			System.out.println(newPos.getCoeff());
 			this.setPosition(newPos);			
 		}
 	}

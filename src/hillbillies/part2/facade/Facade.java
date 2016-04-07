@@ -285,7 +285,7 @@ public class Facade implements IFacade {
 	@Override
 	public boolean isSolidConnectedToBorder(World world, int x, int y, int z) throws ModelException {
 		Block block = world.getBlockAtPos(new Vector(x, y, z));
-		return (world.getStableSet().contains(block));
+		return (world.isStable(block));
 	}
 
 	@Override
@@ -319,7 +319,7 @@ public class Facade implements IFacade {
 
 	@Override
 	public boolean isAlive(Unit unit) throws ModelException {
-		return !(unit.isDead());
+		return !unit.isTerminated();
 	}
 
 	@Override

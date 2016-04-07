@@ -25,7 +25,7 @@ public class World {
 			if(initialGameWorld.get(key).isSolid())
 				this.addSolidBlock(initialGameWorld.get(key));
 		}
-		this.checkWorldForCollapse();
+		this.checkWorldForCollapse(this.getSolidBlocks());
 		this.createPositionList();
 		this.modelListener=listener;
 	}
@@ -34,16 +34,21 @@ public class World {
 		this.setGameWorld(terrain);
 		this.WORLD_BORDER = new ArrayList<Integer>(Arrays.asList(sizeX, sizeY, sizeZ));
 		System.out.println("for start");
+		Set<Block> checkSet = new HashSet<Block>();
 		for(ArrayList<Integer> key : terrain.keySet()){
-			if(terrain.get(key).isSolid())
-				this.addSolidBlock(terrain.get(key));
+			Block block = terrain.get(key);
+			if(block.isSolid()){
+				this.addSolidBlock(block);
+				if(this.isAtBorder(block))
+					this.addToStableSet(block);
+			}
 			else {
-				if(this.isWalkable(terrain.get(key)))
-				this.addWalkableBlock(terrain.get(key));
+				if(this.isWalkable(block))
+					checkSet.add(block);
 			}
 		}
 		System.out.println("for stop");
-		this.checkWorldForCollapse();
+		this.checkWorldForCollapse(checkSet);
 		this.createPositionList();
 		this.modelListener=modelListener2;
 	}
@@ -113,7 +118,6 @@ public class World {
 				this.updateCollapseAt(block);
 			}
 		}
-		System.out.println(this.collapseSet);
 		Set<Block> newStableSet = this.getSolidBlocks();
 		newStableSet.removeAll(this.collapseSet);
 		this.setStableSet(newStableSet);
@@ -165,8 +169,7 @@ public class World {
 			this.modelListener.notifyTerrainChanged(
 					(int)(entry.getLocation().getX()), (int)(entry.getLocation().getY()), (int)(entry.getLocation().getZ()));	
 		}
-		this.solidBlocks.removeAll(collapseSet);
-		this.walkableBlocks.removeAll(collapseSet);
+		this.solidBlocks.removeAll(this.collapseSet);
 		this.collapseSet.clear();
 	}
 	
@@ -421,8 +424,6 @@ public class World {
 		if(block.isSolid()){
 			return false;
 		}
-		if(this.walkableBlocks.contains(block))
-			return true;
 		if(block.getLocation().getZ() == 0)
 			return true;
 		for(int dx = -1; dx<2; dx++){
@@ -588,29 +589,13 @@ public class World {
 	}
 	
 	public void setSolidBlocks(Set<Block> newSet){
-		this.walkableBlocks = new HashSet<Block>(newSet);
-		
-	}public Set<Block> getWalkableBlocks(){
-		return new HashSet<Block>(this.walkableBlocks);
+		this.solidBlocks = new HashSet<Block>(newSet);
 	}
 	
-	public void addWalkableBlock(Block block) throws IllegalArgumentException{
-		if(!this.isWalkable(block))
-			throw new IllegalArgumentException("Non-walkable block!");
-		this.walkableBlocks.add(block);
-	}
-	
-	public void removeWalkableBlock(Block block){
-		this.walkableBlocks.remove(block);
-	}
-	
-	public void setWalkableBlocks(Set<Block> newSet){
-		this.walkableBlocks = new HashSet<Block>(newSet);
-	}
-	
-	public void checkWorldForCollapse(){
+	public void checkWorldForCollapse(Set<Block> checkSet){
 		System.out.println("check start");
-		for(Block block : this.getWalkableBlocks()){
+		System.out.println(checkSet.size());
+		for(Block block : checkSet){
 			for(Block adjacent : this.getDirectlyAdjacent(block)){
 				if(adjacent.isSolid()){
 					if(!this.collapseSet.contains(adjacent) && !this.stableSet.contains(adjacent))
@@ -618,9 +603,14 @@ public class World {
 				}
 			}
 		}
+		System.out.println("Done!");
 		Set<Block> newStableSet = this.getSolidBlocks();
 		newStableSet.removeAll(this.collapseSet);
 		this.setStableSet(newStableSet);
+	}
+	
+	public boolean isStable(Block block){
+		return this.stableSet.contains(block);
 	}
 	
 	private TerrainChangeListener modelListener;
@@ -636,7 +626,6 @@ public class World {
 	private Set<Boulder> boulders = new HashSet<Boulder>();
 	private Set<Log> logs = new HashSet<Log>();
 	private Set<Block> solidBlocks = new HashSet<Block>();
-	private Set<Block> walkableBlocks = new HashSet<Block>();
 	
 
 	

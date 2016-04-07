@@ -130,13 +130,14 @@ public class Unit {
 	 * 			0 or bigger than 0.2 seconds.
 	 */
 	public void advanceTime(double dt)throws IllegalArgumentException{
-		if (dt<0 || dt>0.2)
-			throw new IllegalArgumentException("Invalid time interval!");
-		if (this.isDead()){
-			this.drop();
-			this.getWorld().removeUnit(this);
+		if(this.isTerminated())
+			return;
+		if (this.getHp() == 0){
+			this.terminate();
 			return;
 		}
+		if (dt<0 || dt>0.2)
+			throw new IllegalArgumentException("Invalid time interval!");
 		if (this.getMinRestTime() > 0){
 			this.setMinRestTime(this.getMinRestTime()- dt);
 		}
@@ -163,10 +164,11 @@ public class Unit {
 			
 		
 		if(this.getState() == State.COMBAT){
-			Set<Unit> combatantsCopy = new HashSet<Unit>(this.combatants);
-			for (Unit unit : combatantsCopy){
-				this.attack(unit);
+			if(this.victim == null){
+				if (this.getAttackers().isEmpty())
+				this.setState(State.IDLE);
 			}
+			else this.attack(victim);
 			return;
 		}
 		if (this.restTime >= 180){
@@ -362,7 +364,7 @@ public class Unit {
 		if (!isValidPosition(position))
 			throw new IllegalArgumentException("Out of bounds");
 		if(this.getWorld() != null){
-			this.getBlock().removeUnit(this);;
+			this.getBlock().removeUnit(this);
 			this.pos = position;
 			this.getBlock().addUnit(this);
 		}
@@ -659,9 +661,9 @@ public class Unit {
 	 *			|	then return
 	 * @effect	Tries to add the defender to the unit's set of combatants.
 	 * 			If an IllegalArgumentException is caught, nothing happens
-	 * 			| if(addCombatant(defender) throws IllegalArgumentException)
+	 * 			| if(addAttacker(defender) throws IllegalArgumentException)
 	 *			| 	then return
-	 *			| else addCombatant(defender)
+	 *			| else addAttacker(defender)
 	 * @effect	The orientation of this unit and the defender are set so that they
 	 * 			face each other.
 	 * 			| new.getTheta() ==
@@ -677,11 +679,12 @@ public class Unit {
 	 * 			| new.isAttackInitiated() == true
 	 */ 
 	private void initiateAttack(Unit defender){
-		if(this.getMinRestTime() > 0 || !this.inRange(defender) || this.isMoving()){
+		if(this.getMinRestTime() > 0 || this.isMoving()){
 			return;
 		}
 		try{
-			this.addCombatant(defender);
+			this.setVictim(defender);
+			defender.addAttacker(this);
 		}
 		catch(IllegalArgumentException exc){
 			return;
@@ -748,42 +751,45 @@ public class Unit {
 	 * 			| defender.defend(this)
 	 */
 	public void attack(Unit defender){
-		if (defender == null || defender.isDead()){
+		if (defender == null){
 			this.setState(State.IDLE);
 			return;
 		}
-		if(this.getState() == State.FALLING || defender.getState() == State.FALLING)
+		if(this.getState() == State.FALLING || defender.getState() == State.FALLING){
+			this.victim = null;
+			defender.removeAttackers(this);
 			return;
-		if(this.getFaction() == defender.getFaction() && this.getFaction() != null)
+		}
+		if(this.getFaction() == defender.getFaction() && this.getFaction() != null){
+			this.victim = null;
+			this.setState(State.IDLE);
+			defender.removeAttackers(this);
 			return;
+		}
+		if (!this.inRange(defender)){
+			this.victim = null;
+			this.setState(State.IDLE);
+			defender.removeAttackers(this);
+			return;
+		}
 		if(!this.isAttackInitiated()){
 			this.initiateAttack(defender);
 			return;
 		}
-		
 		if (this.getAttackCooldown() > 0){
 			return;
 		}
-		
-		if (!this.inRange(defender)){
-			this.removeCombatant(defender);
-			this.setState(State.IDLE);
-			this.toggleAttackInitiated();
-			return;
-		}
 		this.toggleAttackInitiated();
-		this.removeCombatant(defender);
+		this.victim = null;
+		defender.removeAttackers(this);
 		defender.defend(this);
 	}
 	/**
 	 * 
 	 * returns true if a unit's Hp is 0, meaning it is dead, and false otherwise.
 	 */
-	public boolean isDead(){
-		if (Math.ceil(this.getHp())==0){
-			return true;
-		}
-		return false;
+	public boolean isTerminated(){
+		return this.terminated;
 	}
 	/**
 	 * Returns the probability of dodging an attack.
@@ -900,8 +906,6 @@ public class Unit {
 	 *			|	setHp(this.getHp() - damage)
 	 */
 	private void defend(Unit attacker){
-		this.setState(State.IDLE);
-		attacker.setState(State.IDLE);
 		double damage = ((double)(attacker.getPrimStats().get("str")))/10;
 		if(this.hasDodged(attacker)){
 			this.dodge(attacker);
@@ -969,8 +973,6 @@ public class Unit {
 	public void setHp(double hp){
 		assert isValidHp(hp);
 		this.hp = hp;
-		if (this.isDead())
-			this.terminate();
 	}
 	/**
 	 * 
@@ -1105,8 +1107,8 @@ public class Unit {
 	 * Returns the set containing the units this unit is currently in combat with.
 	 */
 	@Basic
-	public Set<Unit> getCombatants(){
-		return this.combatants;
+	public Set<Unit> getAttackers(){
+		return this.attackers;
 	}
 	
 	/**
@@ -1121,11 +1123,11 @@ public class Unit {
 	 * 			is the unit itself.
 	 * 			|unit == this
 	 */
-	private void addCombatant(Unit unit) throws IllegalArgumentException{
+	private void addAttacker(Unit unit) throws IllegalArgumentException{
 		if (unit == this){
-			throw new IllegalArgumentException("You are not allowed to fight with yourself!");
+			throw new IllegalArgumentException("You can't get attacked by yourself!");
 		}
-		this.combatants.add(unit);
+		this.attackers.add(unit);
 	}
 	
 	/**
@@ -1135,8 +1137,18 @@ public class Unit {
 	 * @post	The given unit is removed from the set of combatants of this unit.
 	 * 			|!new.getCombatants().contains(unit)
 	 */
-	private void removeCombatant(Unit unit){
-		this.combatants.remove(unit);
+	private void removeAttackers(Unit unit){
+		this.attackers.remove(unit);
+	}
+	
+	public Unit getVictim(){
+		return this.victim;
+	}
+	
+	public void setVictim(Unit victim){
+		if(victim == this)
+			throw new IllegalArgumentException("You can't attack yourself!");
+		this.victim = victim;
 	}
 	/**
 	 * Returns the current speed of the unit
@@ -1299,33 +1311,26 @@ public class Unit {
 	}
 	
 	public void workCompleted(){
-		System.out.println("done");
 		boolean worked = false;
 		if (this.getWorkBlock().getBlockType()==BlockType.WORKSHOP){
 			if (!this.getWorkBlock().getBouldersInCube().isEmpty() && !this.getWorkBlock().getLogsInCube().isEmpty()){
-				System.out.println("workshop");
 				this.operateWorkshop(this.getWorkBlock());
 				worked = true;
 			}
 		}
 		if ((this.getWorkBlock().getBlockType()==BlockType.ROCK || this.getWorkBlock().getBlockType()==BlockType.WOOD) && worked==false){
-			System.out.println("dig");
 			this.getWorld().spawnObject(this.getWorkBlock());
 			this.getWorld().setToPassable(this.getWorkBlock());
 			worked = true;
 		}
 		if (this.isCarrying() && worked==false){
-			System.out.println("drop");
 			this.dropAt(this.getWorkBlock().getLocation());
 			worked = true;
 		}
-		System.out.println(this.getWorkBlock().getBouldersInCube().size());
 		if ((!this.getWorkBlock().getBouldersInCube().isEmpty() || !this.getWorkBlock().getLogsInCube().isEmpty())&& worked==false){
-			System.out.println("pickup");
 			this.pickup(this.getWorkBlock());
 			worked = true;
 		}
-		System.out.println("end");
 		this.setWorkBlock(null);
 		if (worked == true)
 			this.addExp(10);
@@ -1775,6 +1780,14 @@ public class Unit {
 	}
 	
 	private void fall(){
+		if(this.getState() == State.COMBAT){
+			if(this.victim != null){
+				victim.removeAttackers(this);
+				this.victim = null;
+			}
+		}
+			for(Unit attacker : this.getAttackers())
+				attacker.setVictim(null);
 		this.setState(State.FALLING);
 		this.fallHeight = (int)(this.getPosition().getZ());
 	}
@@ -1915,7 +1928,6 @@ public class Unit {
 			int idx = 0;
 			Block finTarget = this.getWorld().getBlockAtPos(positions.get(idx));
 			if(!this.getPath().isEmpty())
-				System.out.println(this.getPath().isEmpty());
 			while(this.getPath().isEmpty()){
 				boolean flag = true;
 				while((!this.getWorld().isWalkable(finTarget) || flag) && idx < positions.size() - 1){
@@ -1939,7 +1951,7 @@ public class Unit {
 			this.rest();
 		}
 		if(state == State.COMBAT){
-			this.initiateAttack(this.getEnemyInRange());
+			this.attack(this.getEnemyInRange());
 			}
 	}
 	
@@ -2008,9 +2020,17 @@ public class Unit {
 	}
 	
 	public void terminate(){
+		if(this.victim != null){
+			victim.removeAttackers(this);
+			this.victim = null;
+		}
+		for(Unit attacker : this.getAttackers()){
+			attacker.setVictim(null);
+		}
 		this.drop();
+		this.getBlock().removeUnit(this);
 		this.getWorld().removeUnit(this);
-		this.removeFaction();
+		this.terminated = true;
 	}
 	
 	private double theta;
@@ -2045,7 +2065,7 @@ public class Unit {
 	
 	private double workTime = 0;
 	
-	private Set<Unit> combatants = new HashSet<Unit>();
+	private Set<Unit> attackers = new HashSet<Unit>();
 	
 	private double restTime = 0;
 	
@@ -2074,4 +2094,8 @@ public class Unit {
 	private int experience = 0;
 	
 	private Block workBlock=null;
+	
+	private Unit victim = null;
+	
+	private boolean terminated = false;
 }

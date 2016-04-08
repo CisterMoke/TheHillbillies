@@ -12,7 +12,7 @@ import be.kuleuven.cs.som.annotate.*;
  */
 public class Log {	
 	/**
-	 * Initialize this new Log with given weight.
+	 * Initialize this new Log with given weight and coordinates.
 	 *
 	 * @param	x
 	 * 			The x-coordinate for the new Log.
@@ -46,10 +46,8 @@ public class Log {
 	 */
 	public void advanceTime(double dt){
 		if(shouldFall()){
-			Vector velocity = new Vector(0, 0, -3);
-			velocity.multiply(dt);
-			Vector newPos = this.getPosition();
-			newPos.add(velocity);
+			Vector velocity = new Vector(0, 0, -3).multiply(dt);
+			Vector newPos = this.getPosition().add(velocity);
 			this.setPosition(newPos);			
 		}
 	}
@@ -102,7 +100,7 @@ public class Log {
 	 */
 	@Basic @Raw
 	public Vector getPosition() {
-		return new Vector(this.position);
+		return this.position;
 	}
 	
 	/**
@@ -241,7 +239,9 @@ public class Log {
 	 * Set the world of this Log to the given
 	 * 	World.
 	 * @param 	world
-	 * 			The given World to be checked.
+	 * 			The given World to be set.
+	 * @post	The World of this Log equals the given
+	 * 			World.
 	 * @throws 	IllegalArgumentException
 	 * 			An exception is thrown if this Log
 	 * 			can't have the given World as its World.
@@ -254,6 +254,7 @@ public class Log {
 	}
 	/**
 	 * Remove the current World of this Log.
+	 * @post	The World of this Log is null.
 	 */
 	@Basic
 	protected void removeWorld(){
@@ -284,8 +285,7 @@ public class Log {
 	public boolean shouldFall(){
 		if(this.getWorld() == null)
 			return false;
-		Vector floorPos = this.getBlockCentre();
-		floorPos.add(0, 0, -1);
+		Vector floorPos = this.getBlockCentre().add(0, 0, -1);
 		if(!isValidPosition(floorPos)){
 			this.setPosition(this.getBlockCentre());
 			return false;

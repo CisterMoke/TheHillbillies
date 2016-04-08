@@ -3,111 +3,237 @@ package hillbillies.model;
 import java.util.HashSet;
 import java.util.Set;
 
+import be.kuleuven.cs.som.annotate.*;
+/**
+ * Class representing a Block of a Hillbilly World.
+ * @author Joost Croonen & Ruben Dedoncker.
+ * 
+ *
+ */
 public class Block{
-	
-	public Block (Vector V, BlockType type){
-		this.setLocation(V);
+	/**
+	 * Initialize a new Block with a given position Vector and BlockType.
+	 * @param 	vector
+	 * 			The given position Vector.
+	 * @param 	type
+	 * 			The given BlockType.
+	 * @post	The location of the new Block is set to the given Vector.
+	 * @post	The BlockType of the new Block is set to the given BlockType.
+	 */
+	public Block (Vector vector, BlockType type){
+		this.setLocation(vector);
 		this.setBlockType(type);
 	}
 	
 	/**
+	 * Set the location of this Block to the given location.
+	 * @param 	newlocation
+	 * 			The given location to be set as the new location
+	 * 			of this Block.
 	 * 
-	 * @param newlocation
-	 * 
-	 * @post new.location == newlocation
+	 * @post 	The location of this Block is equals the given
+	 * 			location.
 	 */
+	@Basic
 	public void setLocation(Vector newlocation){
 		this.location = newlocation;
 	}
 	
 	/**
-	 * 
-	 * returns location of this block
+	 * Return location of this Block.
 	 */
+	@Basic
 	public Vector getLocation(){
-		return new Vector(this.location);
+		return this.location;
 	}
-		
+	
+	/**
+	 * Return a boolean stating whether or not this Block is solid.
+	 */
 	public boolean isSolid(){
 		return(this.getBlockType() == BlockType.WOOD || this.getBlockType() == BlockType.ROCK);
 	}
-	
-	public void setUnitsInCube(Set<Unit> unitlist){
-		this.unitsInCube = unitlist;
-	}
-	
+	/**
+	 * Return a copy of the set containing the Units
+	 * 	positioned in this Block.
+	 */
+	@Basic
 	public Set<Unit> getUnitsInCube(){
-		return new HashSet<Unit>(this.unitsInCube);
+		return new HashSet<Unit>(this.unitsInBlock);
 	}
 	
+	/**
+	 * Set the set of Units positioned in this Block to
+	 * 	the given set.
+	 * @param 	unitSet
+	 * 			The given set of Units.
+	 * @post	The set of Units positioned in the Block is
+	 * 			set to the given set.
+	 */
+	@Basic
+	public void setUnitsInCube(Set<Unit> unitSet){
+		this.unitsInBlock = unitSet;
+	}
+	
+	/**
+	 * Add a given Unit to the set of Units positioned in
+	 * 	this Block.
+	 * @param 	unit
+	 * 			The given Unit to be added.
+	 * @post	The new set of Units contains the given
+	 * 			Unit.
+	 */
+	@Basic
 	protected void addUnit(Unit unit){
-		this.unitsInCube.add(unit);
+		this.unitsInBlock.add(unit);
 	}
-	
+	/**
+	 * Remove a given Unit from the set of Units
+	 * 	positioned in this Block.
+	 * @param 	unit
+	 * 			The given Unit to be removed.
+	 * @post	The given Unit is removed from the
+	 * 			set of Units positioned in this Block.
+	 */
+	@Basic
 	protected void removeUnit(Unit unit){
-		this.unitsInCube.remove(unit);
+		this.unitsInBlock.remove(unit);
 	}
-	
+	/**
+	 * Return the BlockType of this Block.
+	 */
+	@Basic
 	public BlockType getBlockType(){
 		return this.blocktype;
 	}
-	
-	public void setBlockType(BlockType newtype){
-		this.blocktype = newtype;
+	/**
+	 * Set the BlockType of this Block to the given
+	 * 	BlockType.
+	 * @param 	newType
+	 * 			The given BlockType.
+	 * @post	The BlockType of this Block is set to
+	 * 			the given BlockType.
+	 */
+	@Basic
+	public void setBlockType(BlockType newType){
+		this.blocktype = newType;
 	}
-
+	/**
+	 * Class representing a BlockType of a Block.
+	 * 	The possible BlockTypes are the following: 
+		- AIR
+	 * 	- WORKSHOP
+	 *  - ROCK
+	 *  - WOOD
+	 * @author Joost Croonen & Ruben Dedoncker.
+	 *
+	 */
 	public enum BlockType{
 		AIR, WORKSHOP, ROCK, WOOD
 	}
 	
-	public Set<Boulder> getBouldersInCube(){
-		return new HashSet<Boulder>(this.bouldersInCube);
+	/**
+	 * Return a set of Boulders positioned in this Block.
+	 */
+	@Basic
+	public Set<Boulder> getBouldersInBlock(){
+		return new HashSet<Boulder>(this.bouldersInBlock);
+	}
+	/**
+	 * Return a set of Boulders positioned in this Log.
+	 */
+	@Basic
+	public Set<Log> getLogsInBlock(){
+		return new HashSet<Log>(this.logsInBlock);
 	}
 	
-	public Set<Log> getLogsInCube(){
-		return new HashSet<Log>(this.logsInCube);
-	}
-	
+	/**
+	 * Add a given Boulder to the set of Boulders
+	 * 	positioned in this Block.
+	 * @param 	boulder
+	 * 			The given Boulder to be added.
+	 * @post	The set of Boulders positioned in this Block
+	 * 			contains the given Boulder.
+	 */
+	@Basic
 	protected void addBoulder(Boulder boulder){
-		this.bouldersInCube.add(boulder);
+		this.bouldersInBlock.add(boulder);
 	}
 	
+	/**
+	 * Add a given Log to the set of Logs
+	 * 	positioned in this Log.
+	 * @param 	boulder
+	 * 			The given Log to be added.
+	 * @post	The set of Logs positioned in this Block
+	 * 			contains the given Log.
+	 */
+	@Basic
 	protected void addLog(Log log){
-		this.logsInCube.add(log);
+		this.logsInBlock.add(log);
 	}
-	
+	 /**
+	  * Remove a given Boulder from the set of Boulders
+	  *  positioned in this Block.
+	  * @param 	boulder
+	  * 		The given Boulder to be removed from the
+	  * 		set of Boulders positioned in this Block.
+	  * @post	The given Boulder is removed from the
+	  * 		set of Boulders positioned in this Block.
+	  */
+	@Basic
 	protected void removeBoulder(Boulder boulder){
-		this.bouldersInCube.remove(boulder);
+		this.bouldersInBlock.remove(boulder);
 	}
 	
+	 /**
+	  * Remove a given Log from the set of Logs
+	  *  positioned in this Block.
+	  * @param 	boulder
+	  * 		The given Log to be removed from the
+	  * 		set of Logs positioned in this Block.
+	  * @post	The given Log is removed from the
+	  * 		set of Logs positioned in this Block.
+	  */	
+	@Basic
 	protected void removeLog(Log log){
-		this.logsInCube.remove(log);
+		this.logsInBlock.remove(log);
 	}
 	
+	/**
+	 * Set the set of Boulders positioned in this Block
+	 * 	to the given set of Boulders.
+	 * @param 	newSet
+	 * 			The given set of Boulders.
+	 * @post	The set of Boulders positioned in the Block
+	 * 			equals the given set.
+	 */
+	@Basic
 	protected void setBouldersInCube(Set<Boulder> newSet){
-		this.bouldersInCube = newSet;
+		this.bouldersInBlock = newSet;
 	}
 	
+	/**
+	 * Set the set of Logs positioned in this Block
+	 * 	to the given set of Logs.
+	 * @param 	newSet
+	 * 			The given set of Logs.
+	 * @post	The set of Logs positioned in the Block
+	 * 			equals the given set.
+	 */
+	@Basic
 	protected void setLogsInCube(Set<Log> newSet){
-		this.logsInCube = newSet;
+		this.logsInBlock = newSet;
 	}
 	
 	private Vector location;
 	
 	private BlockType blocktype;
 	
-	private Set<Unit> unitsInCube = new HashSet<Unit>();
+	private Set<Unit> unitsInBlock = new HashSet<Unit>();
 	
-	private Set<Boulder> bouldersInCube = new HashSet<Boulder>();
+	private Set<Boulder> bouldersInBlock = new HashSet<Boulder>();
 	
-	private Set<Log> logsInCube = new HashSet<Log>();
+	private Set<Log> logsInBlock = new HashSet<Log>();
 	
-	
-	
-	//private Item itemInCube
 }
-// Wijzigingen: getSolid, setSolid --> isSolid
-//				unitsInCube --> Set ipv ArrayList
-//				unitsPresent verwijderd (overbodig)
-//				suspended verwijderd (overbodig)
-//				constructor versimpeld

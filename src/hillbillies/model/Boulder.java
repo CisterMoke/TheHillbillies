@@ -12,7 +12,7 @@ import be.kuleuven.cs.som.annotate.*;
  */
 public class Boulder {	
 	/**
-	 * Initialize this new Boulder with given weight.
+	 * Initialize this new Boulder with given weight and coordinates.
 	 *
 	 * @param	x
 	 * 			The x-coordinate for the new Boulder.
@@ -46,10 +46,8 @@ public class Boulder {
 	 */
 	public void advanceTime(double dt){
 		if(shouldFall()){
-			Vector velocity = new Vector(0, 0, -3);
-			velocity.multiply(dt);
-			Vector newPos = this.getPosition();
-			newPos.add(velocity);
+			Vector velocity = new Vector(0, 0, -3).multiply(dt);
+			Vector newPos = this.getPosition().add(velocity);
 			this.setPosition(newPos);			
 		}
 	}
@@ -102,7 +100,7 @@ public class Boulder {
 	 */
 	@Basic @Raw
 	public Vector getPosition() {
-		return new Vector(this.position);
+		return this.position;
 	}
 	
 	/**
@@ -241,7 +239,9 @@ public class Boulder {
 	 * Set the world of this Boulder to the given
 	 * 	World.
 	 * @param 	world
-	 * 			The given World to be checked.
+	 * 			The given World to be set.
+	 * @post	The World of this Boulder equals the given
+	 * 			World.
 	 * @throws 	IllegalArgumentException
 	 * 			An exception is thrown if this Boulder
 	 * 			can't have the given World as its World.
@@ -254,6 +254,7 @@ public class Boulder {
 	}
 	/**
 	 * Remove the current World of this Boulder.
+	 * @post	The World of this Boulder is null.
 	 */
 	@Basic
 	protected void removeWorld(){
@@ -284,8 +285,7 @@ public class Boulder {
 	public boolean shouldFall(){
 		if(this.getWorld() == null)
 			return false;
-		Vector floorPos = this.getBlockCentre();
-		floorPos.add(0, 0, -1);
+		Vector floorPos = this.getBlockCentre().add(0, 0, -1);
 		if(!isValidPosition(floorPos)){
 			this.setPosition(this.getBlockCentre());
 			return false;

@@ -250,14 +250,12 @@ public class World {
 		return adjacent;
 	}
 	
-	public ArrayList<Block> getAdjacent(Block V){
+	public ArrayList<Block> getAdjacent(Block block){
 		ArrayList<Block> adjacent = new ArrayList<Block>();
 		for (int i=-1; i<2; i++){
 			for (int j=-1; j<2; j++){
 				for (int k=-1; k<2; k++){
-					Vector check = new Vector(i, j, k);
-					Vector pos = V.getLocation();
-					pos.add(check);
+					Vector pos = block.getLocation().add(new Vector(i, j, k));
 					if(!(i==0 && j==0 && k==0) && this.isValidPosition(pos)){
 						adjacent.add(this.getBlockAtPos(pos));
 					}
@@ -341,11 +339,13 @@ public class World {
 	}
 	
 	public void addUnit(Unit unit){
+		if(!unit.canHaveAsWorld(this))
+			return;
 		unit.setWorld(this);
 		this.units.add(unit);
 		this.getBlockAtPos(unit.getPosition()).addUnit(unit);
-		if(this.getFactions().size() < World.MAX_FACTIONS && unit.getFaction() == null){
-			unit.setFaction(new Faction(unit, "Faction " + Integer.toString(this.factions.size() + 1)));
+		if(this.getFactions().size() < World.MAX_FACTIONS){
+			unit.getFaction().setName("Faction " + Integer.toString(this.factions.size() + 1));
 			this.addFaction(unit.getFaction());
 		}
 		else{
@@ -354,6 +354,7 @@ public class World {
 				if(faction.getUnits().size() < smallestFaction.getUnits().size())
 					smallestFaction = faction;
 			}
+			unit.removeFaction();
 			unit.setFaction(smallestFaction);
 			if(unit.getFaction() != this.getFactions().get(0))
 				unit.startDefault();
@@ -376,12 +377,12 @@ public class World {
 	}
 	
 	public void addFaction(Faction faction){
+		if(!faction.canHaveAsWorld(this))
+			return;
 		if(this.getFactions().size() == World.MAX_FACTIONS)
 			return;
 		this.factions.add(faction);
 		faction.setWorld(this);
-		for(Unit unit : faction.getUnits())
-			this.addUnit(unit);
 	}
 	
 	public void setFactions(ArrayList<Faction> newList){
@@ -432,8 +433,7 @@ public class World {
 		for(int dx = -1; dx<2; dx++){
 			for(int dy = -1; dy<2; dy++){
 				for(int dz = -1; dz<2; dz++){
-					Vector adjacent = block.getLocation();
-					adjacent.add(dx, dy, dz);
+					Vector adjacent = block.getLocation().add(dx, dy, dz);
 					if(isValidPosition(adjacent) && this.getBlockAtPos(adjacent).isSolid())
 						return true;
 				}
@@ -443,6 +443,7 @@ public class World {
 	}
 	
 	public Unit spawnUnit(){
+		
 		if(this.getUnits().size() == World.MAX_UNITS)
 			return null;
 		Collections.shuffle(this.positionList);

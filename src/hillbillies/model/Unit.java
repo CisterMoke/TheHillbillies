@@ -24,11 +24,14 @@ import hillbillies.model.Block.BlockType;
  * 			|	 >= (getPrimStats().get("str") + getPrimStats("agl")) / 2)
  * @invar	A unit must always belong to a faction
  * 			| getFaction() != null
+ * @invar	If a unit belongs to a world, it must be the same as its faction.
+ * 			|if(getWorld() != null)
+ * 			|	then getWorld() == getFaction().getWorld()
  *
  */
 public class Unit {
 	/**
-	 * Initializes this new Hillbilly unit with the given name, position and primary stats.
+	 * Initialize a new Hillbilly unit with the given name, position and primary stats.
 	 * @param name
 	 * 			The name of the unit.
 	 * @param x
@@ -52,8 +55,8 @@ public class Unit {
 	 * 			is set to the maximum allowed amount.
 	 * 			| new.getHp() == getMaxHp() &&
 	 * 			| new.getStam() == getMaxStam()
-	 * @effect	The position of the unit is set to the given position.
-	 * 			| setPosition(x, y, z)
+	 * @effect	The position vector of the unit is set to the given position vector.
+	 * 			| setPosition(Vector(x, y, z))
 	 * @effect	The orientation of the unit is set to pi/2.
 	 * 			| setTheta(Math.PI/2)
 	 * @post	The base speed of the unit equals
@@ -63,6 +66,9 @@ public class Unit {
 	 * 			|			/(2*getTotalWeight())
 	 * @post	The state of the unit is IDLE.
 	 * 			| new.getState() == State.IDLE
+	 * @effect	The Faction of the unit is set to a new Faction,
+	 * 			founded by this Unit.
+	 * 			| setFaction(newFaction(this))
 	 * @throws IllegalArgumentException
 	 * 			An exception is thrown is the name is invalid or if the position is invalid
 	 * 			| !isValidName(name) || !isValidPosition(Vector(x, y, z))
@@ -82,39 +88,44 @@ public class Unit {
 		this.setTheta(Math.PI/2);
 		this.setTarget(this.getPosition());
 		this.setState(State.IDLE);
+		this.setFaction(new Faction(this));
 		
 	}
 	/**
-	 * Updates the unit's state, position, attack cooldown, rest time, minimum required rest time,
-	 * 	work time, hitpoints and stamina points based on the given time interval.
+	 * Update the unit's state, position, target and finalTartget, 
+	 * 	cooldown times(such as attackCooldown, workTime,...), and
+	 * 	hitpoints and stamina points based on the given time interval.
 	 * @param dt
 	 * 			The time interval in seconds.
+	 * @post	Nothing happens if the Unit is terminated.
 	 * @post	If the minimum required rest time is bigger than zero,
 	 * 			the given time interval is subtracted from it.
-	 * 			The method then ends here.
 	 * @post	If the attack cooldown is bigger than zero,
 	 * 			the given time interval is subtracted from it.
-	 * 			The method then ends here.
-	 * @post	If the unit's state is COMBAT, it will attack all the units
-	 * 			in its set of combatants.
-	 * 			The method then ends here.
+	 * @post	If this Unit should be falling, its state will be set
+	 * 			to FALLING.
+	 * @post	If the Unit's state is FALLING,  its position will be set
+	 * 			based on the given time interval. If the Unit shouldn't be
+	 * 			falling anymore, it will land on its current position.
+	 * @post	This Unit will exhibit default behaviours if it is switched on.
+	 * @post	If the unit's state is COMBAT, it will attack its opponent if it has
+	 * 			one. If it hasn't got an opponent and its set of attackers is empty,
+	 * 			this unit's state will be set to IDLE.
 	 * @post	If the unit's state is RESTING and hasn't fully recovered its hitpoints,
 	 * 			an amount of (toughness/200 * dt/0.2) is added. If the new
 	 * 			amount of hitpoints is invalid, it will be set to the maximum
 	 * 			allowed amount.
-	 * 			The method then ends here.
 	 * @post	If the unit's state is RESTING and has fully recovered its hitpoints but 
 	 * 			hasn't fully recovered its stamina points, an amount of 
 	 * 			(toughness/100 * dt/0.2) will be added. If the new
 	 * 			amount of stamina points is invalid, it will be set to the maximum
 	 * 			allowed amount.
-	 * 			The method then ends here.
 	 * @post	If the unit's state is WORKING and its work time is bigger than zero,
 	 * 			the given time interval will be subtracted from the work time.
-	 * 			The method then ends here.
-	 * @effect	If the unit's state isn't IDLE and it has reached its final target, its
-	 * 			state will be set to IDLE.
-	 * 			The method then ends here.
+	 * 			On the other hand, if the unit's state is WORKING and its work time
+	 * 			is smaller than or equal to zero, its work task will be completed.
+	 * @effect	If the unit's state is IDLE and it hasn't reached its final target,
+	 * 			it will move to its final target.
 	 * @post	If the unit's state is SPRINTING and its stamina is bigger than zero,
 	 * 			an amount of dt/0.1 will be subtracted from its stamina. If the new
 	 * 			amount of stamina points is invalid, it will be set to zero.
@@ -140,18 +151,16 @@ public class Unit {
 		if (this.getAttackCooldown() > 0){
 			this.setAttackCooldown(this.getAttackCooldown() - dt);
 		}
+		
+		if(this.shouldFall()){
+			this.fall();
+		}
 		if(this.getState() == State.FALLING){
-			Vector newPos = this.getPosition();
-			Vector distance = this.getV_Vector();
-			distance.multiply(dt);
-			newPos.add(distance);
+			Vector stepSize = this.getV_Vector().multiply(dt);
+			Vector newPos = this.getPosition().add(stepSize);
 			this.setPosition(newPos);
 			if(!this.shouldFall())
 				this.land();
-			return;
-		}
-		if(this.shouldFall()){
-			this.fall();
 			return;
 		}
 		
@@ -160,11 +169,11 @@ public class Unit {
 			
 		
 		if(this.getState() == State.COMBAT){
-			if(this.victim == null){
+			if(this.opponent == null){
 				if (this.getAttackers().isEmpty())
 				this.setState(State.IDLE);
 			}
-			else this.attack(victim);
+			else this.attack(opponent);
 			return;
 		}
 		if (this.restTime >= 180){
@@ -201,7 +210,6 @@ public class Unit {
 		}
 		if (this.getState() == State.WORKING){
 			if(this.getWorkTime() > 0){
-//				this.work();
 				this.setWorkTime(this.getWorkTime() - dt);
 				return;
 			}
@@ -238,18 +246,14 @@ public class Unit {
 				
 				}
 			}
-			Vector nextPos = this.getPosition();
-			Vector stepSize = this.getV_Vector();
-			stepSize.multiply(dt);
-			nextPos.add(stepSize);
-			Vector distance = new Vector(this.getTarget());
-			distance.add(nextPos.getOpposite());
-			distance.normalize();
-			Vector currentDirection = this.getV_Vector();
-			currentDirection.normalize();
-			distance.add(currentDirection.getOpposite());
+			Vector stepSize = this.getV_Vector().multiply(dt);
+			Vector nextPos = this.getPosition().add(stepSize);
+			Vector nextDirection = this.getTarget().add(nextPos.getOpposite()).normalize();
+			Vector currentDirection = this.getV_Vector().normalize();
+			
+			Vector subtraction = nextDirection.add(currentDirection.getOpposite());
 			boolean moved = false;
-			if(distance.getLength() > 0.5){
+			if(subtraction.getLength() > 0.5){
 				this.setPosition(this.getTarget());
 				this.addExp(1);
 				moved = true;
@@ -262,8 +266,7 @@ public class Unit {
 					this.setPosition(nextPos);
 				}
 				catch (IllegalArgumentException exc){
-					Vector newTarget = this.getBlockCentre();
-					this.setTarget(newTarget);
+					this.setTarget(this.getBlockCentre());
 					
 				}
 				moved = true;
@@ -272,7 +275,7 @@ public class Unit {
 	}
 	
 	/**
-	 * Returns the name of this unit.
+	 * Return the name of this unit.
 	 * 
 	 */
 	@Basic
@@ -281,7 +284,7 @@ public class Unit {
 	}
 	
 	/**
-	 * Changes the name of the unit to a valid name.
+	 * Change the name of the unit to a valid name.
 	 * @param newname
 	 * 			The new name of the unit.
 	 * @post The given name is the new name of the unit
@@ -299,7 +302,7 @@ public class Unit {
 		}
 	}
 	/**
-	 * Returns whether or not the given name is a valid name.
+	 * Return a boolean stating whether or not the given name is a valid name.
 	 * @param name
 	 * 			The name to be checked.
 	 * @return True if the name only contains letters and valid characters,
@@ -320,7 +323,7 @@ public class Unit {
 	}
 	/**
 	 * 
-	 * Returns a set containing the valid characters, excluding letters.
+	 * Return a set containing the valid characters, excluding letters.
 	 */
 	@Basic @Immutable
 	private Set<String> getValidChars(){
@@ -336,13 +339,9 @@ public class Unit {
 	}
 	
 	/**
-	 * Sets the position of the unit to the given position.
-	 * @param x
-	 * 			The x-coordinate of the new position.
-	 * @param y
-	 * 			The y-coordinate of the new position.
-	 * @param z
-	 * 			The z-coordinate of the new position.
+	 * Set the position vector of the unit to the given position vector.
+	 * @param 	position
+	 * 			The given position vector.
 	 * @throws 	IllegalArgumentException
 	 * 			Throws an exception when an illegal position is given.
 	 * 			| !isValidPosition(Vector(x, y, z))
@@ -367,15 +366,15 @@ public class Unit {
 		else this.pos = position;
 	}
 	/**
-	 * Returns the vector representing the current position of the unit.
+	 * Return the vector representing the current position of the unit.
 	 * 
 	 */
 	@Basic
 	public Vector getPosition(){
-		return new Vector(this.pos);
+		return this.pos;
 	}
 	/**
-	 * Returns whether or not the given position lies within the boundaries.
+	 * Return a boolean stating whether or not the given position lies within the boundaries.
 	 * @param pos
 	 * 			The position vector the be checked.
 	 * @return True if and only if every coefficient of the given position vector lies between 0 and 50 inclusively.
@@ -394,6 +393,13 @@ public class Unit {
 		return true;
 	}
 	/**
+	 * Return a set containing the keys of a valid map
+	 * 	of primary stats.
+	 */
+	public static Set<String> getPrimStatSet(){
+		return new HashSet<String>(Unit.primStatSet);
+	}
+	/**
 	 * 
 	 * Returns a map containing the primary stats of the unit.
 	 */
@@ -402,12 +408,12 @@ public class Unit {
 		return new HashMap<String, Integer>(this.primStats);
 	}
 	/**
-	 * Sets the primary stats of the unit to the given stats.
+	 * Set the primary stats of the unit to the given stats.
 	 * @param primStats
 	 * 			A map containing the new primary stats.
 	 * @post	Nothing happens if the given map of primary stats is of the wrong format.
-	 * 			| if(!primStats.keySet().equals({"str", "wgt", "agl", "tgh"}))
-	 * 			|	return
+	 * 			| if(!primStats.keySet().equals(getPrimStatSet()))
+	 * 			|	then return
 	 * @post	The values of the new primary stats are set to the values of the given map
 	 * 			containing the new primary stats.
 	 * 			| new.getPrimStats() == primStats
@@ -421,13 +427,11 @@ public class Unit {
 	 * 			|	then for each key in new.getPrimStats.keySet(): (
 	 * 			|		(new.getPrimStats().get(key) >= 25) &&
 	 * 			|		(new.getPrimStats().get(key) <= 100))
-	 * @post	The new weight of the unit is bigger than or equal to
-	 * 			the sum of the new strength and the new agility, divided by two.
-	 * 			| new.getPrimStats().get("wgt")
-	 * 			|	 >= (new.getPrimStats().get("str") + new.getPrimStats("agl")) / 2)
+	 * @post	The new weight of the unit is a valid weight.
+	 * 			| isValidWeight(new.getPrimStats().get("wgt"))
 	 * @post	The new primary stats only contains the unit's strength, agility,
 	 * 			weight and toughness.
-	 * 			| new.getPrimStats.keySet().equals({"str", "agl", "wgt", "tgh"})
+	 * 			| new.getPrimStats.keySet().equals(getPrimStatSet())
 	 */
 	public void setPrimStats(Map<String, Integer> primStats){
 		if (!primStats.keySet().equals(Unit.primStatSet)){
@@ -456,28 +460,27 @@ public class Unit {
 	}
 		 
 	/**
-	 * 
-	 * Returns the orientation of this unit in the x-y plane in radians.
+	 * Return the orientation of this unit in the x-y plane in radians.
 	 */
 	@Basic
 	public Double getTheta(){
 		return this.theta;
 	}
 	/**
-	 * Sets the orientation of this unit to the given angle.
+	 * Set the orientation of this unit to the given angle.
 	 * @param angle
 	 * 			The new angle of orientation of the unit.
 	 * 
 	 * @post The orientation of the unit is set to the given angle.
 	 * 			|new.getTheta() == angle
 	 */
+	@Basic
 	public void setTheta (Double angle){
 		this.theta = angle;
 	}
 	
 	/**
-	 * Returns the vector of the center of the block in which the unit is located.
-	 * 
+	 * Return the vector of the center of the block in which the unit is located.
 	 */
 	public Vector getBlockCentre(){
 		double blockX = Math.floor(this.pos.getX()) + 0.5;
@@ -487,7 +490,7 @@ public class Unit {
 		return  new Vector(blockX, blockY, blockZ);
 	}
 	/**
-	 *  Initiates the movement of the unit to a given adjacent block.
+	 *  Initiate the movement of the unit to a given adjacent block.
 	 * @param dx
 	 * 			The difference between the x-coordinate of the selected adjacent block
 	 * 			and the block the unit is currently standing in.
@@ -505,8 +508,7 @@ public class Unit {
 	 * 			| if (getState() == State.COMBAT)
 	 * 			|	then return
 	 * @effect  A new target is set to the center of the given adjacent block.
-	 * 			| newTarget == this.getBlockPosition
-	 * 			| newTarget.add(dx + 0.5, dy + 0.5, dz + 0.5)
+	 * 			| newTarget == this.getBlockPosition().add(dx + 0.5, dy + 0.5, dz + 0.5)
 	 * 			| setTarget(newTarget)
 	 * @effect	A new velocity vector is created, pointing in the direction of the target.
 	 * 			| setV_Vector()
@@ -515,11 +517,10 @@ public class Unit {
 	 * @effect	When going down, the walking speed is set to 1.2*BaseSpeed.
 	 * 			When going up, the walking speed is set to 0.5*BaseSpeed.
 	 * 			Otherwise the walking speed is set to BaseSpeed.
-	 * 			|setWalkSpeed(getBaseSpeed())
 	 * 			| if(dz == -1)
-	 * 			|	then setWalkSpeed(1.2*this.getBaseSpeed())
+	 * 			|	then setWalkSpeed(1.2*getBaseSpeed())
 	 * 			| else if(dz == 1)
-	 * 			|	then setWalkSpeed(0.5*this.getBaseSpeed())
+	 * 			|	then setWalkSpeed(0.5*getBaseSpeed())
 	 * 			| else setWalkSpeed(getBaseSpeed())
 	 * 			|
 	 * @effect	If the unit isn't sprinting, the unit is set to walk.
@@ -556,27 +557,52 @@ public class Unit {
 			if (dz == 1)
 				this.setWalkSpeed(-this.getBaseSpeed()*0.5);
 		}
-		Vector target = this.getBlockCentre();
-		target.add(dx, dy, dz);
+		Vector target = this.getBlockCentre().add(dx, dy, dz);
 		this.setTarget(target);
 	}
 	/**
-	 * Initiates the movement of a unit to a given position.
+	 * Initiate the movement of a unit to a given position vector.
 	 * 	The position is set to the centre of the block containing
 	 * 	this position.
-	 * @param x
-	 * 			The x-coordinates of the given position.
-	 * @param y
-	 * 			The y-coordinates of the given position.
-	 * @param z
-	 * 			The z-coordinates of the given position.
-	 * 
-	 * @post	The final target is removed if the unit's position equals
+	 * @param 	pos
+	 * 			The given position vector.
+	 * @post	The final target and the path are removed if the unit's position equals
 	 * 			the position of the final target. The method then ends here
+	 * 			|if(getPosition.equals(getFinTarget())
+	 * 			|	then new.getFinTarget() == null &&
+	 * 			|	new.getPath().isEmpty() &&
+	 * 			|	return
+	 * @post	The current step of the path is removed if the unit has reached
+	 * 			the block of the current step and the path isn't empty.
+	 * 			|if(!getPath().isEmpty() && getBlock == getPath.get(0))
+	 * 			|	then !new.getPath().contains(this.getPath().get(0))
 	 * @effect	Tries to create a new final target using the given coordinates.
-	 * 			If it fails to create one, nothing happens.
-	 * @effect	Tries to move to the centre of an adjacent block that is on the path towards the Final Target.
-	 * 			If it fails, nothing happens.
+	 * 			The method will return here if it fails to create one.
+	 * 			| newBlock == getWorld().getBlockAtPos(pos)
+	 * 			| newTarget == newBlock().getLocation().add(0.5, 0.5, 0.5)
+	 * 			| if(setFinTarget(newTarget) throws IllegalArgumentException)
+	 * 			|	then return
+	 * 			| else setFinTarget(newTarget)
+	 * @effect	If the unit's position equals its target and it's not the case
+	 * 			that there is a path and that the block containing the final target
+	 * 			is equal to the last step of the path, a new path is made.
+	 * 			| targetBlock == getWorld.getBlockAtPosition(getTarget())
+	 * 			| if(getPosition().equals(getTarget()) && 
+	 * 			|	!(getPath().isEmpty && targetBlock.equals(getPath().get(getPath.size() - 1))))
+	 * 			|	then pathFinding()
+	 * @effect	The method returns at this point if the current path is empty.
+	 * 			| if(getPath().isEmpty())
+	 * 			|	then return	
+	 * @effect	Tries to move to the centre of a block adjacent to the target
+	 * 			and on the path towards the final target. If an IllegalArgumentException
+	 * 			is caught, the method returns.	
+	 * 			| targetBlockPos == getWorld().getBlockAtPos(getTarget).getLocation()
+	 * 			| nextBlockPos == getPath.get(0).getLocation()
+	 * 			| newBlockPos == nextBlock.add(targetBlock.getOpposite())
+	 * 			| if(moveToAdjacent(newBlock.getX(), newBlock.getY(), newBlock.getZ())
+	 * 			|		throws IllegalArgumentException)
+	 * 			|	then return
+	 * 			| else moveToAdjacent(newBlock.getX(), newBlock.getY(), newBlock.getZ()
 	 */
 	public void move2(Vector pos){
 		if (this.getPosition().equals(this.getFinTarget())){
@@ -589,8 +615,7 @@ public class Unit {
 		}
 		Block newBlock = this.getWorld().getBlockAtPos(pos);
 		try{
-			Vector newTarget = new Vector(newBlock.getLocation());
-			newTarget.add(0.5, 0.5, 0.5);
+			Vector newTarget = newBlock.getLocation().add(0.5, 0.5, 0.5);
 			this.setFinTarget(newTarget);
 		}
 		catch(IllegalArgumentException exc){
@@ -604,13 +629,14 @@ public class Unit {
 		}
 		if (this.getPath().isEmpty())
 			return;
-		Vector newpos = new Vector(this.getPath().get(0).getLocation());
-		newpos.add(this.getWorld().getBlockAtPos(this.getTarget()).getLocation().getOpposite());
+		Vector currentStep = this.getWorld().getBlockAtPos(this.getTarget()).getLocation();
+		Vector nextStep = this.getPath().get(0).getLocation();
+		Vector newPos = nextStep.add(currentStep.getOpposite());
 		try{
-			this.moveToAdjacent((int)(newpos.getX()),(int) (newpos.getY()),(int) (newpos.getZ()));
+			this.moveToAdjacent((int)(newPos.getX()),(int) (newPos.getY()),(int) (newPos.getZ()));
 		}
 		catch(IllegalArgumentException exc){
-			System.out.println("??????");
+//			System.out.println("??????");
 			return;
 		}
 	}
@@ -620,46 +646,43 @@ public class Unit {
 	
 	
 	/**
-	 * Updates the unit's velocity vector.
+	 * Update the unit's velocity vector.
 	 * @effect 	A velocity vector is created pointing in the direction of the target.
-	 * 			| tempV_Vector == this.getPosition()
-	 * 			| tempV_Vector.add(this.getTarget().getOpposite())
-	 * 			| tempV_Vector.normalize()
-	 * 			| tempV_Vector.multiply(this.getSpeed())
-	 * 			| new.getV_Vector() == tempV_Vector
+	 * 			| subtraction == this.getPosition().add(this.getTarget().getOpposite())
+	 * 			| newV_Vector == subtraction.normalize().multiply(this.getSpeed())
+	 * 			| new.getV_Vector() == newV_Vector
 	 */
 	private void setV_Vector(){
 		if(this.getState() == State.FALLING){
 			this.v_vector = new Vector(0, 0, -3);
 			return;
 		}
-		this.v_vector = this.getTarget();
-		this.v_vector.add(this.getPosition().getOpposite());
-		this.v_vector.normalize();
-		this.v_vector.multiply(this.getSpeed());
+		this.v_vector = this.getTarget().add(this.getPosition().getOpposite());
+		this.v_vector = this.v_vector.normalize().multiply(this.getSpeed());
 	}
 	/**
-	 * 
-	 * Returns the velocity vector of this unit.
+	 * Return the velocity vector of this unit.
 	 */
 	@Basic
 	public Vector getV_Vector(){
-		return new Vector(this.v_vector);
+		return this.v_vector;
 	}
 	
 	/**
-	 * 	Initiates the attack of this unit on the given defending unit.
+	 * 	Initiate the attack of this unit on the given defending unit.
 	 * @param defender
 	 * 			The defending unit against which the attack is initiated.
-	 * @post	Nothing happens if the unit hasn't rested long enough,
-	 * 			is moving or if the defender is out of range.
-	 * 			| if(getMinRestTime() > 0 || !inRange(defender) || isMoving())
+	 * @post	Nothing happens if the unit hasn't rested long enough or
+	 * 			if it's moving.
+	 * 			| if(getMinRestTime() > 0 || isMoving())
 	 *			|	then return
-	 * @effect	Tries to add the defender to the unit's set of combatants.
+	 * @effect	Tries to set the defender as the unit's opponent and
+	 * 			add this unit to the defender's set of attackers.
 	 * 			If an IllegalArgumentException is caught, nothing happens
-	 * 			| if(addAttacker(defender) throws IllegalArgumentException)
+	 * 			| if(defender.addAttacker(this) || setOpponent(defender) throws IllegalArgumentException)
 	 *			| 	then return
-	 *			| else addAttacker(defender)
+	 *			| else defender.addAttacker(this) &&
+	 *			|	setOpponent(defender)
 	 * @effect	The orientation of this unit and the defender are set so that they
 	 * 			face each other.
 	 * 			| new.getTheta() ==
@@ -679,7 +702,7 @@ public class Unit {
 			return;
 		}
 		try{
-			this.setVictim(defender);
+			this.setOpponent(defender);
 			defender.addAttacker(this);
 		}
 		catch(IllegalArgumentException exc){
@@ -697,12 +720,37 @@ public class Unit {
 		}
 	}
 	/**
-	 * 
-	 * Returns true if the attack is initiated.
+	 * Return a boolean stating whether or not the attack is initiated.
 	 */
 	@Basic
 	private boolean isAttackInitiated(){
 		return this.attackInitiated;
+	}
+	/**
+	 * Terminate the attack of this unit.
+	 * @post 	If no attack is initiated, nothing happens.
+	 * 			| if(!isAttackInitiated)
+	 * 			|	return
+	 * @post	The attack is not initiated anymore.
+	 * 			| new.isAttackInitiated == false
+	 * @effect	This unit is removed from its opponent's
+	 * 			set of attackers.
+	 * 			| getOpponent().removeAttacker(this)
+	 * @post	This unit has no opponent.
+	 * 			| new.getOpponent() == null
+	 * @post	This unit's state is set to IDLE is this unit
+	 * 			isn't currently falling.
+	 * 			|if(getState() != State.FALLING)
+	 * 			| new.getState() == State.IDLE
+	 */
+	private void terminateAttack(){
+		if(!this.isAttackInitiated())
+			return;
+		this.toggleAttackInitiated();
+		this.getOpponent().removeAttacker(this);
+		this.opponent = null;
+		if(this.getState() != State.FALLING)
+			this.setState(State.IDLE);
 	}
 	/**
 	 * Toggles whether or not the attack is initiated.
@@ -713,37 +761,35 @@ public class Unit {
 		this.attackInitiated = !this.isAttackInitiated();
 	}
 	/**
-	 * The unit performs an attack on the defender.
+	 * Perform an attack from this unit on the defender.
 	 * @param defender
-	 * 			The defender that get's attacked by the unit.
-	 * @effect 	Nothing happens if both units are from the same faction.
-	 * 			| if (getFaction == defender.getFaction)
-	 * 			|	then return
-	 * @effect	The attack get's initiated if it hasn't been initiated yet.
+	 * 			The defender that gets attacked by this unit.
+	 * @post	This unit is set to IDLE if no defender is given.
+	 * 			|if(defender == null)
+	 * 			|	new.getState() == State.IDLE
+	 * @effect	If this unit or the defender is falling, the attack gets terminated.
+	 * 			|if(getState() == FALLING || defender.getState() == FALLING)
+	 * 			|	then terminateAttack() && return
+	 * @effect 	The attack gets terminated if both units belong to a different
+	 * 			faction.
+	 * 			| if (getFaction() == defender.getFaction() && getFaction() != null)
+	 * 			|	then terminateAttack() && return
+	 * @effect	The attack gets terminated if the defender is out of range.
+	 * 			| if(!inRange(defender))
+	 * 			|	then terminateAttack() && return
+	 * @effect	The attack gets initiated if it hasn't been initiated yet.
 	 * 			The method then ends here.
 	 * 			| if(!isAttackInitiated())
 	 *			|	then initiateAttack(defender) && return	
 	 * @post	Nothing happens if the unit hasn't finished its attack yet.
-	 * 			| if(this.getAttackCooldown() > 0)
-	 * 			|	return
-	 * @post	Unit is set to Idle if the defender is dead, and nothing else happens.
-	 * 			| if(defender.isDead())
-	 * 			| 	this.setState(IDLE)
-	 * 			|	return
-	 * @effect	If the defender is out of range, the defender is removed from
-	 * 			the set of combatants, this unit's state is set to IDLE
-	 * 			and the value of isAttackInitiated is set to false.
-	 * 			The method then ends here.
-	 * 			| if (!this.inRange(defender))
-	 *			|	then removeCombatant(defender)
-	 *			|		&& setState(State.IDLE)
-	 *			|		&& new.isAttackInitiated() == false
-	 *			|		&& return
-	 * @effect	The initiation of the attack is toggled.
-	 * 			| toggleAttackInitiated()
-	 * @effect	The defender is removed from the set of combatants.
-	 * 			| removeCombatant(defender)
-	 * @effect	If the unit performs an attack, the defender will try to defend the attack.	
+	 * 			| if(getAttackCooldown() > 0)
+	 * 			|	then return
+	 * @post	The attack is initiated.
+	 * 			| new.isAttackInitiated() == true
+	 * @effect	This unit's opponent is removed and this unit is removed from
+	 * 			the defender's set of attackers.
+	 * 			| setOpponent(null) && removeCombatant(defender)
+	 * @effect	If the unit performs an attack, the defender will attempt to defend the attack.	
 	 * 			| defender.defend(this)
 	 */
 	public void attack(Unit defender){
@@ -752,20 +798,15 @@ public class Unit {
 			return;
 		}
 		if(this.getState() == State.FALLING || defender.getState() == State.FALLING){
-			this.victim = null;
-			defender.removeAttackers(this);
+			this.terminateAttack();
 			return;
 		}
 		if(this.getFaction() == defender.getFaction() && this.getFaction() != null){
-			this.victim = null;
-			this.setState(State.IDLE);
-			defender.removeAttackers(this);
+			this.terminateAttack();
 			return;
 		}
 		if (!this.inRange(defender)){
-			this.victim = null;
-			this.setState(State.IDLE);
-			defender.removeAttackers(this);
+			this.terminateAttack();
 			return;
 		}
 		if(!this.isAttackInitiated()){
@@ -776,19 +817,18 @@ public class Unit {
 			return;
 		}
 		this.toggleAttackInitiated();
-		this.victim = null;
-		defender.removeAttackers(this);
+		this.opponent = null;
+		defender.removeAttacker(this);
 		defender.defend(this);
 	}
 	/**
-	 * 
-	 * returns true if a unit's Hp is 0, meaning it is dead, and false otherwise.
+	 * Return a boolean stating whether or not a unit is terminated.
 	 */
 	public boolean isTerminated(){
 		return this.terminated;
 	}
 	/**
-	 * Returns the probability of dodging an attack.
+	 * Return the probability of dodging an attack.
 	 * @param attacker
 	 * 			The attacking unit.
 	 * @return The probability equals 0.2 times the ratio of the units agility to the attacker's agility.
@@ -798,7 +838,7 @@ public class Unit {
 		return ((double)(0.2*this.getPrimStats().get("agl")))/attacker.getPrimStats().get("agl");
 	}
 	/**
-	 * Returns whether or not then unit successfully dodged the attack.
+	 * Return a boolean stating whether or not then unit successfully dodged the attack.
 	 * @param attacker
 	 * 			The attacking unit.
 	 * @return True if the randomly generated number between 0 and 1 is less than
@@ -809,20 +849,20 @@ public class Unit {
 		return (Math.random() <= this.getDodgeProb(attacker));
 	}
 	/**
-	 * The unit attempts to dodge the attack.
+	 * Dodge an incoming attack.
 	 * @param attacker
 	 * 			The attacking unit.
-	 * @effect	The unit will randomly select an adjacent block. It tries to 
-	 * 			set the position of the unit in that block. If it fails, it
-	 * 			randomly select an adjacent block until it succeeds to move the unit.
-	 *			| while(new.getPosition.equals(old.getPosition()) : (
-	 *			| 	newPosition == Vector(oldPosition)
-	 *			|	newPosition.add(randInt(), randInt(), 0)
-	 *			|	if(!(setPosition(newPosition) throws IllegalArgumentException))
-	 *			|		then setPosition(newPosition)
-	 * @post	If the unit dodged the attack, the target of the unit is set to its position.
-	 * 			| new.getTarget() == getPosition()
-	 * @effect The unit will move to its final target if the unit hasn't reached it yet.
+	 * @post	This unit will jump to a walkable block that is adjacent
+	 * 			in the x- and y-direction if there exists one.
+	 * 			| if(for some block in getWorld.getAdjacent(block) : (
+	 * 			|	(block.getLocation().getZ() == getBlock().getLocation.getZ()) &&
+	 * 			|	getWorld().isWalkable(block))
+	 * 			|	then new.getPosition() == block.getLocation().add(
+	 * 			|		getBlock().getLocation().getOpposite())
+	 * @post	The target of the unit is set to its position and the path is removed.
+	 * 			| new.getTarget() == getPosition() &&
+	 * 			| new.getPath().isEmpty()
+	 * @effect 	The unit will move to its final target if the unit hasn't reached it yet.
 	 * 			| if (getFinTarget() != null)
 	 *			|	then moveTo(getFinTarget())
 	 */
@@ -836,10 +876,8 @@ public class Unit {
 		boolean moved = false;
 		while(!dodgeBlocks.isEmpty() && !moved){
 			if(this.getWorld().isWalkable(dodgeBlocks.get(0))){
-				Vector distance = new Vector(dodgeBlocks.get(0).getLocation());
-				distance.add(this.getBlock().getLocation().getOpposite());
-				Vector nextPos = this.getPosition();
-				nextPos.add(distance);
+				Vector subtraction = dodgeBlocks.get(0).getLocation().add(this.getBlock().getLocation().getOpposite());
+				Vector nextPos = this.getPosition().add(subtraction);
 				this.setPosition(nextPos);
 				moved = true;
 			}
@@ -853,7 +891,7 @@ public class Unit {
 	}
 	
 	/**
-	 * Returns the probability of blocking an attack.
+	 * Return the probability of blocking an attack.
 	 * @param attacker
 	 * 			The attacking unit.
 	 * @return  The probability equals 0.25 times the ratio of the sum the units agility and strength
@@ -867,7 +905,8 @@ public class Unit {
 	}
 	
 	/**
-	 * Returns whether or not the unit has blocked the attack of the attacker.
+	 * Return a boolean stating whether or not the unit has blocked
+	 * 	the attack of the attacker.
 	 * @param attacker
 	 * 			The attacking unit.
 	 * @return True if the randomly generated number between 0 and 1 is less than
@@ -883,15 +922,16 @@ public class Unit {
 	 * The unit attempts to defend itself from the incoming attack.
 	 * @param attacker
 	 * 			The attacking unit.
-	 * @effect	The unit attempts to dodge the attack. If it succeeds, it won't take any damage.
-	 * 			The method ends here.
+	 * @effect	The unit attempts to dodge the attack. If it succeeds, it won't take any damage
+	 * 			and it will gain 20 experience points. The method then ends here.
 	 * 			| if(this.hasDodged(attacker))
-	 * 			|	then dodge(attacker) && new.getHp() == getHp()
-	 * 			|	&& return
+	 * 			|	then dodge(attacker) && new.getHp() == getHp() &&
+	 * 			|	addExp(20) && return
 	 * @post	If the unit failed to dodge the attack, it will attempt to block the attack.
-	 * 			If it succeeds, it won't take any damage.
+	 * 			If it succeeds, it won't take any damage and will gain 20 experience points.
 	 *			| if(this.hasBlocked(attacker))
-	 *			| then new.getHp() == this.getHp() && return
+	 *			| 	then new.getHp() == this.getHp() && 
+	 *			|	addExp(20) && return
 	 * @effect	If the unit neither dodged nor blocked the attack it will lose an amount of hitpoints
 	 * 			equal to the attacker's strength divided by ten. If this amount is bigger than the current
 	 * 			amount of hitpoints of the unit, its hitpoints will be set to zero.
@@ -900,6 +940,9 @@ public class Unit {
 	 *			|	then setHp(0)
 	 *			| else
 	 *			|	setHp(this.getHp() - damage)
+	 * @effect	If the unit neither dodged nor blocked the attack, the attacker gains
+	 * 			20 experience points.
+	 * 			| attacker.addExp(20)
 	 */
 	private void defend(Unit attacker){
 		double damage = ((double)(attacker.getPrimStats().get("str")))/10;
@@ -922,8 +965,7 @@ public class Unit {
 	}
 	
 	/**
-	 * 
-	 * Returns whether or not the unit is set to the default behaviour.
+	 * Return a boolean stating whether or not the unit is set to the default behaviour.
 	 */
 	@Basic
 	public boolean DefaultOn(){
@@ -931,7 +973,7 @@ public class Unit {
 	}
 	
 	/**
-	 * Sets the behaviour of the unit to the default behaviour.
+	 * Set the behaviour of the unit to the default behaviour.
 	 * @post 	The unit is set to default behaviour.
 	 * 			| new.DefaultOn() == true
 	 */
@@ -939,7 +981,7 @@ public class Unit {
 		this.Default = true;
 	}
 	/**
-	 * Sets the behaviour of the unit from default behaviour to no behaviour.
+	 * Set the behaviour of the unit from default behaviour to no behaviour.
 	 * @post	The unit is set from default behaviour to no behaviour
 	 * 			| new.DefaultOn() == false
 	 */
@@ -948,8 +990,7 @@ public class Unit {
 	}
 	
 	/**
-	 * 
-	 * Returns the current amount of hitpoints of this unit.
+	 * Return the current amount of hitpoints of this unit.
 	 */
 	@Basic
 	public double getHp(){
@@ -957,7 +998,7 @@ public class Unit {
 	}
 	
 	/**
-	 * Sets the amount of hitpoints of the unit to the given amount.
+	 * Set the amount of hitpoints of the unit to the given amount.
 	 * @param hp
 	 * 			The given amount of new hitpoints of the unit. 
 	 * @pre  The given amount of hitpoints is a valid amount.
@@ -973,15 +1014,14 @@ public class Unit {
 			this.terminate();
 	}
 	/**
-	 * 
-	 * Returns the current amount of stamina points of this unit.
+	 * Return the current amount of stamina points of this unit.
 	 */
 	@Basic
 	public double getStam(){
 		return this.stam;
 	}
 	/**
-	 * Sets the amount of stamina points of the unit to the given amount.
+	 * Set the amount of stamina points of the unit to the given amount.
 	 * @param stam
 	 * 			The given amount of new stamina points of the unit. 
 	 * @pre  The given amount of stamina points is a valid amount.
@@ -995,7 +1035,7 @@ public class Unit {
 		this.stam = stam;
 	}
 	/**
-	 * Returns whether or not the given amount of hitpoints is a valid amount.
+	 * Return a boolean stating whether or not the given amount of hitpoints is a valid amount.
 	 * @param hp
 	 * 			The amount of hitpoints to be checked.
 	 * @return True if the given amount of hitpoints lies between 0 and
@@ -1007,7 +1047,7 @@ public class Unit {
 		return (hp>=0 && hp<=this.getMaxHp());
 	}
 	/**
-	 * Returns whether or not the given amount of stamina points is a valid amount.
+	 * Return a boolean stating whether or not the given amount of stamina points is a valid amount.
 	 * @param stam
 	 * 			The amount of stamina points to be checked.
 	 * @return True if the given amount of stamina points lies between 0 and
@@ -1019,8 +1059,7 @@ public class Unit {
 		return (stam>=0 && stam<=this.getMaxStam());
 	}
 	/**
-	 * 
-	 * Returns the maximum allowed amount of hitpoints of this unit.
+	 * Return the maximum allowed amount of hitpoints of this unit.
 	 * 		It is always equal to (strength*weight)/50.
 	 */
 	@Basic
@@ -1028,8 +1067,7 @@ public class Unit {
 		return (int)(Math.ceil((double)(this.getPrimStats().get("str") * this.getPrimStats().get("wgt"))/50));
 	}
 	/**
-	 * 
-	 * Returns the maximum allowed amount of stamina points of this unit.
+	 * Return the maximum allowed amount of stamina points of this unit.
 	 * 		It is always equal to (strength*weight)/50.
 	 */
 	@Basic
@@ -1037,17 +1075,16 @@ public class Unit {
 		return (int)(Math.ceil((double)(this.getPrimStats().get("str") * this.getPrimStats().get("wgt"))/50));
 	}
 	/**
-	 * 
-	 * Returns the current target of the unit.
+	 * Return the current target of the unit.
 	 * 		The target of a unit is a position at which the unit
 	 * 		will directly move towards.
 	 */
 	@Basic
 	public Vector getTarget(){
-		return new Vector(this.target);
+		return this.target;
 	}
 	/**
-	 * Sets the target of the unit to the given target.
+	 * Set the target of the unit to the given target.
 	 * @param target
 	 * 			The given position of the new target.
 	 * @post	The target of the unit is set to the given position.
@@ -1061,8 +1098,7 @@ public class Unit {
 		}
 	}
 	/**
-	 * 
-	 * Returns the final target of this unit.
+	 * Return the final target of this unit.
 	 * 		The final target of a unit is a position at which
 	 * 		the unit will move towards by setting new targets.
 	 */
@@ -1070,14 +1106,15 @@ public class Unit {
 	public Vector getFinTarget(){
 		if (this.finTarget == null)
 				return null;
-		return new Vector(this.finTarget);
+		return this.finTarget;
 	}
 	/**
-	 * Sets the final target of the unit to the given position.
+	 * Set the final target of the unit to the given position.
 	 * @param target
 	 * 			The given position of the new final target.
-	 * @post	The final target of the unit is set to the given position if its is valid.
-	 * 				|if (isValidPosition(target))
+	 * @post	The final target of the unit is set to the given position if its is valid
+	 * 			and if the given position doesn't equal the unit's target.
+	 * 				|if (isValidPosition(target) && !target.equals(getTarget()))
 	 * 				|	then new.getFinTarget() == target
 	 * @throws IllegalArgumentException
 	 * 			Throws and exception if the target is an invalid position.
@@ -1092,8 +1129,8 @@ public class Unit {
 	}
 	
 	/**
-	 * 
-	 * Returns the base speed of this unit.
+	 * Return the base speed of this unit. It is always equal to
+	 *	1.5*(strength + agility) / (2*totalWeight).
 	 */
 	@Basic
 	public double getBaseSpeed(){
@@ -1101,8 +1138,7 @@ public class Unit {
 	}
 	
 	/**
-	 * 
-	 * Returns the set containing the units this unit is currently in combat with.
+	 * Return the set containing the units this unit is currently attacked by.
 	 */
 	@Basic
 	public Set<Unit> getAttackers(){
@@ -1110,12 +1146,12 @@ public class Unit {
 	}
 	
 	/**
-	 * Adds the given unit to the set of combatants.
-	 *  	A unit will continue attacking a combatant until it is removed from the set.
+	 * Add the given unit to the set of attackers.
+	 *  	A unit will stay in combat if it is being attacked.
 	 * @param unit
-	 * 			The given unit to be added to the set of combatants.
-	 * @post	The given unit is added to the set of combatants.
-	 * 			|new.getCombatants().contains(unit)
+	 * 			The given unit to be added to the set of attackers.
+	 * @post	The given unit is added to the set of attackers.
+	 * 			|new.getAttackers().contains(unit)
 	 * @throws	IllegalArgumentException
 	 * 			An IllegalArgumentException is thrown if the given unit
 	 * 			is the unit itself.
@@ -1129,29 +1165,45 @@ public class Unit {
 	}
 	
 	/**
-	 * Removes the given unit from the set of combatants of this unit.
+	 * Remove the given unit from the set of attackers of this unit.
 	 * @param unit
-	 * 			The given unit to be removed from the set of combatants of this unit.
-	 * @post	The given unit is removed from the set of combatants of this unit.
-	 * 			|!new.getCombatants().contains(unit)
+	 * 			The given unit to be removed from the set of attackers of this unit.
+	 * @post	The given unit is removed from the set of attackers of this unit.
+	 * 			|!new.getAttackers().contains(unit)
 	 */
-	private void removeAttackers(Unit unit){
+	private void removeAttacker(Unit unit){
 		this.attackers.remove(unit);
 	}
 	
-	public Unit getVictim(){
-		return this.victim;
-	}
-	
-	public void setVictim(Unit victim){
-		if(victim == this)
-			throw new IllegalArgumentException("You can't attack yourself!");
-		if(this.victim != null)
-			throw new IllegalArgumentException("You're already attacking someone!");
-		this.victim = victim;
+	/**
+	 * Return the opponent of this unit. The opponent is
+	 * 	the unit that this unit is attacking. 
+	 */
+	public Unit getOpponent(){
+		return this.opponent;
 	}
 	/**
-	 * Returns the current speed of the unit
+	 * Set this unit's opponent to the given opponent.
+	 * @param 	opponent
+	 * 			The given opponent.
+	 * @post	This unit's opponent is set to the given opponent.
+	 * @throws	IllegalArgumentException
+	 * 			An exception is thrown if the given opponent is the unit
+	 * 			itself and if the this unit's opponent and the given opponent
+	 * 			are different from null.
+	 * 			| (opponent == this) && (getOpponent() != null) &&
+	 * 			|	(opponent != null)
+	 * 			
+	 */
+	public void setOpponent(Unit opponent){
+		if(opponent == this)
+			throw new IllegalArgumentException("You can't attack yourself!");
+		if(this.opponent != null && opponent != null)
+			throw new IllegalArgumentException("You're already attacking someone!");
+		this.opponent = opponent;
+	}
+	/**
+	 * Return the current speed of the unit
 	 * @return	Returns the walking speed of this unit if its state is walking.
 	 * 			|if (this.getState() == State.WALKING)
 	 *			|	result == getWalkSpeed();
@@ -1172,14 +1224,13 @@ public class Unit {
 		return 0;
 	}
 	/**
-	 * 
-	 * Returns the walking speed of this unit.
+	 *  Return the walking speed of this unit.
 	 */
 	public double getWalkSpeed(){
 		return this.v;
 	}
 	/**
-	 * Sets the walking speed of this unit to the given speed.
+	 * Set the walking speed of this unit to the given speed.
 	 * @param v
 	 * 			The given speed to be set to the new walking speed.
 	 * @post 	The walking speed of this unit is set to the given speed.
@@ -1205,6 +1256,7 @@ public class Unit {
 	 * 	- WORKING
 	 * 	- RESTING
 	 * 	- SPRINTING
+	 *  - FALLING
 	 * 
 	 * @author Joost Croonen & Ruben Dedoncker
 	 *
@@ -1213,7 +1265,7 @@ public class Unit {
 		IDLE, COMBAT, WALKING, WORKING, RESTING, SPRINTING, FALLING		
 	}
 	/**
-	 * Sets the state of the unit to the given state.
+	 * Set the state of the unit to the given state.
 	 * @param state
 	 * 			The given state to be set to the new state.
 	 * @post 	The state of the unit is set to the given state.
@@ -1293,18 +1345,17 @@ public class Unit {
 	public void workAt(Vector target){
 		if (this.isMoving() || this.getState() == State.COMBAT || this.getState() == State.FALLING)
 			return;
-		Vector centerTarget = new Vector((double)Math.floor(target.getX()), (double)Math.floor(target.getY()), (double)Math.floor(target.getZ()));
-		centerTarget.add(0.5, 0.5, 0.5);
-		Vector distance = new Vector(centerTarget);
-		distance.add(this.getBlockCentre().getOpposite());
+		Vector centreTarget = new Vector((double)Math.floor(target.getX()), (double)Math.floor(target.getY()), (double)Math.floor(target.getZ()));
+		centreTarget = centreTarget.add(0.5, 0.5, 0.5);
+		Vector distance = centreTarget.add(this.getBlockCentre().getOpposite());
 		if (distance.getLength() > 1.8){
 			return;
 		}
-		Block targetBlock = this.getWorld().getBlockAtPos(centerTarget);
+		Block targetBlock = this.getWorld().getBlockAtPos(centreTarget);
 		this.setWorkBlock(targetBlock);
 		if (this.getState() != State.WORKING){
 			this.setState(State.WORKING);
-			this.setWorkTime(10/this.getPrimStats().get("str"));
+			this.setWorkTime(500/this.getPrimStats().get("str"));
 			this.setTheta(Math.atan2(distance.getY(), distance.getX()));
 		}
 		
@@ -1313,7 +1364,7 @@ public class Unit {
 	public void workCompleted(){
 		boolean worked = false;
 		if (this.getWorkBlock().getBlockType()==BlockType.WORKSHOP){
-			if (!this.getWorkBlock().getBouldersInCube().isEmpty() && !this.getWorkBlock().getLogsInCube().isEmpty()){
+			if (!this.getWorkBlock().getBouldersInBlock().isEmpty() && !this.getWorkBlock().getLogsInBlock().isEmpty()){
 				this.operateWorkshop(this.getWorkBlock());
 				worked = true;
 			}
@@ -1327,7 +1378,7 @@ public class Unit {
 			this.dropAt(this.getWorkBlock().getLocation());
 			worked = true;
 		}
-		if ((!this.getWorkBlock().getBouldersInCube().isEmpty() || !this.getWorkBlock().getLogsInCube().isEmpty())&& worked==false){
+		if ((!this.getWorkBlock().getBouldersInBlock().isEmpty() || !this.getWorkBlock().getLogsInBlock().isEmpty())&& worked==false){
 			this.pickup(this.getWorkBlock());
 			worked = true;
 		}
@@ -1339,9 +1390,9 @@ public class Unit {
 	
 	public void pickup(Block targetBlock){
 		boolean lifted = false;
-		int random = (int) (Math.random()*targetBlock.getBouldersInCube().size());
+		int random = (int) (Math.random()*targetBlock.getBouldersInBlock().size());
 		int counter = 0;
-		for (Boulder boulder : targetBlock.getBouldersInCube()){
+		for (Boulder boulder : targetBlock.getBouldersInBlock()){
 			if (counter == random){
 				this.lift(boulder);
 				lifted = true;
@@ -1349,9 +1400,9 @@ public class Unit {
 			counter++;
 		}
 		
-		int random2 = (int) (Math.random()*targetBlock.getBouldersInCube().size());
+		int random2 = (int) (Math.random()*targetBlock.getBouldersInBlock().size());
 		int counter2 = 0;
-		for (Log log : targetBlock.getLogsInCube()){
+		for (Log log : targetBlock.getLogsInBlock()){
 			if (counter2 == random2 && !lifted){
 				this.lift(log);
 
@@ -1361,17 +1412,17 @@ public class Unit {
 	}
 	
 	public void operateWorkshop(Block targetBlock){
-		int random = (int) (Math.random()*targetBlock.getBouldersInCube().size());
+		int random = (int) (Math.random()*targetBlock.getBouldersInBlock().size());
 		int counter = 0;
-		for (Boulder boulder : targetBlock.getBouldersInCube()){
+		for (Boulder boulder : targetBlock.getBouldersInBlock()){
 			if (counter == random){
 				this.getWorld().removeBoulder(boulder);
 			}
 			counter++;
 		}
-		int random2 = (int) (Math.random()*targetBlock.getBouldersInCube().size());
+		int random2 = (int) (Math.random()*targetBlock.getBouldersInBlock().size());
 		int counter2 = 0;
-		for (Log log : targetBlock.getLogsInCube()){
+		for (Log log : targetBlock.getLogsInBlock()){
 			if (counter2 == random2){
 				this.getWorld().removeLog(log);
 			}
@@ -1396,15 +1447,15 @@ public class Unit {
 	}
 	
 	public void dropAt(Vector blockTarget){
-		blockTarget.add(new Vector(0.5, 0.5, 0.5));
+		Vector blockCentre = blockTarget.add(0.5, 0.5, 0.5);
 		if(getBoulder() != null){
-			this.getBoulder().setPosition(blockTarget);
+			this.getBoulder().setPosition(blockCentre);
 			this.getBoulder().removeCarrier();
 			this.getWorld().addBoulderAt(this.getWorkBlock(), this.getBoulder());
 			this.boulder = null;			
 		}
 		else{
-			this.getLog().setPosition(blockTarget);
+			this.getLog().setPosition(blockCentre);
 			this.getLog().removeCarrier();
 			this.getWorld().addLogAt(this.getWorkBlock(), this.getLog());
 			this.log = null;
@@ -1424,8 +1475,7 @@ public class Unit {
 	 */
 	public boolean inRange(Unit unit){
 		boolean inRange = false;
-		Vector distance = this.getBlockCentre();
-		distance.add(unit.getBlockCentre().getOpposite());
+		Vector distance = this.getBlockCentre().add(unit.getBlockCentre().getOpposite());
 		if (distance.getLength() < 1.8)
 			inRange = true;
 		return inRange;
@@ -1539,7 +1589,7 @@ public class Unit {
 	 * 			|	!faction.getUnits.contains(this)
 	 */
 	public void setFaction(Faction faction){
-		if (!canHaveAsFaction(faction))
+		if (!canHaveAsFaction(faction) || faction == null)
 			return;
 		faction.addUnit(this);
 		this.faction = faction;
@@ -1551,12 +1601,15 @@ public class Unit {
 	 * @param 	faction
 	 * 			The given faction to be checked.
 	 * @return	True if and only if this unit is currently not
-	 * 			belonging to any faction.
-	 * 			| return getFaction() == null
+	 * 			belonging to any faction and the unit belongs to the
+	 * 			same world as the faction's world or no world at all.
+	 * 			| return (getFaction() == null &&
+	 * 			|	(getWorld() == null || getWorld() == faction.getWorld()))
 	 */
 	@Basic @Raw
 	public boolean canHaveAsFaction(Faction faction) {
-		return this.faction == null;
+		return (this.faction == null &&
+				(this.world == null || this.world == faction.getWorld()));
 	}
 	/**
 	 * Remove the unit from it's current faction.
@@ -1772,6 +1825,8 @@ public class Unit {
 	}
 	
 	protected void setWorld(World world){
+		if(!this.canHaveAsWorld(world))
+			return;
 		this.world = world;
 	}
 	
@@ -1779,15 +1834,20 @@ public class Unit {
 		this.world = null;
 	}
 	
+	public boolean canHaveAsWorld(World world){
+		return((this.getWorld() == null || world == this.getFaction().getWorld())
+				&& !this.isTerminated());
+	}
+	
 	private void fall(){
 		if(this.getState() == State.COMBAT){
-			if(this.victim != null){
-				victim.removeAttackers(this);
-				this.victim = null;
+			if(this.opponent != null){
+				opponent.removeAttacker(this);
+				this.opponent = null;
 			}
 		}
 			for(Unit attacker : this.getAttackers())
-				attacker.setVictim(null);
+				attacker.setOpponent(null);
 		this.setState(State.FALLING);
 		this.fallHeight = (int)(this.getPosition().getZ());
 	}
@@ -2019,12 +2079,12 @@ public class Unit {
 	}
 	
 	public void terminate(){
-		if(this.victim != null){
-			victim.removeAttackers(this);
-			this.victim = null;
+		if(this.opponent != null){
+			opponent.removeAttacker(this);
+			this.opponent = null;
 		}
 		for(Unit attacker : this.getAttackers()){
-			attacker.setVictim(null);
+			attacker.setOpponent(null);
 		}
 		this.drop();
 		this.getBlock().removeUnit(this);
@@ -2076,7 +2136,7 @@ public class Unit {
 	
 	private static final Set<String> primStatSet = new HashSet<String>(Arrays.asList("str", "wgt", "agl", "tgh"));
 
-	private Faction faction = null;
+	private Faction faction;
 	
 	private static final ArrayList<State> stateList = new ArrayList<State>(Arrays.asList(State.COMBAT, State.WALKING, State.RESTING, State.WORKING));
 
@@ -2094,7 +2154,7 @@ public class Unit {
 	
 	private Block workBlock=null;
 	
-	private Unit victim = null;
+	private Unit opponent = null;
 	
 	private boolean terminated = false;
 }

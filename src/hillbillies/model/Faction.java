@@ -7,28 +7,33 @@ import be.kuleuven.cs.som.annotate.*;
 
 
 /**
- * Class representing faction.
+ * Class representing Faction.
  * @author Joost Croonen & Ruben Dedoncker
  * 
- * @invar 	The amount of units of this faction is less
+ * @invar 	The amount of Units of this Faction is less
  * 			than or equal to the maximum allowed amount (50).
  * 			| getUnits().size() <= Faction.MAX_UNITS
- * @invar	The members of this faction are valid units.
- * 			| for each unit in getUnits() : isValidUnit(unit)
+ * @invar	The members of this Faction are valid Units.
+ * 			| for each Unit in getUnits() : isValidUnit(unit)
+ * @invar	If a member of this Faction belongs to a World,
+ * 			then this Faction's World is the same as the member's
+ * 			World.
+ * @invar	If this Faction doesn't belong to a World, none of its
+ * 			members do either.
  */
 public class Faction {
 
 	/**
-	 * Initialize this new faction with given creator.
+	 * Initialize this new Faction with given creator.
 	 * 
 	 * @param  	creator
-	 *         	The creator for this new faction.
+	 *         	The creator for this new Faction.
 	 * @param	name
-	 * 			The given name of the faction.
-	 * @effect  If the given creator is a valid creator for any faction,
-	 *         	the creator is added as a member of the faction and the creator's
-	 *          faction is set to this faction. Otherwise, this faction is terminated.
-	 * @post	The name of the faction is set to the given name.
+	 * 			The given name of the Faction.
+	 * @effect  If the given creator is a valid creator for any Faction,
+	 *         	the creator is added as a member of the Faction and the creator's
+	 *          Faction is set to this Faction. Otherwise, this Faction is terminated.
+	 * @post	The name of the Faction is set to the given name.
 	 * 
 	 */
 	public Faction(Unit creator, String name) {
@@ -40,14 +45,14 @@ public class Faction {
 		}
 	}
 	/**
-	 * Initialize this new faction with given creator.
+	 * Initialize this new Faction with given creator.
 	 * 
 	 * @param  creator
-	 *         The creator for this new faction.
-	 * @post  If the given creator is a valid creator for any faction,
-	 *         	the creator is added as a member of the faction and the creator's
-	 *          faction is set to this faction. Otherwise, this faction is terminated.
-	 * @post	The name of the faction is set to "Faction".
+	 *         The creator for this new Faction.
+	 * @post  If the given creator is a valid creator for any Faction,
+	 *         	the creator is added as a member of the Faction and the creator's
+	 *          Faction is set to this Faction. Otherwise, this Faction is terminated.
+	 * @post	The name of the Faction is set to "Faction".
 	 */          
 	public Faction(Unit creator){
 		if (!isValidUnit(creator))
@@ -58,20 +63,20 @@ public class Faction {
 		}
 	}
 	/**
-	 * Returns the set of units belonging to this faction.
+	 * Return the set of Units belonging to this Faction.
 	 */
 	@Basic
 	public Set<Unit> getUnits(){
 		return new HashSet<Unit>(this.unitSet);
 	}
 	/**
-	 * Adds a unit to the faction if possible.
-	 * @param 	unit
-	 * 			The given unit to be added to the faction.
-	 * @post 	If the given unit is a valid unit
-	 * 			and number of units of this faction is less than
-	 * 			the maximum allowed number, the unit is added to
-	 * 			the faction.
+	 * Add a Unit to the Faction if possible.
+	 * @param 	Unit
+	 * 			The given Unit to be added to the Faction.
+	 * @post 	If the given Unit is a valid Unit
+	 * 			and number of Units of this Faction is less than
+	 * 			the maximum allowed number, the Unit is added to
+	 * 			the Faction.
 	 * 			
 	 */
 	protected void addUnit(Unit unit){
@@ -79,27 +84,27 @@ public class Faction {
 		this.unitSet.add(unit);
 	}
 	/**
-	 * Returns a boolean stating whether or not the given unit is valid.
-	 * @param	unit
-	 * 			The given unit to be checked.
-	 * @return	True of and only if the unit's faction can be set
-	 * 			to this faction.
+	 * Return a boolean stating whether or not the given Unit is valid.
+	 * @param	Unit
+	 * 			The given Unit to be checked.
+	 * @return	True of and only if the Unit's Faction can be set
+	 * 			to this Faction.
 	 */
 	public boolean isValidUnit(Unit unit){
 		return unit.canHaveAsFaction(this);
 	}
 	/**
-	 * Returns a string containing the name of this faction.
+	 * Return a string containing the name of this Faction.
 	 */
 	@Basic
 	public String getName(){
 		return this.name;
 	}
 	/**
-	 * Sets the name of the faction to the given name.
+	 * Set the name of the Faction to the given name.
 	 * @param 	name
-	 * 			The given name to be set as the new name of the faction.
-	 * @post	If the faction isn't terminated, the given name is the new name of the faction.
+	 * 			The given name to be set as the new name of the Faction.
+	 * @post	If the Faction isn't terminated, the given name is the new name of the Faction.
 	 * 			Otherwise, nothing happens.
 	 */
 	
@@ -109,7 +114,7 @@ public class Faction {
 	}
 	
 	/**
-	  * Return a boolean indicating whether or not this faction
+	  * Return a boolean indicating whether or not this Faction
 	  * is terminated.
 	  */
 	@Basic @Raw
@@ -117,51 +122,80 @@ public class Faction {
 		return this.terminated;
 	}
 	/**
-	 * Remove a unit from the set of units belonging to this faction.
-	 * @param 	unit
-	 * 			The given unit to be removed from the set of units
-	 * 			belonging to this faction.
-	 * @post	The unit is removed if it can be removed.
+	 * Remove a Unit from the set of Units belonging to this Faction.
+	 * @param 	Unit
+	 * 			The given Unit to be removed from the set of Units
+	 * 			belonging to this Faction.
+	 * @post	The Unit is removed if it can be removed.
 	 */
 	public void removeUnit(Unit unit){
 		if (canBeRemoved(unit))
 			this.unitSet.remove(unit);
 	}
 	/**
-	 * Return a boolean stating whether or not a given unit
-	 * 	can be removed from the set of units belonging to this faction.
-	 * @param	unit
-	 * 			The given unit to be checked.
-	 * @return	True if and only if the unit's faction does not equal
-	 * 			this faction.
+	 * Return a boolean stating whether or not a given Unit
+	 * 	can be removed from the set of Units belonging to this Faction.
+	 * @param	Unit
+	 * 			The given Unit to be checked.
+	 * @return	True if and only if the Unit's Faction does not equal
+	 * 			this Faction.
 	 */
 	@Basic
 	public boolean canBeRemoved(Unit unit){
 		return unit.getFaction() != this;
 	}
-	
+	/**
+	 * Return the World this Faction belongs to.
+	 */
+	@Basic
 	public World getWorld(){
 		return this.world;
 	}
-	
+	/**
+	 * Set the World of this Faction to the given World.
+	 * @param 	world
+	 * 			The given World to be set as this Faction's World.
+	 * @post	The given World equals the World of this Faction.
+	 */
+	@Basic
 	protected void setWorld(World world){
+		if(!canHaveAsWorld(world) || world == null)
+			return;
 		this.world = world;
 	}
-	
+	/**
+	 * Remove this Faction's World.
+	 * @post	The World of this Faction is null.
+	 */
+	@Basic
 	protected void removeWorld(){
+		for(Unit unit : this.getUnits())
+			unit.removeWorld();
 		this.world = null;
 	}
 	/**
-	 * Return a boolean stating whether or not this faction is terminated.
+	 * Return a boolean stating whether or not this Faction
+	 * 	can belong to the given World.
+	 * @param 	world
+	 * 			The given World to be checked.
+	 * @return	True if and only if this Faction is not terminated
+	 * 			and this Faction doesn't belong to a World.
+	 */
+	public boolean canHaveAsWorld(World world){
+		return(this.getWorld() == null && !this.isTerminated());
+	}
+	/**
+	 * Return a boolean stating whether or not this Faction is terminated.
+	 * 	A Faction can be terminated if it contains no Units.
 	 */
 	@Basic
 	public boolean canBeTerminated(){
 		return getUnits().isEmpty();
 	}
 	/**
-	 * Terminate this faction.
+	 * Terminate this Faction.
 	 *
-	 * @post   This faction is terminated if it is allowed.
+	 * @post   This Faction is terminated if it is allowed.
 	 */
 	public void terminate(){
 		if (canBeTerminated())

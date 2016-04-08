@@ -8,6 +8,7 @@ import be.kuleuven.cs.som.annotate.*;
  * @author Joost Croonen & Ruben Dedoncker
  *
  */
+@Value
 public class Vector {
 	/**
 	 * Initialize a three-dimensional vector having real coefficients. 
@@ -39,6 +40,8 @@ public class Vector {
 	/**
 	 * Return the x-coordinate of the vector.
 	 */
+	@Basic
+	@Immutable
 	public double getX(){
 		return this.x;
 	}
@@ -46,13 +49,17 @@ public class Vector {
 	/**
 	 * Return the y-coordinate of the vector.
 	 */
+	@Basic
+	@Immutable
 	public double getY(){
 		return this.y;
 	}
 	
 	/**
 	 * Return the z-coordinate of the vector.
-	 */	
+	 */
+	@Basic
+	@Immutable	
 	public double getZ(){
 		return this.z;
 	}
@@ -60,6 +67,7 @@ public class Vector {
 	/**
 	 * Return a list containing the coefficients of this vector.
 	 */
+	@Immutable
 	public ArrayList<Double> getCoeff(){
 		ArrayList<Double> coeff = new ArrayList<Double>();
 		coeff.add(this.x);
@@ -68,91 +76,18 @@ public class Vector {
 		return coeff;
 	}
 	
-	public double distance(Vector target){
-		Vector thisvector = new Vector(this);
-		thisvector.add(target.getOpposite());
-		double distance = thisvector.getLength();
-		return distance;
-	}
-	
 	/**
-	 * Set the coefficients of this vector to the given coefficients.
-	 * @param 	x
-	 * 			The given x-coordinate to be set as the x-coordinate
-	 * 			of this vector.
-	 * @param 	y
-	 * 			The given y-coordinate to be set as the x-coordinate
-	 * 			of this vector.
-	 * @param 	z
-	 * 			The given z-coordinate to be set as the x-coordinate
-	 * 			of this vector.
-	 * @post	The coefficients of this vector are set to the given
-	 * 			coefficients.
-	 */
-	@Basic
-	public void setCoeff(double x, double y, double z){
-		this.x = x;
-		this.y = y;
-		this.z = z;
-	}
-	/**
-	 * Set this vector to the given vector.
-	 * @param 	vector
-	 * 			The given vector.
-	 * @post	This vector is equal to the given vector.
-	 */
-	@Basic
-	public void setVector(Vector vector){
-		this.x = vector.getX();
-		this.y = vector.getY();
-		this.z = vector.getZ();
-	}
-	/**
-	 * Return a boolean stating whether this vector is equal to the
-	 * 	given vector.
-	 * @param 	vector
-	 * 			The vector to be checked.
-	 * @return	True if and only if the all the coefficients of
-	 * 			this vector are equal to the coefficients of the
-	 * 			given vector.
-	 */
-	@Basic
-	public boolean equals(Vector vector){
-		if (this == null || vector == null)
-			return false;
-		return((this.x == vector.getX()) && (this.y == vector.getY()) && (this.z == vector.getZ()));
-	}
-	/**
-	 * Return the length of this vector.
-	 */
-	public double getLength(){
-		return Math.sqrt(Math.pow(this.x, 2) + Math.pow(this.y, 2) + Math.pow(this.z, 2));
-	}
-	/**
-	 * Normalize this vector.
-	 */
-	public void normalize(){
-		if (this.getLength() == 0)
-				return;
-		double length = this.getLength();
-		this.x /= length;
-		this.y /= length;
-		this.z /= length;
-	}
-	/**
-	 * Add a given vector to this vector.
+	 * Addition of a given vector to this vector.
 	 * @param	vector
 	 * 			The given vector to be added.
-	 * @post	The coefficients of the given vector are
-	 * 			added to this vector.
+	 * @return	The sum of the two vectors is returned.
 	 */
-	public void add(Vector vector){
-		this.x += vector.getX();
-		this.y += vector.getY();
-		this.z += vector.getZ();
+	public Vector add(Vector vector){
+		return new Vector(this.x + vector.getX(), this.y + vector.getY(),
+				this.z + vector.getZ());
 	}
 	/**
-	 * Add this vector with the given coefficients.
+	 * Addition this vector with the given coefficients.
 	 * @param 	x
 	 * 			The given x-coordinate to be added to the
 	 * 			x-coordinate of this vector.
@@ -162,13 +97,57 @@ public class Vector {
 	 * @param 	z
 	 * 			The given x-coordinate to be added to the
 	 * 			z-coordinate of this vector.
-	 * @post	The given coefficients are added to this vector.
+	 * @return	Return the sum of this vector with the given
+	 * 			coefficients
 	 */
-	public void add(double x, double y, double z){
-		this.x += x;
-		this.y += y;
-		this.z += z;
+	public Vector add(double x, double y, double z){
+		return new Vector(this.x + x, this.y + y, this.z + z);
 	}
+	
+	/**
+	 * Return a boolean stating whether this vector is equal to the
+	 * 	given vector.
+	 * @param 	vector
+	 * 			The vector to be checked.
+	 * @return	True if and only if the all the coefficients of
+	 * 			this vector are equal to the coefficients of the
+	 * 			given vector.
+	 */
+	public boolean equals(Vector vector){
+		if (this == null || vector == null)
+			return false;
+		return((this.x == vector.getX()) && (this.y == vector.getY()) && (this.z == vector.getZ()));
+	}
+	/**
+	 * Return the length of this vector.
+	 */
+	@Immutable
+	public double getLength(){
+		return Math.sqrt(Math.pow(this.x, 2) + Math.pow(this.y, 2) + Math.pow(this.z, 2));
+	}
+	
+	/**
+	 * Calculation of the distance between this vector and a given vector.
+	 * @param 	target
+	 * 			The given vector.
+	 * @return Return the distance between this vector and the given vector.
+	 */
+	public double distance(Vector target){
+		Vector distanceVector = this.add(target.getOpposite());
+		double distance = distanceVector.getLength();
+		return distance;
+	}
+	
+	/**
+	 * Return the normalized vector.
+	 */
+	public Vector normalize(){
+		if (this.getLength() == 0)
+				return this;
+		double length = this.getLength();
+		return new Vector(this.x / length, this.y / length, this.z / length);
+	}
+	
 	
 	/**
 	 * Scalar multiplication of this vector with a given vector.
@@ -197,30 +176,27 @@ public class Vector {
 	}
 	
 	/**
-	 * Multiply the coefficients of this vector with a real factor.
+	 * Multiplication the coefficients of this vector with a real factor.
 	 * @param 	factor
 	 * 			The given factor.
-	 * @post	The coefficients of the vector are multiplied with
-	 * 			the factor.
+	 * @return Return the product of this vector with the given factor.
 	 */
 	@Basic
-	public void multiply(double factor){
-		this.x *= factor;
-		this.y *= factor;
-		this.z *= factor;
+	public Vector multiply(double factor){
+		return new Vector(this.x*factor, this.y*factor, this.z*factor);
 	}
+	
 	/**
 	 * Return a vector which is opposite to this one.
 	 */
 	public Vector getOpposite(){
-		Vector opposite = new Vector(this);
-		opposite.multiply(-1);
+		Vector opposite = this.multiply(-1);
 		return opposite;
 	}
 	
-	private double x;
-	private double y;
-	private double z;
+	private final double x;
+	private final double y;
+	private final double z;
 	
 
 }

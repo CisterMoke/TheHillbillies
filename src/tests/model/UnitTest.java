@@ -3,28 +3,47 @@ package tests.model;
 import static org.junit.Assert.*;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map;
 
 import org.junit.Before;
 import org.junit.Test;
 
 import hillbillies.model.*;
+import hillbillies.model.Block.BlockType;
 import hillbillies.model.Unit.State;
+import hillbillies.part2.listener.TerrainChangeListener;
 
 public class UnitTest {
 	private Unit testUnit;
+	private World testWorld;
 	@Before
 	public void setup(){
 		this.testUnit = new Unit("Billie", 0.5, 0.5, 0.5, 50, 50, 50, 50);
 		new Faction(testUnit);
 		testUnit.stopDefault();
+		Map<ArrayList<Integer>, Block> testmap = new HashMap<ArrayList<Integer>, Block>();
+		for (int i=0; i<50;i++){
+			for (int j=0; j<50;j++){
+				for (int k=0; k<50;k++){
+					ArrayList<Integer> locationArray = new ArrayList<Integer>(Arrays.asList(i, j, k));
+					Vector v = new Vector (i, j, k);
+					Block B = new Block(v, BlockType.AIR);
+					testmap.put(locationArray, B);
+				}
+			}
+		}
+		TerrainChangeListener modelLinstener = null;
+		this.testWorld = new World(testmap, modelLinstener);
+		testWorld.addUnit(testUnit);
 	}
 	
 	@Test
 	public void testSetPositionUpperOutOfBounds(){
 		boolean checker = false;
 		try{
-			testUnit.setPosition(-1.0, -1.0, -1.0);
+			testUnit.setPosition(new Vector(-1.0, -1.0, -1.0));
 		}
 		catch(IllegalArgumentException exc){
 			exc.printStackTrace();
@@ -36,7 +55,7 @@ public class UnitTest {
 	public void testSetPositionLowerOutOfBounds() {
 		boolean checker = false;
 		try{
-			testUnit.setPosition(51, 51, 51);
+			testUnit.setPosition(new Vector(51, 51, 51));
 		}
 		catch(IllegalArgumentException exc){
 			exc.printStackTrace();
@@ -48,7 +67,7 @@ public class UnitTest {
 	public void testSetPostionAllowed(){
 		boolean checker = false;
 		try{
-			testUnit.setPosition(5.5, 5.5, 5.5);
+			testUnit.setPosition(new Vector(5.5, 5.5, 5.5));
 		}
 		catch(IllegalArgumentException exc){
 			exc.printStackTrace();
@@ -162,19 +181,19 @@ public class UnitTest {
 	
 	@Test
 	public void testWorkState(){
-		testUnit.work();
+		testUnit.workAt(testUnit.getPosition());
 		assertEquals(State.WORKING, testUnit.getState());
 	}
 	@Test
 	public void testWorkTime(){
-		testUnit.work();
+		testUnit.workAt(testUnit.getPosition());
 		assertEquals(10.0, testUnit.getWorkTime(), 0.0000000001);
 		testUnit.advanceTime(0.1);
 		assertEquals(9.9, testUnit.getWorkTime(), 0.0000000001);
 	}
 	@Test
 	public void testStopWorking(){
-		testUnit.work();
+		testUnit.workAt(testUnit.getPosition());
 		for (int idx = 1; idx<11 ; idx++){
 			testUnit.advanceTime(0.2);
 			testUnit.advanceTime(0.2);
@@ -186,8 +205,211 @@ public class UnitTest {
 		testUnit.advanceTime(0.2);
 		testUnit.advanceTime(0.2);
 		assertEquals(State.IDLE, testUnit.getState());
+		int checkLvlUp = -200;
+		for (Map.Entry<String, Integer> entry : testUnit.getPrimStats().entrySet()){
+			checkLvlUp+=entry.getValue();
+		}
+		assertEquals(0, checkLvlUp);
 	}
-	
+	@Test
+	public void testOperateWorkShop(){
+		Vector v = new Vector (1, 0, 0);
+		ArrayList<Integer> pos = new ArrayList<Integer>(Arrays.asList(1, 0, 0));
+		testWorld.getBlockAtPos(pos).setBlockType(BlockType.WORKSHOP);
+		Log log = new Log(v.getX(), v.getY(), v.getZ(), (int) 30);
+		testWorld.addLog(log);
+		Boulder boulder = new Boulder(v.getX(), v.getY(), v.getZ(), (int)30);
+		testWorld.addBoulder(boulder);
+		testUnit.workAt(v);
+		for (int idx = 0; idx<11 ; idx++){
+			testUnit.advanceTime(0.2);
+			testUnit.advanceTime(0.2);
+			testUnit.advanceTime(0.2);
+			testUnit.advanceTime(0.2);
+			testUnit.advanceTime(0.2);
+		}
+		boolean checkTgh = false;
+		if (testUnit.getPrimStats().get("tgh")==55||testUnit.getPrimStats().get("tgh")==56)
+			checkTgh = true;
+		boolean checkWgt = false;
+		if (testUnit.getPrimStats().get("wgt")==55||testUnit.getPrimStats().get("wgt")==56)
+			checkWgt = true;
+		assertTrue(checkTgh);
+		assertTrue(checkWgt);
+		assertTrue(testWorld.getBlockAtPos(v).getBouldersInBlock().isEmpty());
+		assertTrue(testWorld.getBlockAtPos(v).getLogsInBlock().isEmpty());
+		int checkLvlUp = -200;
+		for (Map.Entry<String, Integer> entry : testUnit.getPrimStats().entrySet()){
+			checkLvlUp+=entry.getValue();
+		}
+		assertEquals(11, checkLvlUp);
+	}
+	@Test
+	public void testPickupLog(){
+		Vector v = new Vector (1, 0, 0);
+		Log log = new Log(v.getX(), v.getY(), v.getZ(), (int) 30);
+		testWorld.addLog(log);
+		testUnit.workAt(v);
+		for (int idx = 0; idx<11 ; idx++){
+			testUnit.advanceTime(0.2);
+			testUnit.advanceTime(0.2);
+			testUnit.advanceTime(0.2);
+			testUnit.advanceTime(0.2);
+			testUnit.advanceTime(0.2);
+		} 
+		assertTrue(testWorld.getBlockAtPos(v).getLogsInBlock().isEmpty());
+		assertTrue(testUnit.getLog()==log);
+		int checkLvlUp = -200;
+		for (Map.Entry<String, Integer> entry : testUnit.getPrimStats().entrySet()){
+			checkLvlUp+=entry.getValue();
+		}
+		assertEquals(1, checkLvlUp);
+	}
+	@Test
+	public void testPickupBoulder(){
+		Vector v = new Vector (1, 0, 0);
+		Boulder boulder = new Boulder(v.getX(), v.getY(), v.getZ(), (int) 30);
+		testWorld.addBoulder(boulder);
+		testUnit.workAt(v);
+		for (int idx = 0; idx<11 ; idx++){
+			testUnit.advanceTime(0.2);
+			testUnit.advanceTime(0.2);
+			testUnit.advanceTime(0.2);
+			testUnit.advanceTime(0.2);
+			testUnit.advanceTime(0.2);
+		} 
+		assertTrue(testWorld.getBlockAtPos(v).getBouldersInBlock().isEmpty());
+		assertTrue(testUnit.getBoulder()==boulder);
+		int checkLvlUp = -200;
+		for (Map.Entry<String, Integer> entry : testUnit.getPrimStats().entrySet()){
+			checkLvlUp+=entry.getValue();
+		}
+		assertEquals(1, checkLvlUp);
+	}
+	@Test
+	public void testDrop(){
+		Vector w = new Vector (0, 0, 0);
+		Vector v = new Vector (1, 0, 0);
+		Boulder boulder = new Boulder(w.getX(), w.getY(), w.getZ(), (int) 30);
+		testUnit.lift(boulder);
+		testUnit.workAt(v);
+		for (int idx = 0; idx<11 ; idx++){
+			testUnit.advanceTime(0.2);
+			testUnit.advanceTime(0.2);
+			testUnit.advanceTime(0.2);
+			testUnit.advanceTime(0.2);
+			testUnit.advanceTime(0.2);
+		} 
+		assertTrue(testWorld.getBlockAtPos(v).getBouldersInBlock().contains(boulder));
+		assertTrue(testUnit.getBoulder()==null);
+		int checkLvlUp = -200;
+		for (Map.Entry<String, Integer> entry : testUnit.getPrimStats().entrySet()){
+			checkLvlUp+=entry.getValue();
+		}
+		assertEquals(1, checkLvlUp);
+	}
+	@Test
+	public void testDigRock(){
+		Vector v = new Vector (1, 0, 0);
+		ArrayList<Integer> pos = new ArrayList<Integer>(Arrays.asList(1, 0, 0));
+		testWorld.getBlockAtPos(pos).setBlockType(BlockType.ROCK);
+		testUnit.workAt(v);
+		for (int idx = 0; idx<11 ; idx++){
+			testUnit.advanceTime(0.2);
+			testUnit.advanceTime(0.2);
+			testUnit.advanceTime(0.2);
+			testUnit.advanceTime(0.2);
+			testUnit.advanceTime(0.2);
+		}
+		assertEquals(BlockType.AIR, testWorld.getBlockAtPos(v).getBlockType());
+		assertFalse(testWorld.getBlockAtPos(v).getBouldersInBlock().isEmpty());
+		int checkLvlUp = -200;
+		for (Map.Entry<String, Integer> entry : testUnit.getPrimStats().entrySet()){
+			checkLvlUp+=entry.getValue();
+		}
+		assertEquals(1, checkLvlUp);
+	}
+	@Test
+	public void testChopWood(){
+		Vector v = new Vector (1, 0, 0);
+		ArrayList<Integer> pos = new ArrayList<Integer>(Arrays.asList(1, 0, 0));
+		testWorld.getBlockAtPos(pos).setBlockType(BlockType.WOOD);
+		testUnit.workAt(v);
+		for (int idx = 0; idx<11 ; idx++){
+			testUnit.advanceTime(0.2);
+			testUnit.advanceTime(0.2);
+			testUnit.advanceTime(0.2);
+			testUnit.advanceTime(0.2);
+			testUnit.advanceTime(0.2);
+		}
+		assertEquals(BlockType.AIR, testWorld.getBlockAtPos(v).getBlockType());
+		assertFalse(testWorld.getBlockAtPos(v).getLogsInBlock().isEmpty());
+		int checkLvlUp = -200;
+		for (Map.Entry<String, Integer> entry : testUnit.getPrimStats().entrySet()){
+			checkLvlUp+=entry.getValue();
+		}
+		assertEquals(1, checkLvlUp);
+	}
+	@Test
+	public void testTerminate(){
+		Vector w = new Vector (0, 0, 0);
+		Boulder boulder = new Boulder(w.getX(), w.getY(), w.getZ(), (int) 30);
+		testUnit.lift(boulder);
+		testUnit.setHp(0);
+		assertFalse(testWorld.getUnits().contains(testUnit));
+		assertTrue(testWorld.getBlockAtPos(w).getBouldersInBlock().contains(boulder));
+		assertTrue(testUnit.isTerminated());
+	}
+	@Test
+	public void testIsCarrying(){
+		Vector w = new Vector (0, 0, 0);
+		Boulder boulder = new Boulder(w.getX(), w.getY(), w.getZ(), (int) 30);
+		testUnit.lift(boulder);
+		assertTrue(testUnit.isCarrying());
+	}
+	@Test
+	public void testCarryWeightSlowDown(){
+		Vector v = new Vector (1, 0, 0);
+		Vector w = new Vector (0, 0, 0);
+		Boulder boulder = new Boulder(w.getX(), w.getY(), w.getZ(), (int) 30);
+		testUnit.lift(boulder);
+		assertEquals(30, testUnit.getCarryWeight());
+		testUnit.move2(v);
+		testUnit.advanceTime(0.1);
+		assertEquals(1.5*((double)(testUnit.getPrimStats().get("str")+testUnit.getPrimStats().get("agl")))/(2*(testUnit.getPrimStats().get("wgt")+30)), testUnit.getBaseSpeed(), 0.0000001);
+	}
+	@Test
+	public void testGetXP(){
+		testUnit.moveToAdjacent(1, 0, 0);
+		testUnit.advanceTime(0.2);
+		testUnit.advanceTime(0.2);
+		testUnit.advanceTime(0.2);
+		testUnit.advanceTime(0.2);
+		assertEquals(1, testUnit.getExp());
+		
+	}
+	@Test
+	public void testStepLevelUp(){
+		Vector v = new Vector (10, 0, 0);
+		testUnit.move2(v);
+		for (int idx = 0; idx<10 ; idx++){
+			testUnit.advanceTime(0.2);
+			testUnit.advanceTime(0.2);
+			testUnit.advanceTime(0.2);
+			testUnit.advanceTime(0.2);
+			testUnit.advanceTime(0.2);
+		}
+		int checkLvlUp = -200;
+		for (Map.Entry<String, Integer> entry : testUnit.getPrimStats().entrySet()){
+			checkLvlUp+=entry.getValue();
+		}
+		assertEquals(1, checkLvlUp);
+	}
+	@Test
+	public void testFaction(){
+		Faction faction = testUnit.getFaction();
+		assertEquals(1, faction.getUnits().size());
+	}
 	
 	@Test
 	public void testRestWhenFull(){
@@ -196,7 +418,7 @@ public class UnitTest {
 	}
 	@Test
 	public void testRestWhenInjured(){
-		testUnit.setHp(testUnit.getHp() - 1);
+		testUnit.setHp(testUnit.getHp() - 1.0);
 		testUnit.rest();
 		assertEquals(State.RESTING, testUnit.getState());
 	}
@@ -213,14 +435,15 @@ public class UnitTest {
 		assertEquals(40.0/testUnit.getPrimStats().get("tgh"), testUnit.getMinRestTime(), 0.000000001);
 		testUnit.advanceTime(0.1);
 		assertEquals(40.0/testUnit.getPrimStats().get("tgh")-0.1, testUnit.getMinRestTime(), 0.000000001);
-		testUnit.moveTo(1.0, 1.0, 1.0);
+		testUnit.move2(new Vector(1.0, 1.0, 1.0));
 		testUnit.advanceTime(0.1);
 		assertEquals(State.RESTING, testUnit.getState());
 	}
 	@Test
 	public void testAutoRest(){
-		testUnit.moveTo(10.0, 10.0, 10.0);
-		testUnit.sprint();
+		Vector V = new Vector(10.0, 10.0, 0);
+		testUnit.move2(V);
+		testUnit.toggleSprint();
 		for (int idx = 1; idx<181 ; idx++){
 			testUnit.advanceTime(0.2);
 			testUnit.advanceTime(0.2);
@@ -234,24 +457,39 @@ public class UnitTest {
 		testUnit.advanceTime(0.2);
 		assertEquals(State.RESTING, testUnit.getState());
 	}
-	
-	
 	@Test
 	public void testOrientationMoveTo(){
-		testUnit.moveTo(2, 2, 2);
+		testUnit.move2(new Vector(2, 2, 0));
 		assertEquals(Math.PI/4, testUnit.getTheta(), 0.0000000001);
 	}
 	@Test
 	public void testFinPosOutBoundsMoveTo(){
 		Vector startPos = testUnit.getPosition();
-		testUnit.moveTo(-1, -1, -1);
+		testUnit.move2(new Vector(-1, -1, -1));
+		testUnit.advanceTime(0.1);
+		assertTrue(startPos.equals(testUnit.getPosition()));
+	}
+	@Test
+	public void testMoveToSolid(){
+		Vector v = new Vector(1, 0, 0);
+		ArrayList<Integer> pos = new ArrayList<Integer>(Arrays.asList(1, 0, 0));
+		testWorld.getBlockAtPos(pos).setBlockType(BlockType.ROCK);
+		Vector startPos = testUnit.getPosition();
+		testUnit.move2(v);
+		testUnit.advanceTime(0.1);
+		assertTrue(startPos.equals(testUnit.getPosition()));
+	}
+	@Test
+	public void testMoveToNonWalkable(){
+		Vector startPos = testUnit.getPosition();
+		testUnit.move2(new Vector(0, 0, 1));
 		testUnit.advanceTime(0.1);
 		assertTrue(startPos.equals(testUnit.getPosition()));
 	}
 	@Test
 	public void testInCentreOfBlockAfterMoveTo(){
-		testUnit.setPosition(1, 1, 1);
-		testUnit.moveTo(0, 0, 0);
+		testUnit.setPosition(new Vector(1, 1, 0));
+		testUnit.move2(new Vector(0, 0, 0));
 		testUnit.advanceTime(0.2);
 		testUnit.advanceTime(0.2);
 		testUnit.advanceTime(0.2);
@@ -274,51 +512,58 @@ public class UnitTest {
 	}
 	@Test
 	public void testMoveToCorrectBaseSpeed(){
-		testUnit.moveTo(1, 1, 1);
+		testUnit.move2(new Vector(1, 1, 0));
 		testUnit.advanceTime(0.1);
 		assertEquals(1.5*((double)(testUnit.getPrimStats().get("str")+testUnit.getPrimStats().get("agl")))/(2*testUnit.getPrimStats().get("wgt")), testUnit.getBaseSpeed(), 0.000000001);
 		
 	}
 	@Test
 	public void testMoveToCorrectWalkSpeedUp(){
-		testUnit.moveTo(0, 0, 1);
+		ArrayList<Integer> pos = new ArrayList<Integer>(Arrays.asList(1, 0, 0));
+		testWorld.getBlockAtPos(pos).setBlockType(BlockType.ROCK);
+		testUnit.moveToAdjacent(0, 0, 0);
+		testUnit.move2(new Vector(0, 0, 1));
 		testUnit.advanceTime(0.1);
 		assertEquals(testUnit.getBaseSpeed()*0.5, testUnit.getSpeed(), 0.0000000001);
 		
 	}
 	@Test
 	public void testMoveToCorrectWalkSpeedDown(){
-		testUnit.setPosition(0.5, 0.5, 1.5);
-		testUnit.moveTo(0, 0, 0);
+		ArrayList<Integer> pos = new ArrayList<Integer>(Arrays.asList(1, 0, 0));
+		testWorld.getBlockAtPos(pos).setBlockType(BlockType.ROCK);
+		testUnit.setPosition(new Vector(0.5, 0.5, 1.5));
+		testUnit.moveToAdjacent(0, 0, 0);
+		testUnit.move2(new Vector(0, 0, 0));
 		testUnit.advanceTime(0.1);
 		assertEquals(testUnit.getBaseSpeed()*1.2, testUnit.getSpeed(), 0.0000000001);
 	}
 	@Test
 	public void testIsMoving(){
-		testUnit.moveTo(1, 1, 1);
+		testUnit.move2(new Vector(1, 1, 0));
 		testUnit.advanceTime(0.1);
 		assertTrue(testUnit.isMoving());
 		
 	}
 	@Test
 	public void testIsSprinting(){
-		testUnit.moveTo(1, 1, 0);
-		testUnit.sprint();
+		testUnit.move2(new Vector(1, 1, 0));
+		testUnit.toggleSprint();
 		assertEquals(State.SPRINTING, testUnit.getState());
 		
 	}
 	@Test
 	public void testSprintSpeed(){
-		testUnit.moveTo(1, 1, 0);
-		testUnit.sprint();
+		testUnit.move2(new Vector(1, 1, 0));
+		testUnit.toggleSprint();
 		assertEquals(testUnit.getBaseSpeed()*2, testUnit.getSpeed(), 0.00000000000001);
 		
 	}
 	@Test
 	public void testStopSprintingAtZeroStam(){
-		testUnit.moveTo(5, 5, 0);
+		Vector V = new Vector(5.0, 5.0, 0.0);
+		testUnit.move2(V);
 		testUnit.setStam(2);
-		testUnit.sprint();
+		testUnit.toggleSprint();
 		testUnit.advanceTime(0.2);
 		assertEquals(State.SPRINTING, testUnit.getState());
 		testUnit.advanceTime(0.2);
@@ -403,16 +648,16 @@ public class UnitTest {
 	
 	@Test
 	public void testRestWhenMoving(){
-		testUnit.moveTo(0, 0, 0);
+		testUnit.move2(new Vector(10, 0, 0));
 		testUnit.advanceTime(0.1);
 		testUnit.rest();
 		assertEquals(State.WALKING, testUnit.getState());
 	}
 	@Test
 	public void testWorkWhenMoving(){
-		testUnit.moveTo(0, 0, 0);
+		testUnit.move2(new Vector(10, 0, 0));
 		testUnit.advanceTime(0.1);
-		testUnit.work();
+		testUnit.workAt(testUnit.getPosition());
 		assertEquals(State.WALKING, testUnit.getState());
 	}
 
@@ -510,15 +755,46 @@ public class UnitTest {
 		new Faction(testUnit2);
 		testUnit.attack(testUnit2);
 		testUnit.advanceTime(0.1);
-		testUnit.moveTo(1.0, 1.0, 1.0);
+		testUnit.move2(new Vector(1.0, 1.0, 1.0));
 		testUnit.advanceTime(0.1);
 		assertEquals(State.COMBAT, testUnit.getState());
-		testUnit.work();
+		testUnit.workAt(testUnit.getPosition());
 		testUnit.advanceTime(0.1);
 		assertEquals(State.COMBAT, testUnit.getState());
 		testUnit.rest();
 		testUnit.advanceTime(0.1);
 		assertEquals(State.COMBAT, testUnit.getState());
+	}
+	@Test
+	public void testAttackSameFaction(){
+		Unit testUnit2 = new Unit("Dummie", 0.5, 0.5, 0.5, 50, 50, 50, 50);
+		testWorld.addUnit(testUnit2);
+		Unit testUnit3 = new Unit("Dummie", 0.5, 0.5, 0.5, 50, 50, 50, 50);
+		testWorld.addUnit(testUnit3);
+		Unit testUnit4 = new Unit("Dummie", 0.5, 0.5, 0.5, 50, 50, 50, 50);
+		testWorld.addUnit(testUnit4);
+		Unit testUnit5 = new Unit("Dummie", 0.5, 0.5, 0.5, 50, 50, 50, 50);
+		testWorld.addUnit(testUnit5);
+		Unit testUnit6 = new Unit("Dummie", 0.5, 0.5, 0.5, 50, 50, 50, 50);
+		testWorld.addUnit(testUnit6);
+		testUnit.attack(testUnit6);
+		testWorld.advanceTime(0.1);
+		System.out.println(testUnit.getState());
+		assertEquals(State.IDLE, testUnit.getState());
+	}
+	@Test
+	public void testFall(){
+		double BaseLine = testUnit.getHp();
+		testUnit.setPosition(new Vector(10, 10, 3));
+		testWorld.advanceTime(0.2);
+		assertEquals(State.FALLING, testUnit.getState());
+		testWorld.advanceTime(0.2);
+		assertEquals(State.FALLING, testUnit.getState());
+		testWorld.advanceTime(0.2);
+		assertEquals(State.FALLING, testUnit.getState());
+		testWorld.advanceTime(0.2);
+		assertEquals(State.IDLE, testUnit.getState());
+		assertEquals(BaseLine-30, testUnit.getHp(), 0.0000001);
 	}
 }
 	

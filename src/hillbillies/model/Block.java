@@ -35,7 +35,7 @@ public class Block{
 	 * 			location.
 	 */
 	@Basic
-	public void setLocation(Vector newlocation){
+	protected void setLocation(Vector newlocation){
 		this.location = newlocation;
 	}
 	
@@ -43,7 +43,7 @@ public class Block{
 	 * Return location of this Block.
 	 */
 	@Basic
-	public Vector getLocation(){
+	protected Vector getLocation(){
 		return this.location;
 	}
 	
@@ -71,7 +71,7 @@ public class Block{
 	 * 			set to the given set.
 	 */
 	@Basic
-	public void setUnitsInCube(Set<Unit> unitSet){
+	protected void setUnitsInCube(Set<Unit> unitSet){
 		this.unitsInBlock = unitSet;
 	}
 	
@@ -265,17 +265,30 @@ public class Block{
 	protected void removeWorld(){
 		this.world = null;
 	}
-		
+	/**
+	 * World this block is part of	
+	 */
 	private World world = null;
-	
+	/**
+	 * Location of this Block in the world
+	 */
 	private Vector location;
-	
+	/**
+	 * The Type of this block.
+	 * This can be ROCK, WOOD, WORKSHOP or AIR
+	 */
 	private BlockType blocktype;
-	
+	/**
+	 * Set of units in this block
+	 */
 	private Set<Unit> unitsInBlock = new HashSet<Unit>();
-	
+	/**
+	 * Set of boulders in this block
+	 */
 	private Set<Boulder> bouldersInBlock = new HashSet<Boulder>();
-	
+	/**
+	 * Set of logs in this block
+	 */
 	private Set<Log> logsInBlock = new HashSet<Log>();
 	
 }

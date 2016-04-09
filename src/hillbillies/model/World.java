@@ -102,7 +102,7 @@ public class World {
 	 * 			The position the be checked.
 	 * @return 	True if every coordinate lies within the borders of this World.
 	 */
-	public boolean isValidPosition(ArrayList<Integer> pos){
+	protected boolean isValidPosition(ArrayList<Integer> pos){
 		boolean checker = true;
 		for(int i=0; i<3; i++){
 			if (pos.get(i)>= this.getBorders().get(i) || pos.get(i) <0)
@@ -119,7 +119,7 @@ public class World {
 	 * @return 	True if every coefficient of the given Vector
 	 * 			lies within the borders of this World.
 	 */
-	public boolean isValidPosition(Vector pos){
+	protected boolean isValidPosition(Vector pos){
 		boolean checker = true;
 		for(int i=0; i<3; i++){
 			if (pos.getCoeff().get(i)>= this.getBorders().get(i) || pos.getCoeff().get(i) <0)
@@ -149,7 +149,7 @@ public class World {
 	 * 			a gameWorld or if the World of a Block of the given
 	 * 			gameWorld can't be set to this one.
 	 */
-	public void setGameWorld(Map<ArrayList<Integer>, Block> newWorld)
+	protected void setGameWorld(Map<ArrayList<Integer>, Block> newWorld)
 			throws IllegalArgumentException{
 		if(!this.gameWorld.isEmpty())
 			throw new IllegalArgumentException("This World already has a gameWorld!");
@@ -164,15 +164,6 @@ public class World {
 			this.gameWorld.put(entry.getKey(), entry.getValue());
 		}
 	}
-//	/**
-//	 * 
-//	 * @param block
-//	 */
-//	private void addBlock(Block block){
-//		block.setWorld(this);
-//		if(block.isSolid())
-//			this.addSolidBlock(block);
-//	}
 	
 	/**
 	 * Switch a Block from a solid to a passable
@@ -251,7 +242,7 @@ public class World {
 	 * @post	If the given Block has BlockType WOOD, a
 	 * 			Log is spawned in its centre.
 	 */
-	public void spawnObject(Block block){
+	protected void spawnObject(Block block){
 		int weight = (int) (41*Math.random()) + 10;
 		if (block.getBlockType()==BlockType.ROCK){
 			double x = block.getLocation().getX()+0.5;
@@ -300,7 +291,7 @@ public class World {
 	 * 			The given Block for which the
 	 * 			directly adjacent Blocks must be found.
 	 */
-	public ArrayList<Block> getDirectlyAdjacent(Block block){		
+	protected ArrayList<Block> getDirectlyAdjacent(Block block){		
 		ArrayList<Block> adjacent = new ArrayList<Block>();
 		ArrayList<Integer> clone1 = new ArrayList<Integer>();
 		ArrayList<Integer> clone2 = new ArrayList<Integer>();
@@ -331,7 +322,7 @@ public class World {
 	 * 			The given Block of which the adjacent
 	 * 			Blocks must be found.
 	 */
-	public ArrayList<Block> getAdjacent(Block block){
+	protected ArrayList<Block> getAdjacent(Block block){
 		ArrayList<Block> adjacent = new ArrayList<Block>();
 		for (int i=-1; i<2; i++){
 			for (int j=-1; j<2; j++){
@@ -351,7 +342,7 @@ public class World {
 	 * are known to be connected to the border.
 	 */
 	@Basic
-	public Set<Block> getStableSet(){
+	protected Set<Block> getStableSet(){
 		return new HashSet<Block>(this.stableSet);
 	}
 	
@@ -362,7 +353,7 @@ public class World {
 	 * @post 	The new stableSet equals the given set.
 	 */
 	@Basic
-	public void setStableSet(Set<Block> newstable){
+	protected void setStableSet(Set<Block> newstable){
 		this.stableSet = newstable;
 	}
 	
@@ -373,7 +364,7 @@ public class World {
 	  * @post 	The new stableSet contains the given Block.
 	  */
 	@Basic
-	public void addToStableSet(Block block){
+	protected void addToStableSet(Block block){
 			this.stableSet.add(block);
 	}
 	
@@ -382,7 +373,7 @@ public class World {
 	 * 	not connected to the border and therefore must collapse.
 	 */
 	@Basic
-	public Set<Block> getCollapseSet(){
+	protected Set<Block> getCollapseSet(){
 		return new HashSet<Block>(this.collapseSet);
 	}
 	
@@ -393,7 +384,7 @@ public class World {
 	 * @post 	The new collapseSet equals the given set.
 	 */
 	@Basic
-	public void setCollapseSet(Set<Block> newcollapse){
+	protected void setCollapseSet(Set<Block> newcollapse){
 		collapseSet = newcollapse;
 	}
 	
@@ -404,7 +395,7 @@ public class World {
 	  * @post 	The new collapseSet contains the given Block.
 	  */
 	@Basic
-	public void addCollapseSet(Block block){
+	protected void addCollapseSet(Block block){
 		this.collapseSet.add(block);
 	}
 	
@@ -469,7 +460,7 @@ public class World {
 	 * 			every Unit to this World. If an IllegalArgumentException
 	 * 			is caught, the set of Units is cleared again.
 	 */
-	public void setUnits(Set<Unit> newSet){
+	protected void setUnits(Set<Unit> newSet){
 		this.units.clear();
 		for(Unit unit : newSet)
 			try{
@@ -488,7 +479,7 @@ public class World {
 	 * 			the given Unit is removed from the set
 	 * 			of Units in this World.
 	 */
-	public void removeUnit(Unit unit){
+	protected void removeUnit(Unit unit){
 		unit.removeWorld();
 		this.units.remove(unit);
 	}
@@ -526,7 +517,7 @@ public class World {
 	 * 			every Faction of the given list is added to the
 	 * 			list of Factions of this World.
 	 */
-	public void setFactions(ArrayList<Faction> newList){
+	protected void setFactions(ArrayList<Faction> newList){
 		this.factions.clear();
 		for(Faction faction : newList)
 			try {
@@ -565,7 +556,7 @@ public class World {
 	 * 			than the size of this World in the direction of
 	 * 			that coordinate.
 	 */
-	public boolean isAtBorder(Block block){
+	protected boolean isAtBorder(Block block){
 		Vector position = block.getLocation();
 		if(position.getX() == 0 || position.getX() == (this.WORLD_BORDER.get(0) - 1) )
 			return true;
@@ -584,7 +575,7 @@ public class World {
 	 * @return	True if and only if there exists a solid Block
 	 * 			adjacent to the given Block.
 	 */
-	public boolean isWalkable(Block block){
+	protected boolean isWalkable(Block block){
 		if(block.isSolid()){
 			return false;
 		}
@@ -776,7 +767,7 @@ public class World {
 	 * 			Blocks directly adjacent to each other, are added to the
 	 * 			collapseSet.
 	 */
-	public void updateCollapseAt(Block startBlock){
+	protected void updateCollapseAt(Block startBlock){
 		if(!startBlock.isSolid())
 			return;
 		Set<Block> checked = new HashSet<Block>();
@@ -814,7 +805,7 @@ public class World {
 	 * 	Blocks of this World.
 	 */
 	@Basic
-	public ArrayList<ArrayList<Integer>> getPositionList(){
+	protected ArrayList<ArrayList<Integer>> getPositionList(){
 		return new ArrayList<ArrayList<Integer>>(this.positionList);
 	}
 	
@@ -822,7 +813,7 @@ public class World {
 	 * Return a set containing all the solid Blocks of this World.
 	 */
 	@Basic
-	public Set<Block> getSolidBlocks(){
+	protected Set<Block> getSolidBlocks(){
 		return new HashSet<Block>(this.solidBlocks);
 	}
 	
@@ -836,7 +827,7 @@ public class World {
 	 * 			An exception is thrown if the given Block is not
 	 * 			solid or if the Block's World isn't equal to this World.
 	 */
-	public void addSolidBlock(Block block) throws IllegalArgumentException{
+	protected void addSolidBlock(Block block) throws IllegalArgumentException{
 		if(!block.isSolid() || block.getWorld() != this)
 			throw new IllegalArgumentException("Non-solid block!");
 		this.solidBlocks.add(block);
@@ -850,7 +841,7 @@ public class World {
 	 * 			the given Block.
 	 */
 	@Basic
-	public void removeSolidBlock(Block block){
+	protected void removeSolidBlock(Block block){
 		this.solidBlocks.remove(block);
 	}
 	
@@ -862,7 +853,7 @@ public class World {
 	 * 			Block of the given set is added to the set of 
 	 * 			solid Blocks.
 	 */
-	public void setSolidBlocks(Set<Block> newSet){
+	protected void setSolidBlocks(Set<Block> newSet){
 		this.solidBlocks.clear();
 		for(Block block : newSet)
 			this.addSolidBlock(block);
@@ -906,18 +897,59 @@ public class World {
 		return this.stableSet.contains(block);
 	}
 	
+	/**
+	 * This is used to notify the GUI of changes in the gameworld.
+	 */
 	private TerrainChangeListener modelListener;
+	/**
+	 * Set of blocks that must collapse.
+	 */
 	private Set<Block> collapseSet = new HashSet<Block>();
+	/**
+	 * Map containing the Blocks at every position.
+	 */
 	private Map<ArrayList<Integer>, Block> gameWorld = new HashMap<ArrayList<Integer>, Block>();
+	/**
+	 * Set of blocks that are known to be stable
+	 */
 	private Set<Block> stableSet = new HashSet<Block>();
+	/**
+	 * List of factions in the world
+	 */
 	private ArrayList<Faction> factions = new ArrayList<Faction>();
+	/**
+	 * Set of all the units in the world
+	 */
 	private Set<Unit> units = new HashSet<Unit>();
+	/**
+	 * Maximum number of factions allowed in the world.
+	 * This is a static variable and cannot be changed.
+	 */
 	private static final int MAX_FACTIONS = 5;
+	/**
+	 * Maximum number of units allowed in the world.
+	 * This is a static variable and cannot be changed.
+	 */
 	private static final int MAX_UNITS = 100;
+	/**
+	 * List with lists of integers of all the positions.
+	 */
 	private ArrayList<ArrayList<Integer>> positionList;
+	/**
+	 * List with the X-, Y- and Z-worldsize
+	 */
 	private final ArrayList<Integer> WORLD_BORDER;
+	/**
+	 * Set of all the boulders in the world
+	 */
 	private Set<Boulder> boulders = new HashSet<Boulder>();
+	/**
+	 * Set of all the logs in the world
+	 */
 	private Set<Log> logs = new HashSet<Log>();
+	/**
+	 * Set of all the solid blocks in the world
+	 */
 	private Set<Block> solidBlocks = new HashSet<Block>();
 	
 

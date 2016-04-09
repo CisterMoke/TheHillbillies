@@ -789,7 +789,6 @@ public class UnitTest {
 		testWorld.addUnit(testUnit6);
 		testUnit.attack(testUnit6);
 		testWorld.advanceTime(0.1);
-		System.out.println(testUnit.getState());
 		assertEquals(State.IDLE, testUnit.getState());
 	}
 	@Test

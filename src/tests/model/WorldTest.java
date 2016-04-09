@@ -5,17 +5,13 @@ import static org.junit.Assert.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 import org.junit.Before;
 import org.junit.Test;
 
 import hillbillies.model.Block;
-import hillbillies.model.Boulder;
 import hillbillies.model.Faction;
-import hillbillies.model.Log;
 import hillbillies.model.Unit;
 import hillbillies.model.Vector;
 import hillbillies.model.World;
@@ -120,7 +116,6 @@ public class WorldTest {
 	}
 	@Test
 	public void testIsStable(){
-		
 		ArrayList<Integer> locationArray = new ArrayList<Integer>(Arrays.asList(25, 25, 0));
 		testWorld.getBlockAtPos(locationArray).setBlockType(BlockType.ROCK);
 		ArrayList<Integer> locationArray2 = new ArrayList<Integer>(Arrays.asList(25, 25, 1));
@@ -128,14 +123,6 @@ public class WorldTest {
 		ArrayList<Integer> locationArray3 = new ArrayList<Integer>(Arrays.asList(25, 25, 2));
 		testWorld.getBlockAtPos(locationArray3).setBlockType(BlockType.ROCK);
 		testWorld.setToPassable(testWorld.getBlockAtPos(locationArray2));
-		Set<Block>solids = new HashSet<Block>();
-		for (Map.Entry<ArrayList<Integer>, Block> entry : testWorld.getGameWorld().entrySet())
-			if (entry.getValue().isSolid())
-				solids.add(entry.getValue());
-		System.out.println(solids.size());
-		testWorld.checkWorldForCollapse(solids);
-		System.out.println(testWorld.getStableSet().size());
-		System.out.println(testWorld.isStable(testWorld.getBlockAtPos(locationArray)));
 		assertTrue(testWorld.isStable(testWorld.getBlockAtPos(locationArray)));
 		assertFalse(testWorld.isStable(testWorld.getBlockAtPos(locationArray2)));
 	}

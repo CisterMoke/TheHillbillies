@@ -61,7 +61,7 @@ public class Boulder {
 	 * Return the weight of this Boulder.
 	 */
 	@Basic @Raw
-	public int getWeight() {
+	protected int getWeight() {
 		return this.weight;
 	}
 	
@@ -74,7 +74,7 @@ public class Boulder {
 	 * @return 	True if and only if the given weight lies between
 	 * 			10 and 50 inclusively.
 	*/
-	public static boolean isValidWeight(int weight) {
+	protected static boolean isValidWeight(int weight) {
 		return (weight >= 10 || weight <= 50);
 	}
 	
@@ -92,7 +92,7 @@ public class Boulder {
 	 *       | ! isValidWeight(getWeight())
 	 */
 	@Raw
-	public void setWeight(int weight) 
+	protected void setWeight(int weight) 
 			throws IllegalArgumentException {
 		if (! isValidWeight(weight))
 			throw new IllegalArgumentException("Invalid weight!");
@@ -112,7 +112,7 @@ public class Boulder {
 	 * Return the coordinates of the centre
 	 * 	of the cube this Boulder is currently in.
 	 */
-	public Vector getBlockCentre(){
+	protected Vector getBlockCentre(){
 		double blockX = Math.floor(getPosition().getX()) + 0.5;
 		double blockY = Math.floor(getPosition().getY()) + 0.5;
 		double blockZ = Math.floor(getPosition().getZ()) + 0.5;
@@ -129,7 +129,7 @@ public class Boulder {
 	 * 			the world's boundary or the block according to the given
 	 * 			position is solid.
 	*/
-	public boolean isValidPosition(Vector position) {
+	protected boolean isValidPosition(Vector position) {
 		if(this.getWorld() == null) return true;
 		if(position.getX() < 0 || position.getX() >= this.getWorld().getBorders().get(0))
 			return false;
@@ -205,7 +205,7 @@ public class Boulder {
 	 * 			current carrier and the given Unit isn't
 	 * 			carrying anything.
 	 */
-	public boolean canHaveAsCarrier(Unit unit){
+	protected boolean canHaveAsCarrier(Unit unit){
 		return((this.carrier == null) && !unit.isCarrying());
 	}
 	
@@ -226,7 +226,7 @@ public class Boulder {
 	 * Return the World this Boulder is currently in.
 	 */
 	@Basic
-	public World getWorld(){
+	protected World getWorld(){
 		return this.world;
 	}
 	/**
@@ -237,7 +237,7 @@ public class Boulder {
 	 * @return	True if and only if this Boulder's current
 	 * 			World is null.
 	 */
-	public boolean canHaveAsWorld(World world){
+	protected boolean canHaveAsWorld(World world){
 		return (this.getWorld() == null);
 	}
 	/**
@@ -271,7 +271,7 @@ public class Boulder {
 	 * 			An exception is thrown if the World
 	 * 			of this unit is null.
 	 */
-	public Block getBlock() throws NullPointerException{
+	protected Block getBlock() throws NullPointerException{
 		try{
 			return this.getWorld().getBlockAtPos(this.getPosition());
 		}
@@ -287,7 +287,7 @@ public class Boulder {
 	  *			the block directly underneath is invalid.
 	  *			True otherwise.
 	  */
-	public boolean shouldFall(){
+	protected boolean shouldFall(){
 		if(this.getWorld() == null)
 			return false;
 		Vector floorPos = this.getBlockCentre().add(0, 0, -1);
@@ -307,8 +307,12 @@ public class Boulder {
 	 * Variable registering the weight of this Boulder.
 	 */
 	private int weight;
-	
+	/**
+	 * Unit that is carrying this boulder
+	 */
 	private Unit carrier = null;
-	
+	/**
+	 * World this boulder is part of
+	 */
 	private World world = null;
 }

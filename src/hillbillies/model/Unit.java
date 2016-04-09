@@ -669,7 +669,7 @@ public class Unit {
 	 * Return the velocity vector of this unit.
 	 */
 	@Basic
-	public Vector getV_Vector(){
+	private Vector getV_Vector(){
 		return this.v_vector;
 	}
 	
@@ -775,7 +775,7 @@ public class Unit {
 	 * @effect	If this unit or the defender is falling, the attack gets terminated.
 	 * 			|if(getState() == FALLING || defender.getState() == FALLING)
 	 * 			|	then terminateAttack() && return
-	 * @effect 	The attack gets terminated if both units belong to a different
+	 * @effect 	The attack gets terminated if both units belong to the same
 	 * 			faction.
 	 * 			| if (getFaction() == defender.getFaction() && getFaction() != null)
 	 * 			|	then terminateAttack() && return
@@ -1085,7 +1085,7 @@ public class Unit {
 	 * 		will directly move towards.
 	 */
 	@Basic
-	public Vector getTarget(){
+	private Vector getTarget(){
 		return this.target;
 	}
 	/**
@@ -1107,8 +1107,8 @@ public class Unit {
 	 * 		The final target of a unit is a position at which
 	 * 		the unit will move towards by setting new targets.
 	 */
-	@Basic
-	public Vector getFinTarget(){
+	@Basic 
+	protected Vector getFinTarget(){
 		if (this.finTarget == null)
 				return null;
 		return this.finTarget;
@@ -1125,7 +1125,7 @@ public class Unit {
 	 * 			Throws and exception if the target is an invalid position.
 	 * 				|!isValidPosition(target)
 	 */
-	public void setFinTarget(Vector target) throws IllegalArgumentException{
+	private void setFinTarget(Vector target) throws IllegalArgumentException{
 		if(target.equals(this.getTarget()))
 			return;
 		if (!this.isValidPosition(target) && !this.getWorld().isWalkable(this.getWorld().getBlockAtPos(target)))
@@ -1146,7 +1146,7 @@ public class Unit {
 	 * Return the set containing the units this unit is currently attacked by.
 	 */
 	@Basic
-	public Set<Unit> getAttackers(){
+	private Set<Unit> getAttackers(){
 		return this.attackers;
 	}
 	
@@ -1184,7 +1184,7 @@ public class Unit {
 	 * Return the opponent of this unit. The opponent is
 	 * 	the unit that this unit is attacking. 
 	 */
-	public Unit getOpponent(){
+	private Unit getOpponent(){
 		return this.opponent;
 	}
 	/**
@@ -1200,7 +1200,7 @@ public class Unit {
 	 * 			|	(opponent != null)
 	 * 			
 	 */
-	public void setOpponent(Unit opponent){
+	private void setOpponent(Unit opponent){
 		if(opponent == this)
 			throw new IllegalArgumentException("You can't attack yourself!");
 		if(this.opponent != null && opponent != null)
@@ -1231,7 +1231,7 @@ public class Unit {
 	/**
 	 *  Return the walking speed of this unit.
 	 */
-	public double getWalkSpeed(){
+	private double getWalkSpeed(){
 		return this.v;
 	}
 	/**
@@ -1408,7 +1408,7 @@ public class Unit {
 	 * 			|	setWorkBlock(null) &&
 	 * 			|	setState(State.IDLE) 
 	 */
-	public void workCompleted(){
+	private void workCompleted(){
 		boolean worked = false;
 		if (this.getWorkBlock().getBlockType()==BlockType.WORKSHOP){
 			if (!this.getWorkBlock().getBouldersInBlock().isEmpty() && !this.getWorkBlock().getLogsInBlock().isEmpty()){
@@ -1449,7 +1449,7 @@ public class Unit {
 	 * 			|		lift(log)
 	 */
 
-	public void pickup(Block targetBlock){
+	private void pickup(Block targetBlock){
 		int random = (int) (Math.random()*targetBlock.getBouldersInBlock().size());
 		int counter = 0;
 		for (Boulder boulder : targetBlock.getBouldersInBlock()){
@@ -1493,7 +1493,7 @@ public class Unit {
 	 * 			| new.getStam()/new.getMaxStam() == this.getStam()/this.getMaxStam() 
 	 */
 
-	public void operateWorkshop(Block targetBlock){
+	private void operateWorkshop(Block targetBlock){
 		int random = (int) (Math.random()*targetBlock.getBouldersInBlock().size());
 		int counter = 0;
 		for (Boulder boulder : targetBlock.getBouldersInBlock()){
@@ -1546,7 +1546,7 @@ public class Unit {
 	 * @effect	Set CarryWeight to 0
 	 */
 
-	public void dropAt(Vector blockTarget){
+	private void dropAt(Vector blockTarget){
 		if(this.getBoulder() != null){
 			this.getBoulder().setPosition(blockTarget.add(0.5, 0.5, 0.5));
 			this.getBoulder().removeCarrier();
@@ -1572,7 +1572,7 @@ public class Unit {
 	 * 			| distance == getBlockPosition.add(unit.getBlockPosition.getOpposite())
 	 * 			| result == distance.getLength() < 1.8
 	 */
-	public boolean inRange(Unit unit){
+	private boolean inRange(Unit unit){
 		Vector distance = this.getBlockCentre().add(unit.getBlockCentre().getOpposite());
 		if (distance.getLength() < 1.8)
 			return true;
@@ -1704,8 +1704,8 @@ public class Unit {
 	 * 			| return (getFaction() == null && faction != null &&
 	 * 			|	(getWorld() == null || getWorld() == faction.getWorld()))
 	 */
-	@Basic @Raw
-	public boolean canHaveAsFaction(Faction faction) {
+	@Basic @Raw 
+	protected boolean canHaveAsFaction(Faction faction) {
 		return (this.faction == null && faction != null &&
 				(this.world == null || this.world == faction.getWorld()));
 	}
@@ -1874,7 +1874,7 @@ public class Unit {
 	 * 	This is the sum of the unit's weight
 	 * 	with the carry weight.
 	 */
-	public int getTotalWeight(){
+	private int getTotalWeight(){
 		return this.getPrimStats().get("wgt") + this.getCarryWeight();
 	}
 	
@@ -1921,7 +1921,7 @@ public class Unit {
 	 * 			| result == (getWorld() == null || world == getFaction().getWorld()) &&
 	 *			|			!this.isTerminated())
 	 */
-	public boolean canHaveAsWorld(World world){
+	protected boolean canHaveAsWorld(World world){
 		return((this.getWorld() == null || world == this.getFaction().getWorld())
 				&& !this.isTerminated());
 	}
@@ -1929,7 +1929,7 @@ public class Unit {
 	/**
 	 * Return the fall height of this unit.
 	 */
-	public int getFallHeight(){
+	private int getFallHeight(){
 		return this.fallHeight;
 	}
 	
@@ -2017,7 +2017,7 @@ public class Unit {
 	 * @return	True if the unit's current block isn't walkable.
 	 * 			| result == !getWorld().isWalkable(getBlock())
 	 */
-	public boolean shouldFall(){
+	private boolean shouldFall(){
 		if(this.getWorld() == null)
 			return false;
 		if(!this.getWorld().isWalkable(this.getBlock()))
@@ -2028,7 +2028,7 @@ public class Unit {
 	/**
 	 * Return the block this unit is positioned in.
 	 */
-	public Block getBlock(){
+	protected Block getBlock(){
 		return this.getWorld().getBlockAtPos(this.getBlockCentre());
 	}
 	/**
@@ -2057,7 +2057,7 @@ public class Unit {
 	 * 			| else !new.getPath().isEmpty()
 	 * 
 	 */
-	public void pathFinding(){
+	protected void pathFinding(){
 		if (this.getFinTarget()==null)
 			return;
 		Block current = this.getBlock();
@@ -2112,7 +2112,7 @@ public class Unit {
 	 * 			|	getWorld().getAdjacent(current).contains(block) &&
 	 * 			|	!finalCost.containsKey(block))
 	 */
-	public Set<Block> getNext(Block current, Map<Block, Double> finalCost){
+	private Set<Block> getNext(Block current, Map<Block, Double> finalCost){
 		Set<Block> next = new HashSet<Block>();
 		for (Block block : this.getWorld().getAdjacent(current)){
 			if (this.getWorld().isWalkable(block) && !finalCost.containsKey(block)){
@@ -2126,7 +2126,7 @@ public class Unit {
 	 * Return the block this unit is working on.
 	 */
 	@Basic
-	public Block getWorkBlock(){
+	private Block getWorkBlock(){
 		return this.workBlock;
 	}
 	
@@ -2139,7 +2139,7 @@ public class Unit {
 	 * 			| new.getWorkBlock() == block
 	 */
 	@Basic
-	public void setWorkBlock(Block block){
+	private void setWorkBlock(Block block){
 		this.workBlock = block;
 	}
 	
@@ -2148,7 +2148,7 @@ public class Unit {
 	 * 	final target.
 	 */
 	@Basic
-	public ArrayList<Block> getPath(){
+	protected ArrayList<Block> getPath(){
 		return new ArrayList<Block>(this.Path);
 	}
 	
@@ -2157,7 +2157,7 @@ public class Unit {
 	 * 	final target.
 	 */
 	@Basic
-	public void clearPath(){
+	protected void clearPath(){
 		this.Path.clear();
 	}
 	
@@ -2165,7 +2165,7 @@ public class Unit {
 	 * Return a set containing the units adjacent
 	 * 	to this one.
 	 */
-	public Set<Unit> getAdjacentUnits(){
+	protected Set<Unit> getAdjacentUnits(){
 		Set<Unit> adjacentUnits = new HashSet<Unit>();
 		for(Block block : this.getWorld().getAdjacent(this.getBlock()))
 			adjacentUnits.addAll(block.getUnitsInCube());
@@ -2202,7 +2202,7 @@ public class Unit {
 	 * 			|	workAt(block)) ||
 	 * 			|	workAt(getBlock())
 	 */
-	public void defaultBehaviour(){
+	protected void defaultBehaviour(){
 		if(this.getState() == State.WALKING){
 			double sprintRoll = Math.random();
 			double sprintChance = 0.001;
@@ -2258,7 +2258,7 @@ public class Unit {
 	/**
 	 * Return an enemy in range of this unit.
 	 */
-	public Unit getEnemyInRange(){
+	protected Unit getEnemyInRange(){
 		Set<Unit> unitsInRange = new HashSet<Unit>(this.getAdjacentUnits());
 		unitsInRange.addAll(this.getBlock().getUnitsInCube());
 		unitsInRange.remove(this);
@@ -2363,7 +2363,7 @@ public class Unit {
 	 * 			|	then  new.getFinTarget() == null &&
 	 * 			|	new.getPath() == null			
 	 */
-	public void updateFinTarget(){
+	protected void updateFinTarget(){
 		if(!this.getWorld().isWalkable(this.getWorld().getBlockAtPos(this.getFinTarget()))){
 			this.finTarget = null;
 			this.Path.clear();
@@ -2408,69 +2408,140 @@ public class Unit {
 		this.terminated = true;
 	}
 	
+	/**
+	 * Orientation of the unit in radians
+	 */
 	private double theta;
-	
+	/**
+	 * List containing the blocks of the shortest path to the final target
+	 */
 	private ArrayList<Block> Path = new ArrayList<Block>();
-	
+	/**
+	 * Map containing the primary stats of this unit
+	 */
 	private Map<String, Integer> primStats = new HashMap<String, Integer>();
-	
+	/**
+	 * Position of this unit
+	 */
 	private Vector pos;
-	
+	/**
+	 * Center of the adjacent block the unit is currently moving to.
+	 */
 	private Vector target;
-	
+	/**
+	 * Center of the block that is it's final target to move towards.
+	 */
 	private Vector finTarget = null;
-	
+	/**
+	 * Name of this unit	
+	 */
 	private String name;
-	
+	/**
+	 * Speed of this unit
+	 */
 	private double v;
-	
+	/**
+	 * Velocity of this unit
+	 */
 	private Vector v_vector = new Vector(0.0, 0.0, 0.0);
-	
+	/**
+	 * Minimal name length. This is a static variable and cannot be changed.
+	 */
 	private static final int NAMELENGTH_MIN = 2;
-	
+	/**
+	 * Set of characters besides the alphabet that are allowed in the name of this unit.	
+	 * This is a static variable and cannot be changed.
+	 */
 	private static final Set<String> VALIDCHARS = new HashSet<String>(Arrays.asList(" ", "\"", "\'"));
-	
+	/**
+	 * Time until the next attack can be performed
+	 */
 	private double attcooldown = 0;
-	
+	/**
+	 * Hitpoints of this unit
+	 */
 	private double hp;
-	
+	/**
+	 * Stamina of this unit
+	 */
 	private double stam;
-	
+	/**
+	 * State this unit is in. 
+	 * This can be IDLE, COMBAT, FALLING, WORKING, RESTING, WALKING or SPRINTING.
+	 */
 	private State state;
-	
+	/**
+	 * Time until the current worktask is completed
+	 */
 	private double workTime = 0;
-	
+	/**
+	 * Set containing the units currently attacking this unit
+	 */
 	private Set<Unit> attackers = new HashSet<Unit>();
-	
+	/**
+	 * Time until this unit must rest
+	 */
 	private double restTime = 0;
-	
+	/**
+	 * Boolean indicating whether this unit is in Default or not.
+	 */
 	private boolean Default = false;
-	
+	/**
+	 * Minimal time this unit must rest before other tasks can be assigned.
+	 */
 	private double minRestTime = 0;
-	
+	/**
+	 * Boolean indicating whether this unit is attacking.
+	 */
 	private boolean attackInitiated = false;
-	
+	/**
+	 * Set containing the keys of the Map primStat
+	 * This is a static variable and cannot be changed.
+	 */
 	private static final Set<String> primStatSet = new HashSet<String>(Arrays.asList("str", "wgt", "agl", "tgh"));
-
+	/**
+	 * Faction this unit belongs to
+	 */
 	private Faction faction;
-	
+	/**
+	 * List of the states COMBAT, WALKING, RESTING, WORKING.
+	 * This is a static variable and cannot be changed.
+	 */
 	private static final ArrayList<State> stateList = new ArrayList<State>(Arrays.asList(State.COMBAT, State.WALKING, State.RESTING, State.WORKING));
-
+	/**
+	 * Boulder this unit is carrying
+	 */
 	private Boulder boulder = null;
-	
+	/**
+	 * Log this unit is carrying
+	 */
 	private Log log = null;
-	
+	/**
+	 * Weight of the log or boulder this unit is carrying
+	 */
 	private int carryWeight = 0;
-
+	/**
+	 * World this unit belongs to
+	 */
 	private World world;
-	
+	/**
+	 * Height this unit is falling from
+	 */
 	private int fallHeight;
-	
+	/**
+	 * Current experience this unit has
+	 */
 	private int experience = 0;
-	
+	/**
+	 * Block this unit is currently working in
+	 */
 	private Block workBlock=null;
-	
+	/**
+	 * Unit this unit is in combat with
+	 */
 	private Unit opponent = null;
-	
+	/**
+	 * Boolean indicating whether this unit is dead or not.
+	 */
 	private boolean terminated = false;
 }

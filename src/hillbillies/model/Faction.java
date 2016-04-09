@@ -90,7 +90,7 @@ public class Faction {
 	 * @return	True of and only if the Unit's Faction can be set
 	 * 			to this Faction.
 	 */
-	public boolean isValidUnit(Unit unit){
+	protected boolean isValidUnit(Unit unit){
 		return unit.canHaveAsFaction(this);
 	}
 	/**
@@ -128,7 +128,7 @@ public class Faction {
 	 * 			belonging to this Faction.
 	 * @post	The Unit is removed if it can be removed.
 	 */
-	public void removeUnit(Unit unit){
+	protected void removeUnit(Unit unit){
 		if (canBeRemoved(unit))
 			this.unitSet.remove(unit);
 	}
@@ -141,14 +141,14 @@ public class Faction {
 	 * 			this Faction.
 	 */
 	@Basic
-	public boolean canBeRemoved(Unit unit){
+	protected boolean canBeRemoved(Unit unit){
 		return unit.getFaction() != this;
 	}
 	/**
 	 * Return the World this Faction belongs to.
 	 */
 	@Basic
-	public World getWorld(){
+	protected World getWorld(){
 		return this.world;
 	}
 	/**
@@ -181,7 +181,7 @@ public class Faction {
 	 * @return	True if and only if this Faction is not terminated
 	 * 			and this Faction doesn't belong to a World.
 	 */
-	public boolean canHaveAsWorld(World world){
+	protected boolean canHaveAsWorld(World world){
 		return(this.getWorld() == null && !this.isTerminated());
 	}
 	/**
@@ -189,7 +189,7 @@ public class Faction {
 	 * 	A Faction can be terminated if it contains no Units.
 	 */
 	@Basic
-	public boolean canBeTerminated(){
+	protected boolean canBeTerminated(){
 		return getUnits().isEmpty();
 	}
 	/**
@@ -197,15 +197,30 @@ public class Faction {
 	 *
 	 * @post   This Faction is terminated if it is allowed.
 	 */
-	public void terminate(){
+	protected void terminate(){
 		if (canBeTerminated())
 			this.terminated = true;
 		return;
 	}
-	
+	/**
+	 * Set of all the units in this faction
+	 */
 	private Set<Unit> unitSet = new HashSet<Unit>();
+	/**
+	 * Maximum number of units allowed in this faction.
+	 * This is a static variable and cannot be changed.
+	 */
 	private static final int MAX_UNITS = 50;
+	/**
+	 * Name of this faction
+	 */
 	private String name;
+	/**
+	 * Boolean indicating whether this faction has been terminated or not.
+	 */
 	private boolean terminated = false;
+	/**
+	 * World this faction is part of
+	 */
 	private World world = null;
 	}

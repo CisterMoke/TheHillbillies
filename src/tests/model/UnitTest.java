@@ -185,6 +185,16 @@ public class UnitTest {
 		assertEquals(State.WORKING, testUnit.getState());
 	}
 	@Test
+	public void testWorkOutOfRange(){
+		testUnit.workAt(new Vector(2, 0, 0));
+		assertEquals(State.IDLE, testUnit.getState());
+	}
+	@Test
+	public void testWorkOutOfBound(){
+		testUnit.workAt(new Vector(-1, 0, 0));
+		assertEquals(State.IDLE, testUnit.getState());
+	}
+	@Test
 	public void testWorkTime(){
 		testUnit.workAt(testUnit.getPosition());
 		assertEquals(10.0, testUnit.getWorkTime(), 0.0000000001);

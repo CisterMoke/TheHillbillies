@@ -1547,13 +1547,13 @@ public class Unit {
 	 */
 
 	public void dropAt(Vector blockTarget){
-		if(getBoulder() != null){
+		if(this.getBoulder() != null){
 			this.getBoulder().setPosition(blockTarget.add(0.5, 0.5, 0.5));
 			this.getBoulder().removeCarrier();
 			this.getWorld().addBoulder(this.getBoulder());
 			this.boulder = null;			
 		}
-		else{
+		if(this.getLog() != null){
 			this.getLog().setPosition(blockTarget.add(0.5, 0.5, 0.5));
 			this.getLog().removeCarrier();
 			this.getWorld().addLog(this.getLog());

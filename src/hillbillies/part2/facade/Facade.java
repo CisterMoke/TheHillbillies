@@ -268,7 +268,12 @@ public class Facade implements IFacade {
 
 	@Override
 	public void advanceTime(World world, double dt) throws ModelException {
-		world.advanceTime(dt);
+		try{
+			world.advanceTime(dt);
+		}
+		catch(IllegalArgumentException exc){
+			throw new ModelException();
+		}
 	}
 
 	@Override
@@ -290,15 +295,23 @@ public class Facade implements IFacade {
 	@Override
 	public Unit spawnUnit(World world, boolean enableDefaultBehavior) throws ModelException {
 		Unit unit = world.spawnUnit();
-		if(enableDefaultBehavior)
-			unit.startDefault();
-		else unit.stopDefault();
-		return unit;
+		if (unit!=null){
+			if(enableDefaultBehavior)
+				unit.startDefault();
+			else unit.stopDefault();
+				return unit;
+		}
+		throw new ModelException();
 	}
 
 	@Override
 	public void addUnit(Unit unit, World world) throws ModelException {
-		world.addUnit(unit);
+		try{
+			world.addUnit(unit);
+		}
+		catch(IllegalArgumentException exc){
+			throw new ModelException();
+		}
 	}
 
 	@Override
@@ -329,7 +342,6 @@ public class Facade implements IFacade {
 	@Override
 	public void workAt(Unit unit, int x, int y, int z) throws ModelException {
 		Vector pos = new Vector(x, y, z);
-		pos.add(new Vector(0.5, 0.5, 0.5));
 		unit.workAt(pos);
 
 	}

@@ -40,7 +40,7 @@ public class BoulderTest {
 			}
 		}
 		TerrainChangeListener modelLinstener = null;
-		this.testWorld = new World(testmap, modelLinstener);
+		this.testWorld = new World(50, 50, 50, testmap, modelLinstener);
 		testWorld.addUnit(testUnit);
 	}
 	@Test

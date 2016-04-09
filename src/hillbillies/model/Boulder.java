@@ -43,8 +43,13 @@ public class Boulder {
 	 * @effect	If the boulder should be falling, a new position is
 	 * 			being calculated with the given time interval and
 	 * 			the position is set to that position.
+	 * @throws IllegalArgumentException
+	 * 			An exception is thrown if the given time interval is smaller than
+	 * 			0 or bigger than 0.2 seconds.
 	 */
 	public void advanceTime(double dt){
+		if (dt<0 || dt>0.2)
+			throw new IllegalArgumentException("Invalid time interval!");
 		if(shouldFall()){
 			Vector velocity = new Vector(0, 0, -3).multiply(dt);
 			Vector newPos = this.getPosition().add(velocity);

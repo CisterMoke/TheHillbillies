@@ -106,6 +106,7 @@ public class Block{
 	public BlockType getBlockType(){
 		return this.blocktype;
 	}
+	
 	/**
 	 * Set the BlockType of this Block to the given
 	 * 	BlockType.
@@ -113,10 +114,16 @@ public class Block{
 	 * 			The given BlockType.
 	 * @post	The BlockType of this Block is set to
 	 * 			the given BlockType.
+	 * @post	
 	 */
 	@Basic
 	public void setBlockType(BlockType newType){
 		this.blocktype = newType;
+		if (this.getWorld()!=null){
+			if (newType==BlockType.ROCK || newType==BlockType.WOOD)
+					this.getWorld().addSolidBlock(this);
+			else this.getWorld().removeSolidBlock(this);
+		}
 	}
 	/**
 	 * Class representing a BlockType of a Block.
@@ -225,6 +232,41 @@ public class Block{
 	protected void setLogsInCube(Set<Log> newSet){
 		this.logsInBlock = newSet;
 	}
+	
+	/**
+	 * Return the World this Block is in.
+	 */
+	@Basic
+	protected World getWorld(){
+		return world;
+	}
+	
+	/**
+	 * Set the World of this Block to the given World.
+	 * @param 	newWorld
+	 * 			The given World.
+	 * @post	The World of this Block equals the given World.
+	 * @throws	IllegalArgumentException
+	 * 			An exception is thrown if this Block already belongs
+	 * 			to another world.
+	 */
+	@Basic
+	protected void setWorld(World newWorld)
+			throws IllegalArgumentException{
+		if(this.getWorld() != null)
+			throw new IllegalArgumentException("This Block already belongs to another World!");
+		this.world = newWorld;
+	}
+	
+	/**
+	 * Remove the current World of this Block.
+	 * @post	The current World of this Block is set to null.
+	 */
+	protected void removeWorld(){
+		this.world = null;
+	}
+		
+	private World world = null;
 	
 	private Vector location;
 	

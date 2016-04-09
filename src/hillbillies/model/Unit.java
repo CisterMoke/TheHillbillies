@@ -428,7 +428,7 @@ public class Unit {
 	 * 			|		(new.getPrimStats().get(key) >= 25) &&
 	 * 			|		(new.getPrimStats().get(key) <= 100))
 	 * @post	The new weight of the unit is a valid weight.
-	 * 			| isValidWeight(new.getPrimStats().get("wgt"))
+	 * 			| hasValidWeight(new.getPrimStats())
 	 * @post	The new primary stats only contains the unit's strength, agility,
 	 * 			weight and toughness.
 	 * 			| new.getPrimStats.keySet().equals(getPrimStatSet())
@@ -453,7 +453,7 @@ public class Unit {
 				primStats.put(key, 200);
 			}
 		}
-		if (!this.isValidWeight(primStats)){
+		if (!this.hasValidWeight(primStats)){
 			primStats.put("wgt", (int)(Math.ceil(((double)(primStats.get("str"))+(double)(primStats.get("agl"))) / 2)));
 		}		
 		 this.primStats = new HashMap<String, Integer>(primStats);
@@ -566,6 +566,9 @@ public class Unit {
 	 * 	this position.
 	 * @param 	pos
 	 * 			The given position vector.
+	 * @post	Nothing happens if the given position is invalid.
+	 * 			| if(!isValidPosition(pos))
+	 * 			|	return
 	 * @post	The final target and the path are removed if the unit's position equals
 	 * 			the position of the final target. The method then ends here
 	 * 			|if(getPosition.equals(getFinTarget())
@@ -605,6 +608,8 @@ public class Unit {
 	 * 			| else moveToAdjacent(newBlock.getX(), newBlock.getY(), newBlock.getZ()
 	 */
 	public void move2(Vector pos){
+		if(!isValidPosition(pos))
+			return;
 		if (this.getPosition().equals(this.getFinTarget())){
 			this.finTarget = null;
 			this.Path.clear();
@@ -1268,36 +1273,40 @@ public class Unit {
 	 * Set the state of the unit to the given state.
 	 * @param state
 	 * 			The given state to be set to the new state.
+	 * @post	If the given state is COMBAT or FALLING, the minimum rest time and
+	 * 			the work time will be reset. Otherwise, if the minimum rest time hasn't
+	 * 			reached zero yet, nothing happens.
+	 * 			| if(state == State.COMBAT || state == State.FALLING)
+	 * 			|	then new.getMinRestTime() == 0 &&
+	 * 			|	new.getWorkTime() == 0
+	 * 			| else if(getMinRestTime() > 0)
+	 * 			|	then return
 	 * @post 	The state of the unit is set to the given state.
 	 * 			|new.getState() == state
-	 * @post	The state of the unit remains unchanged if it hasn't rested long enough and is not in combat.
-	 * 			|if(this.getMinRestTime() > 0 && state != State.COMBAT)
-	 *			|	return
 	 *@effect	The velocity vector is updated
 	 *			|this.setV_Vector()
 	 */
 	private void setState(State state){
-		if (state == State.COMBAT){
+		if (state == State.COMBAT || state == State.FALLING){
 			this.setMinRestTime(0);
 			this.setWorkTime(0);
-			
 		}
-		if(this.getMinRestTime() > 0 && state != State.COMBAT){
-			return;
+		else{
+			if(this.getMinRestTime() >0)
+				return;
 		}
 		this.state = state;
 		this.setV_Vector();
 	}
 	/**
-	 * 
-	 * Returns the current state of the unit.
+	 *  Return the current state of the unit.
 	 */
 	@Basic
 	public State getState(){
 		return this.state;
 	}
 	/**
-	 * Returns whether or not the unit is moving.
+	 * Return a boolean stating whether or not the unit is moving.
 	 * @return True if the unit is either walking or sprinting
 	 * 			| result == (getState() == State.WALKING) || (getState() == State.SPRINTING)
 	 */
@@ -1305,15 +1314,14 @@ public class Unit {
 		return (this.getState() == State.WALKING || this.getState() == State.SPRINTING);
 	}
 	/**
-	 * 
-	 * Returns the remaining amount of work time needed.
+	 *  Return the remaining amount of work time needed.
 	 */
 	@Basic
 	public double getWorkTime() {
 		return this.workTime;
 	}
 	/**
-	 * Sets the remaining amount of work time needed to the given time.
+	 * Set the remaining amount of work time needed to the given time.
 	 * @param newTime
 	 * 			The given time to be set as the new amount of work time needed.
 	 * @post  	The remaining amount of work time needed is set to the given time.
@@ -1322,45 +1330,84 @@ public class Unit {
 	private void setWorkTime(double newTime){
 		this.workTime = newTime;
 	}
-	/**
-	 * The unit starts to work.
-	 * @post	Nothing happens if the unit is moving.
-	 * 			| if (this.isMoving())
-	 * 			|	return
-	 * @effect 	If the unit isn't working, it is set to work and the work time is set to 500/strength.
-	 * 			|if(getState() != State.WORKING)
-	 * 			|	setState(State.WORKING)
-	 *			|	setWorkTime(500/getPrimStats().get("str"));
-	 * 
-	 */
-//	public void work(){
-//		if (this.isMoving() || this.getState() == State.COMBAT || this.getState() == State.FALLING)
-//			return;
-//		if (this.getState() != State.WORKING){
-//			this.setState(State.WORKING);
-//			this.setWorkTime(500/this.getPrimStats().get("str"));
-//		}
-//	}
 	
+	/**
+	 * Start to work at the given work block.
+	 * @param 	target
+	 * 			The position of block in which the unit has to work.
+	 * @post	Nothing happens if the unit is moving, in combat or falling.
+	 * 			| if(isMoving() || getState() == State.COMBAT || getState() == State.FALLING)
+	 * 			|	then return
+	 * @post	Nothing happens is the given position of the work block
+	 * 			is not adjacent and not equal to the block position of this unit.
+	 * 			| targetBlock == getWorld().getBlockAtPos(target)
+	 * 			| if(!getWorld().getAdjacent(getBlock()).contains(targetBlock) &&
+	 * 			|	targetBlock != getBlock())
+	 * 			|	then return
+	 * @effect	The given work block is set as the new work block.
+	 * 			| setWorkBlock(getWorld().getBlockAtPos(target))
+	 * @effect	if the unit isn't currently working, its state will be set to WORKING,
+	 * 			its orientation will be set towards the given work block
+	 * 			and the work time is set to 500/strength.
+	 * 			| targetBlock == getWorld().getBlockAtPos(target)
+	 * 			| direction == targetBlock.getLocation().add(getBlock().getLocation().getOpposite())
+	 * 			| if(getState() != State.WORKING)
+	 * 			|	then setState(State.WORKING) &&
+	 * 			|	setWorkTime(500/getPrimStats.get("str")) &&
+	 * 			|	setTheta(arctan(direction.getY()/direction.getX()))
+	 */
 	public void workAt(Vector target){
 		if (this.isMoving() || this.getState() == State.COMBAT || this.getState() == State.FALLING)
 			return;
-		Vector centreTarget = new Vector((double)Math.floor(target.getX()), (double)Math.floor(target.getY()), (double)Math.floor(target.getZ()));
-		centreTarget = centreTarget.add(0.5, 0.5, 0.5);
-		Vector distance = centreTarget.add(this.getBlockCentre().getOpposite());
-		if (distance.getLength() > 1.8){
+
+		Block targetBlock = this.getWorld().getBlockAtPos(target);
+		if(!this.getWorld().getAdjacent(this.getBlock()).contains(targetBlock) && targetBlock != this.getBlock())
 			return;
-		}
-		Block targetBlock = this.getWorld().getBlockAtPos(centreTarget);
 		this.setWorkBlock(targetBlock);
+		Vector direction = targetBlock.getLocation().add(this.getBlock().getLocation().getOpposite());
 		if (this.getState() != State.WORKING){
 			this.setState(State.WORKING);
 			this.setWorkTime(500/this.getPrimStats().get("str"));
-			this.setTheta(Math.atan2(distance.getY(), distance.getX()));
+			this.setTheta(Math.atan2(direction.getY(), direction.getX()));
 		}
 		
 	}
 	
+	/**
+	 * Perform the action of completing a work task at the work block. 
+	 * @effect	If the work block is a workshop, and a log and boulder are present, the workshop will be operated
+	 * 			and the unit will have completed its work task.
+	 * 			| worked == false
+	 * 			| if(getWorkBlock().getBlockType()==BlockType.WORKSHOP &&
+	 * 			|	(!getWorkBlock.getBouldersInBlock().isEmpty && !getWorkBlock().getLogsInBlock().isEmpty()))
+	 * 			|	then operateWorkshop(getWorkBlock()) && 
+	 * 			|	worked == true
+	 * @effect	Otherwise, If the work block is a solid block, it will be set to passable, an object will be spawned
+	 * 			and the unit will have completed its work task.
+	 * 			| if ((getWorkBlock().getBlockType() == BlockType.ROCK ||
+	 * 			|		getWorkBlock().getBlockType() == BlockType.WOOD) && worked == false)
+	 *			|	then getWorld().spawnObject(getWorkBlock()) &&
+	 *			|	getWorld().setToPassable(getWorkBlock()) &&
+	 *			|	worked == true
+	 * @effect	If this unit is carrying an object, it will drop the object in the work block
+	 * 			and the unit will have completed its work task.
+	 * 			| if(isCarrying() && worked==false)
+	 * 			|	then dropAt(getWorkBlock().getLoaction()) &&
+	 * 			|	worked == true
+	 * @effect	If this unit is not carrying an object and an object is available in the work block,
+	 * 			the unit will pick up that object and it will have completed its work task.
+	 * 			| if ((!getWorkBlock().getBouldersInBlock().isEmpty() ||
+	 * 			|		!getWorkBlock().getLogsInBlock().isEmpty())&& worked==false)
+	 *			|	then pickup(this.getWorkBlock()) &&
+	 *			|		worked == true
+	 * @effect	If the unit has completed any of the work tasks listed above, then
+	 * 			10 experience points will be added to this Unit, the work block is set to
+	 * 			null and its state is set to IDLE.
+	 * 			| if(worked == true)
+	 * 			|	then addExp(10) &&
+	 * 			|	setWorkBlock(null) &&
+	 * 			|	setState(State.IDLE) 
+	 */
 	public void workCompleted(){
 		boolean worked = false;
 		if (this.getWorkBlock().getBlockType()==BlockType.WORKSHOP){
@@ -1388,14 +1435,27 @@ public class Unit {
 		this.setState(State.IDLE);
 	}
 	
+	/**
+	 * Pickup a boulder or log, present in the targetBlock.
+	 * @param 	targetBlock
+	 * 			Block from which a boulder or log is picked up.
+	 * @effect	A boulder is lifted if present, otherwise a log is lifted
+	 * 			if present.
+	 * 			| if(!targetBlock.getBouldersInBlock().isEmpty())
+	 * 			|	then for one boulder in targetBlock.getBouldersInBlock : (
+	 * 			|		lift(boulder)
+	 * 			| else if(!targetBlock.getLogsInBlock().isEmpty())
+	 * 			|	then for one log in targetBlock.getLogInBlock : (
+	 * 			|		lift(log)
+	 */
+
 	public void pickup(Block targetBlock){
-		boolean lifted = false;
 		int random = (int) (Math.random()*targetBlock.getBouldersInBlock().size());
 		int counter = 0;
 		for (Boulder boulder : targetBlock.getBouldersInBlock()){
 			if (counter == random){
 				this.lift(boulder);
-				lifted = true;
+				return;
 			}
 			counter++;
 		}
@@ -1403,7 +1463,7 @@ public class Unit {
 		int random2 = (int) (Math.random()*targetBlock.getBouldersInBlock().size());
 		int counter2 = 0;
 		for (Log log : targetBlock.getLogsInBlock()){
-			if (counter2 == random2 && !lifted){
+			if (counter2 == random2){
 				this.lift(log);
 
 			}
@@ -1411,6 +1471,28 @@ public class Unit {
 		}
 	}
 	
+	/**
+	 * Improve weight and toughness by consuming one log and one boulder on the workshop block.
+	 * @param 	targetBlock
+	 * 			Block containing the workshop
+	 * @effect	A boulder is removed from the workshop block.
+	 * 			| for one boulder in old.targetBlock.getBouldersInBlock() : (
+	 * 			|	!new.targetBlock.getLogsInBlock().contains(boulder))
+	 * @effect	A log is removed from the workshop block.
+	 * 			| for one log in old.targetBlock.getLogsInBlock() : (
+	 * 			|	!new.targetBlock.getLogsInBlock().contains(log))
+	 * @effect	The primary stats of this unit are set to a new map of primary stats
+	 * 			in which the toughness and weight are raised with 5 points.
+	 * 			| newPrimStats == getPrimStats()
+	 * 			| newPrimStats.put("tgh", newPrimStats.get("tgh") + 5) && 
+	 * 			| newPrimStats.put("str", newPrimStats.get("wgt") + 5)
+	 * 			| setPrimStats(newPrimStats)
+	 * @post	The ratio of the Hp to the MaxHp is maintained.
+	 * 			| new.getHp()/new.getMaxHp() == this.getHp()/this.getMaxHp()
+	 * @post	The ratio of the Stam to the MaxStam is maintained.
+	 * 			| new.getStam()/new.getMaxStam() == this.getStam()/this.getMaxStam() 
+	 */
+
 	public void operateWorkshop(Block targetBlock){
 		int random = (int) (Math.random()*targetBlock.getBouldersInBlock().size());
 		int counter = 0;
@@ -1438,58 +1520,73 @@ public class Unit {
 				newStats.put(stat, newStats.get(stat) + 5);
 			}
 		}
-		if(!isValidWeight(newStats)){
-			newStats.put("wgt", (int) Math.ceil(((double)(primStats.get("str"))+(double)(primStats.get("agl"))) / 2));
-		}
 		this.setPrimStats(newStats);
 		this.setHp(hpRatio*this.getMaxHp());
 		this.setStam(stamRatio*this.getMaxStam());
 	}
 	
+	/**
+	 * Drop a log or boulder in the targeted block.
+	 * @param 	blockTarget
+				Block in which the log or boulder must be dropped.
+	 * @effect	If this unit is carrying a boulder, set the position of the boulder in the targeted block, 
+	 * 			remove the carrier of the boulder and set the boulder of this unit to null.
+	 * 			| if(getBoulder() != null)
+	 * 			|	then getBoulder().setPosition(blockTarget.add(0.5, 0.5, 0.5)) &&
+	 * 			|	getBoulder().removeCarrier() &&
+	 * 			|	getWorld().addBoulder(getBoulder()) &&
+	 * 			|	new.getBoulder == null
+	 * 			
+	 * @effect	If this unit is carrying a log, set the position of the log in the targeted block, 
+	 * 			remove the carrier of the log, and set the log of this unit to null.| if(getBoulder() != null)
+	 * 			|	then getLog().setPosition(blockTarget.add(0.5, 0.5, 0.5)) &&
+	 * 			|	getLog().removeCarrier() &&
+	 * 			|	getWorld().addBoulder(getLog()) &&
+	 * 			|	new.getLog == null
+	 * @effect	Set CarryWeight to 0
+	 */
+
 	public void dropAt(Vector blockTarget){
-		Vector blockCentre = blockTarget.add(0.5, 0.5, 0.5);
 		if(getBoulder() != null){
-			this.getBoulder().setPosition(blockCentre);
+			this.getBoulder().setPosition(blockTarget.add(0.5, 0.5, 0.5));
 			this.getBoulder().removeCarrier();
-			this.getWorld().addBoulderAt(this.getWorkBlock(), this.getBoulder());
+			this.getWorld().addBoulder(this.getBoulder());
 			this.boulder = null;			
 		}
 		else{
-			this.getLog().setPosition(blockCentre);
+			this.getLog().setPosition(blockTarget.add(0.5, 0.5, 0.5));
 			this.getLog().removeCarrier();
-			this.getWorld().addLogAt(this.getWorkBlock(), this.getLog());
+			this.getWorld().addLog(this.getLog());
 			this.log = null;
 		}
 		this.setCarryWeight(0);
 	}
 	
 	/**
-	 * Returns whether or not the given unit is in range. Two units are in range if they
-	 *	occupy the same block or a block adjacent to the other block.
+	 * Return a boolean stating whether or not the given unit is in range.
+	 * 	Two units are in range if they occupy the same block or a block
+	 * 	adjacent to the other block.
 	 * @param unit
 	 * 			The unit to be checked.
 	 * @return True if and only if the distance between the units is less than 2 meters.
-	 * 			| distance == Vector(this.getBlockPosition)
-	 * 			| distance.add(unit.getBlockPosition.getOpposite())
-	 * 			| result == distance.getLength() < 2
+	 * 			| distance == getBlockPosition.add(unit.getBlockPosition.getOpposite())
+	 * 			| result == distance.getLength() < 1.8
 	 */
 	public boolean inRange(Unit unit){
-		boolean inRange = false;
 		Vector distance = this.getBlockCentre().add(unit.getBlockCentre().getOpposite());
 		if (distance.getLength() < 1.8)
-			inRange = true;
-		return inRange;
+			return true;
+		return false;
 	}
 	/**
-	 * 
-	 * Returns the time that has passed since this unit last rested.
+	 * Return the time that has passed since this unit last rested.
 	 */
 	@Basic
 	public double getRestTime(){
 		return this.restTime;
 	}
 	/**
-	 * Sets the time that has passed since the unit last rested to the given time.
+	 * Set the time that has passed since the unit last rested to the given time.
 	 * @param newTime
 	 * 			The given time to be set to the time that has passed since the unit last rested.
 	 * @post 	The time that has passed since the unit last rested is set to the given time.
@@ -1499,15 +1596,14 @@ public class Unit {
 		this.restTime = newTime;
 	}
 	/**
-	 * 
-	 * Returns the time until this unit can perform an attack.
+	 * Return the time until this unit can perform an attack.
 	 */
 	@Basic
 	public double getAttackCooldown(){
 		return this.attcooldown;
 	}
 	/**
-	 * Sets the time until this unit can perform an attack to the given time.
+	 * Set the time until this unit can perform an attack to the given time.
 	 * @param newTime
 	 * 			The given time to be set to the time until this unit can perform an attack.
 	 * @post	The cooldown is set to the given time.
@@ -1517,15 +1613,14 @@ public class Unit {
 		this.attcooldown = newTime;
 	}
 	/**
-	 * 
-	 * Returns the time the unit needs to rest until it can perform any other actions.
+	 * Return the time the unit needs to rest until it can perform any other actions.
 	 */
 	@Basic
 	public double getMinRestTime(){
 		return this.minRestTime;
 	}
 	/**
-	 * Sets the time the unit needs to rest until it can perform any other actions to the given time.
+	 * Set the time the unit needs to rest until it can perform any other actions to the given time.
 	 * @param newtime
 	 * 			The given time to be set to the minimum resting time.
 	 * @post	The minimum resting time is set to the given time.
@@ -1536,12 +1631,14 @@ public class Unit {
 	}
 	/**
 	 * The unit starts to rest.
-	 * @post	Nothing happens if the unit is moving or in combat
+	 * @post	Nothing happens if the unit is moving, in combat or falling
 	 * 			and if the rest time is bigger than 180 seconds.
-	 * 			| if ((isMoving() || getState() == State.COMBAT) && (restTime >= 180) )
+	 * 			| if ((isMoving() || getState() == State.COMBAT
+	 * 			|		|| getState() == State.FALLING) && (restTime >= 180) )
 	 * 			| 	return
-	 * @effect If the unit isn't resting, its state is set to resting
-	 * 			and its minimum resting time is set to 40/toughness.
+	 * @effect If the unit isn't resting and either its hp or stamina hasn't fully
+	 * 			replenished yet, its state is set to resting. and its minimum resting
+	 * 			time is set to 40/toughness.
 	 * 			| if (getState() != State.RESTING)
 	 * 			|	setState(State.RESTING)
 	 * 			|	setMinRestTime(40.0/getPrimStats().get("tgh"))
@@ -1578,10 +1675,10 @@ public class Unit {
 	 * Set the faction of this unit a given faction.
 	 * @param 	faction
 	 * 			The given faction to be set to this unit's
-	 * 			faction and this unit is added as a member of
-	 * 			the given faction.
+	 * 			faction.
 	 * @effect	If this unit can belong to the given faction,
-	 * 			this unit's faction is set to the given faction.
+	 * 			this unit's faction is set to the given faction
+	 * 			and this unit is added as a member of the given faction.
 	 * 			| if (canHaveAsFaction(faction))
 	 * 			| 	then new.getFaction() == faction &&
 	 * 			|	faction.getUnits.contains(this)
@@ -1589,7 +1686,7 @@ public class Unit {
 	 * 			|	!faction.getUnits.contains(this)
 	 */
 	public void setFaction(Faction faction){
-		if (!canHaveAsFaction(faction) || faction == null)
+		if (!canHaveAsFaction(faction))
 			return;
 		faction.addUnit(this);
 		this.faction = faction;
@@ -1601,14 +1698,15 @@ public class Unit {
 	 * @param 	faction
 	 * 			The given faction to be checked.
 	 * @return	True if and only if this unit is currently not
-	 * 			belonging to any faction and the unit belongs to the
-	 * 			same world as the faction's world or no world at all.
-	 * 			| return (getFaction() == null &&
+	 * 			belonging to any faction, the given faction is not null,
+	 * 			and the unit belongs to the same world as the faction's
+	 * 			world or no world at all.
+	 * 			| return (getFaction() == null && faction != null &&
 	 * 			|	(getWorld() == null || getWorld() == faction.getWorld()))
 	 */
 	@Basic @Raw
 	public boolean canHaveAsFaction(Faction faction) {
-		return (this.faction == null &&
+		return (this.faction == null && faction != null &&
 				(this.world == null || this.world == faction.getWorld()));
 	}
 	/**
@@ -1616,7 +1714,7 @@ public class Unit {
 	 * @effect	The unit is removed from the set of units
 	 * 			belonging to its faction and the unit's
 	 * 			faction is set to null.
-	 * 			|this.faction.removeUnit(this) && new.getFaction == null
+	 * 			| faction.removeUnit(this) && new.getFaction == null
 	 */
 	public void removeFaction(){
 		this.faction.removeUnit(this);
@@ -1627,7 +1725,7 @@ public class Unit {
 	 * Return a boolean stating whether or not the unit is carrying
 	 * 	something.
 	 * @return 	True if the unit is carrying a boulder or a log.
-	 * 			|result == (getBoulder() != null || getLog() != null)
+	 * 			| result == (getBoulder() != null || getLog() != null)
 	 */
 	public boolean isCarrying() {
 		return (this.boulder != null || this.log != null);		
@@ -1694,46 +1792,6 @@ public class Unit {
 				log.setCarrier(this);
 				this.log = log;
 				this.setCarryWeight(log.getWeight());
-	}
-	
-	/**
-	 * Drop the prop that this unit is carrying.
-	 * 
-	 * @effect	Nothing happens if the unit isn't carrying
-	 * 			anything.
-	 * 			| if(!isCarrying)
-	 * 			|	then return
-	 * @effect	If the unit is carrying a boulder, the boulder's
-	 * 			carrier will be removed and the boulder will be
-	 * 			added to the world. The boulder this unit is
-	 * 			carrying will also be removed.
-	 * 			Otherwise the log's carrier will be removed and
-	 * 			the log will be added to the world. The log this
-	 * 			unit is carrying will also be removed.
-	 * 			| if(getBoulder != null)
-	 * 			|	then getBoulder().removeCarrier() &&
-	 * 			|	getWorld().addBoulder(getBoulder()) &&
-	 * 			|	new.getBoulder() == null &&
-	 * 			| else getLog().removeCarrier() &&
-	 * 			|	getWorld().addLog(getLog()) &&
-	 * 			|	new.getLog() == null
-	 * @post	The carry weight is set to zero.
-	 * 			| new.getCarryWeight() == 0
-	 */
-	public void drop(){
-		if(!isCarrying())
-			return;
-		if(getBoulder() != null){
-			this.getWorld().addBoulder(this.getBoulder());
-			this.getBoulder().removeCarrier();
-			this.boulder = null;			
-		}
-		else{
-			this.getWorld().addLog(this.getLog());
-			this.getLog().removeCarrier();
-			this.log = null;
-		}
-		this.setCarryWeight(0);
 	}
 	
 	/**
@@ -1820,25 +1878,90 @@ public class Unit {
 		return this.getPrimStats().get("wgt") + this.getCarryWeight();
 	}
 	
+	 /**
+	  * Return the world of this unit.
+	  */
+	@Basic
 	public World getWorld(){
 		return this.world;
 	}
 	
+	/**
+	 * Set the world of this unit to the given world.
+	 * @param 	world
+	 * 			The given world.
+	 * @post	The unit's world is set to the given world if
+	 * 			this unit can have the given world as its world.
+	 * 			| if(canHaveAsWorld(world))
+	 * 			| 	new.getWorld() == world 
+	 */
 	protected void setWorld(World world){
 		if(!this.canHaveAsWorld(world))
 			return;
 		this.world = world;
 	}
 	
+	/**
+	 * Remove the world of this unit.
+	 * @post	The world of this unit is set to null.
+	 * 			|new.getWorld() == null
+	 */
 	protected void removeWorld(){
 		this.world = null;
 	}
 	
+	/**
+	 * Return a boolean stating whether or not this unit can
+	 * 	have the given world as its world.
+	 * @param 	world
+	 * 			The given world to be checked.
+	 * @return	True if the unit isn't terminated and this unit
+	 * 			doesn't belong to a world or the given world is
+	 * 			the same as its faction's world.
+	 * 			| result == (getWorld() == null || world == getFaction().getWorld()) &&
+	 *			|			!this.isTerminated())
+	 */
 	public boolean canHaveAsWorld(World world){
 		return((this.getWorld() == null || world == this.getFaction().getWorld())
 				&& !this.isTerminated());
 	}
 	
+	/**
+	 * Return the fall height of this unit.
+	 */
+	public int getFallHeight(){
+		return this.fallHeight;
+	}
+	
+	/**
+	 * Set the fall height of this unit to the given height.
+	 * @param 	newHeight
+	 * 			The given height to be set as the new height.
+	 * @post	| new.getFallHeight() == newHeight
+	 */
+	private void setFallHeight(int newHeight){
+		this.fallHeight = newHeight;
+	}
+	 /**
+	  * The unit starts to fall.
+	  * @effect	If this unit is in combat, the opponents of its
+	  * 		attackers are set to null.
+	  * 		| if(getState() == State.COMBAT)
+	  * 		|	then for each attacker in getAttackers(): (
+	  * 		|	attacker.setOpponent(null)
+	  * @effect	if this unit is in combat and it has an opponent, 
+	  * 		then this unit is removed from its opponent's set
+	  * 		of attackers and this unit's opponent is set
+	  * 		to null.
+	  * 		| if(getState() == State.COMBAT &&
+	  * 		|		getOpponent() != null)
+	  * 		|	then opponent.removeAttacker(this) &&
+	  * 		|	new.getOpponent() == null
+	  * @post	This unit's state is set to FALLING and its fall height is set
+	  * 		to the biggest integer smaller than its z-coordinate.
+	  * 		| new.getState() == State.FALLING &&
+	  * 		| new.getFallHeight == floor(getPosition().getZ())
+	  */
 	private void fall(){
 		if(this.getState() == State.COMBAT){
 			if(this.opponent != null){
@@ -1849,9 +1972,31 @@ public class Unit {
 			for(Unit attacker : this.getAttackers())
 				attacker.setOpponent(null);
 		this.setState(State.FALLING);
-		this.fallHeight = (int)(this.getPosition().getZ());
+		this.setFallHeight((int)(this.getPosition().getZ()));
 	}
 	
+	/**
+	 * The unit lands on its position.
+	 * @effect 	This unit's state is set to IDLE  and its
+	 * 			target is set to its position.
+	 * 			| setState(State.IDLE) && 
+	 * 			| setTarget(getPosition())
+	 * @post	This unit loses an amount of hitpoints equal to
+	 * 			the fall height subtracted by its current z-level,
+	 * 			multiplied by 10. If the new amount of hitpoints is
+	 * 			invalid, it will be set to 0.
+	 * 			| if(isValidHp(getHp() - 
+	 * 			|		(getFallHeight - floor(getPosition().getZ())*10)
+	 * 			|	then new.getHp() == this.getHp() - 
+	 * 			|		(getFallHeight - floor(getPosition().getZ())*10)
+	 * 			| else new.getHp() == null
+	 * @effect	If this unit has a final target, its path gets cleared,
+	 * 			its state is set to WALKING and it will move to its target.
+	 * 			| if(getFinTarget() != null)
+	 * 			|	then new.getPath().isEmpty()
+	 * 			|	setState(State.WALKING)
+	 * 			|	move2(getFinTarget())
+	 */
 	private void land(){
 		this.setState(State.IDLE);
 		this.setTarget(this.getPosition());
@@ -1860,25 +2005,57 @@ public class Unit {
 			this.setState(State.WALKING);
 			this.move2(this.getFinTarget());
 		}
-		int damage = this.fallHeight - (int) (this.getPosition().getZ());
+		int damage = this.getFallHeight() - (int) (this.getPosition().getZ());
 		if(!isValidHp(this.getHp() - damage *10))
 			setHp(0);
 		else this.setHp(this.getHp() - damage * 10);
 	}
 	
+	/**
+	 * Return a boolean stating whether or not this unit
+	 * 	should be falling.
+	 * @return	True if the unit's current block isn't walkable.
+	 * 			| result == !getWorld().isWalkable(getBlock())
+	 */
 	public boolean shouldFall(){
 		if(this.getWorld() == null)
 			return false;
-		if(!this.getWorld().isWalkable(this.getBlock()) && !this.getBlock().isSolid())
+		if(!this.getWorld().isWalkable(this.getBlock()))
 				return true;
 		return false;
 	}
 	
+	/**
+	 * Return the block this unit is positioned in.
+	 */
 	public Block getBlock(){
 		return this.getWorld().getBlockAtPos(this.getBlockCentre());
 	}
 	/**
-	 * Finds the shortest path from the position it is going to be after the current moveToAdjacent, to the FinalTarget, sets this as Path. 
+	 * Return a list of blocks representing the shortest path
+	 *  from this unit's position to its final target.
+	 * @post	Nothing happens if this unit has no final target.
+	 * 			| if(getFinTarget == null)
+	 * 			|	return
+	 * @post	If there doesn't exist a path between the unit and
+	 * 			its final target , then the current path and the final
+	 * 			path are removed. Otherwise a path is created.
+	 * 			| flag == true
+	 * 			| toBeChecked.contains(getBlock())
+	 * 			| startBlock == getBlock()
+	 * 			| checked.isEmpty()
+	 * 			| while(flag && !toBeChecked.isEmpty()) (
+	 * 			|	toBeChecked.remove(startBlock)
+	 * 			|	checked.aad(startBlock)
+	 * 			|	for each block in getWorld.getAdjacent(startBlock) : (
+	 * 			|		if(getWorld().isWalkable(startBlock)
+	 * 			|			then toBeChecked.add(startBlock))
+	 * 			|	startBlock == toBeChecked.next()
+	 * 			| if(for each block in checked : block != getWorld().getBlockAtPos(getTarget()))
+	 * 			|	then new.getPath().isEmpty() &&
+	 * 			| 	new.getFinTarget() == null
+	 * 			| else !new.getPath().isEmpty()
+	 * 
 	 */
 	public void pathFinding(){
 		if (this.getFinTarget()==null)
@@ -1922,11 +2099,18 @@ public class Unit {
 		this.Path= finalPath;
 	}
 	/**
-	 * Finds the set of blocks that must be checked surrounding the current block.
-	 * @param current : Block for which the next blocks must be found.
-	 * @param finalCost : Map containing the cost of all Blocks that have already been given the cost required to move to them. 
-	 * 						This Map can therefore also be used to check whether a block has already been checked.
-	 * @return A set containing all the blocks that are walkable, adjacent to current and not yet in finalCost. 
+	 * Return the set of blocks that must be checked surrounding the current block.
+	 * @param	current
+	 * 			Block for which the next blocks must be found.
+	 * @param 	finalCost
+	 * 			Map containing the cost of all Blocks that have already been given
+	 * 			the cost required to move to them. This Map can therefore also be
+	 * 			used to check whether a block has already been checked.
+	 * @return 	A set containing all the blocks that are walkable, adjacent to current and not yet in finalCost.
+	 * 			| for each block in result : (
+	 * 			|	getWorld().isWalkable(block) &&
+	 * 			|	getWorld().getAdjacent(current).contains(block) &&
+	 * 			|	!finalCost.containsKey(block))
 	 */
 	public Set<Block> getNext(Block current, Map<Block, Double> finalCost){
 		Set<Block> next = new HashSet<Block>();
@@ -1938,22 +2122,49 @@ public class Unit {
 		return next;
 	}
 	
-	public void setWorkBlock(Block block){
-		this.workBlock = block;
-	}
-	
+	/**
+	 * Return the block this unit is working on.
+	 */
+	@Basic
 	public Block getWorkBlock(){
 		return this.workBlock;
 	}
 	
+	/**
+	 * Set the work block of the unit to the given block.
+	 * @param 	block
+	 * 			The given block.
+	 * @post	This unit's work block is set to the given
+	 * 			block.
+	 * 			| new.getWorkBlock() == block
+	 */
+	@Basic
+	public void setWorkBlock(Block block){
+		this.workBlock = block;
+	}
+	
+	/**
+	 * Return the path from this unit towards its
+	 * 	final target.
+	 */
+	@Basic
 	public ArrayList<Block> getPath(){
 		return new ArrayList<Block>(this.Path);
 	}
 	
+	/**
+	 * Remove the path from this unit towards its
+	 * 	final target.
+	 */
+	@Basic
 	public void clearPath(){
 		this.Path.clear();
 	}
 	
+	/**
+	 * Return a set containing the units adjacent
+	 * 	to this one.
+	 */
 	public Set<Unit> getAdjacentUnits(){
 		Set<Unit> adjacentUnits = new HashSet<Unit>();
 		for(Block block : this.getWorld().getAdjacent(this.getBlock()))
@@ -1961,6 +2172,36 @@ public class Unit {
 		return adjacentUnits;
 	}
 	
+	/**
+	 * Let the unit exhibit its default behaviour.
+	 * @effect 	If the unit is walking, there is a one in a thousand
+	 * 			chance that it starts sprinting. The method returns here
+	 * 			| if(getState() == State.WALKING && Math.random() < 0.001)
+	 * 			|	then setState(State.Sprinting) &&
+	 * 			|	return
+	 * @post	If the unit's state isn't IDLE or the unit has a final
+	 * 			target, nothing happens.
+	 * 			| if(getState() != State.IDLE || getFinTarget() != null)
+	 * 			|	then return
+	 * @post	The unit will randomly choose to walk to a new final target,
+	 * 			work at a block, attack a unit in range or rest until it is
+	 * 			fully recovered.
+	 * 			| stateList == ArrayList<State>(Arrays.asList(
+	 * 			|	State.COMBAT, State.RESTING, State.WALKING, State.WORKING))
+	 * 			| Collection.shuffle(stateList)
+	 * 			| state == staseList.get(0)
+	 * 			| if (state == State.WALKING)
+	 * 			|	then for one position in getWorld().keySet() : (
+	 * 			|		move2(getWorld().getBlockAtPos(position).getLocation()))
+	 * 			| else if(state == State.COMBAT)
+	 * 			|	then attack(getEnemyInRange())
+	 * 			| else if(state == State.RESTING)
+	 * 			|	then rest()
+	 * 			| else if (state == State.WORKING)
+	 * 			|	then for one block in getWorld().getAdjacent(getBlock()) : (
+	 * 			|	workAt(block)) ||
+	 * 			|	workAt(getBlock())
+	 */
 	public void defaultBehaviour(){
 		if(this.getState() == State.WALKING){
 			double sprintRoll = Math.random();
@@ -2014,9 +2255,9 @@ public class Unit {
 			}
 	}
 	
-	
-	
-	
+	/**
+	 * Return an enemy in range of this unit.
+	 */
 	public Unit getEnemyInRange(){
 		Set<Unit> unitsInRange = new HashSet<Unit>(this.getAdjacentUnits());
 		unitsInRange.addAll(this.getBlock().getUnitsInCube());
@@ -2028,10 +2269,29 @@ public class Unit {
 		return null;
 	}
 	
+	/**
+	 * Return the current amount of experience points of this unit.
+	 */
+	@Basic
 	public int getExp(){
 		return this.experience;
 	}
 	
+	/**
+	 * Add a given amount of experience points to this unit.
+	 * @param 	exp
+	 * 			The given amount of experience points.
+	 * @effect	If the given amount of experience is a strictly positive number, 
+	 * 			then the amount will be added to the current amount of
+	 * 			experience points. The unit then levels every 10 experience
+	 * 			points.
+	 * 			| if(exp > 0)
+	 * 			|	then tempExp == this.getExperience() + 10 &&
+	 * 			|	while(tempExp >= 10) (
+	 * 			|		new.tempExp == old.tempExp - 10 &&
+	 * 			|		levelUp())
+	 * 			|	new.getExperience == tempExp
+	 */
 	public void addExp(int exp){
 		if(exp <= 0)
 			return;
@@ -2042,6 +2302,20 @@ public class Unit {
 		}
 	}
 	
+	/**
+	 * Level the unit.
+	 * @post	A randomly chosen primary stat with a value smaller than
+	 * 			200 is added with one point. If this results in an invalid
+	 * 			weight, then the weight gains one point while the previous
+	 * 			primary stat is set to its previous value.
+	 * 			| for one stat in getPrimStats().keySet() : (
+	 * 			|	new.getPrimStats.get(stat) == this.getPrimStats.get(stat) + 1 &&
+	 * 			|	if(!hasValidWeight(new.getPrimStats))
+	 * 			|		then stat == "wgt")
+	 * @post	The ratios of hp to max hp an stam to max stam are maintained
+	 * 			| new.getHp()/new.getMaxHp() == this.getHp()/this.getMaxHp() &&
+	 * 			| new.getStam()/new.getMaxStam() == this.getStam()/this.getMaxStam()
+	 */
 	private void levelUp(){
 		ArrayList<String> statList = new ArrayList<String>(this.getPrimStats().keySet());
 		Collections.shuffle(statList);
@@ -2051,7 +2325,7 @@ public class Unit {
 		for(String stat : statList){
 			if(this.getPrimStats().get(stat) != 200 ){
 				newStats.put(stat, newStats.get(stat) + 1);
-				if(!isValidWeight(newStats)){
+				if(!hasValidWeight(newStats)){
 					newStats.put(stat, this.getPrimStats().get(stat));
 					newStats.put("wgt", newStats.get("wgt") + 1);
 				}
@@ -2063,14 +2337,32 @@ public class Unit {
 		}
 	}
 	
-	public boolean isValidWeight(Map<String, Integer> primStats){
-		if(!primStats.keySet().equals(Unit.primStatSet))
+	/**
+	 * Return a boolean stating whether the given set of
+	 * 	primary stats contains a valid weight.
+	 * @param 	primStats
+	 * 			The given set of primary sets to be checked.
+	 * @return	False if the format of the given set of primary
+	 * 			stats is invalid and its weight is smaller than
+	 * 			(strength + agility)/2.
+	 * 			| result == !primStats.keySet().equals(getPrimStatsSet()) &&
+	 * 			|	primStats.get("wgt") >= (primStats.get("str") + primStats.get"agl")/2
+	 */
+	public boolean hasValidWeight(Map<String, Integer> primStats){
+		if(!primStats.keySet().equals(Unit.getPrimStatSet()))
 			return false;
 		if (primStats.get("wgt") < Math.ceil(((double)(primStats.get("str"))+(double)(primStats.get("agl"))) / 2))
 			return false;
 		return true;
 	}
-	
+	/**
+	 * Update the final target of this unit.
+	 * @post 	If the block of the final target is not walkable,
+	 * 			then the target and the path are removed.
+	 * 			| if(!getWorld().isWalkable(getWorld().getBlockAtPos(getFinTarget)))
+	 * 			|	then  new.getFinTarget() == null &&
+	 * 			|	new.getPath() == null			
+	 */
 	public void updateFinTarget(){
 		if(!this.getWorld().isWalkable(this.getWorld().getBlockAtPos(this.getFinTarget()))){
 			this.finTarget = null;
@@ -2078,6 +2370,30 @@ public class Unit {
 		}
 	}
 	
+	/**
+	 * Terminate this unit
+	 * @effect	If this unit is attacking another unit,
+	 * 			this unit is removed from the opponent's
+	 * 			set of attackers and this unit's opponent
+	 * 			is set to null.
+	 * 			| if(getOpponent != null)
+	 * 			|	then getOpponent.removeAttacker(this) &&
+	 * 			|	new.getOpponent() == null
+	 * @effect	The attackers of this unit have their
+	 * 			opponents set to null.
+	 * 			| for each attacker in getAttackers : (
+	 * 			|	attacker.setOpponent(null)
+	 * @effect	The item this unit is carrying is dropped at
+	 * 			its position.
+	 * 			| dropAt(getPosition)
+	 * @effect	This unit is removed from its block.
+	 * 			| getBlock.removeUnit(this)
+	 * @effect	This unit is removed from its world.
+	 * 			| getWorld().removeUnit(this)
+	 * @effect	Set terminated to true
+	 * 			| isTerminated == true
+	 */
+
 	public void terminate(){
 		if(this.opponent != null){
 			opponent.removeAttacker(this);
@@ -2086,7 +2402,7 @@ public class Unit {
 		for(Unit attacker : this.getAttackers()){
 			attacker.setOpponent(null);
 		}
-		this.drop();
+		this.dropAt(this.getPosition());
 		this.getBlock().removeUnit(this);
 		this.getWorld().removeUnit(this);
 		this.terminated = true;

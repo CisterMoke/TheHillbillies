@@ -102,8 +102,8 @@ public class Unit {
 	 * 			the given time interval is subtracted from it.
 	 * @post	If the attack cooldown is bigger than zero,
 	 * 			the given time interval is subtracted from it.
-	 * @post	If this Unit should be falling, its state will be set
-	 * 			to FALLING.
+	 * @effect	If this Unit should be falling and it isn't currenlty falling,
+	 * 			its state will initiate its fall.
 	 * @post	If the Unit's state is FALLING,  its position will be set
 	 * 			based on the given time interval. If the Unit shouldn't be
 	 * 			falling anymore, it will land on its current position.
@@ -152,7 +152,7 @@ public class Unit {
 			this.setAttackCooldown(this.getAttackCooldown() - dt);
 		}
 		
-		if(this.shouldFall()){
+		if(this.shouldFall() && this.getState() != State.FALLING){
 			this.fall();
 		}
 		if(this.getState() == State.FALLING){
@@ -641,7 +641,7 @@ public class Unit {
 			this.moveToAdjacent((int)(newPos.getX()),(int) (newPos.getY()),(int) (newPos.getZ()));
 		}
 		catch(IllegalArgumentException exc){
-//			System.out.println("??????");
+			System.out.println("??????");
 			return;
 		}
 	}
@@ -2402,7 +2402,7 @@ public class Unit {
 		for(Unit attacker : this.getAttackers()){
 			attacker.setOpponent(null);
 		}
-		this.dropAt(this.getPosition());
+		this.dropAt(this.getBlock().getLocation());
 		this.getBlock().removeUnit(this);
 		this.getWorld().removeUnit(this);
 		this.terminated = true;

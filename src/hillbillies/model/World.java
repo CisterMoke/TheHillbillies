@@ -55,7 +55,6 @@ public class World {
 	public World(int sizeX, int sizeY, int sizeZ, Map<ArrayList<Integer>, Block> terrain, TerrainChangeListener modelListener){
 		this.WORLD_BORDER = new ArrayList<Integer>(Arrays.asList(sizeX, sizeY, sizeZ));
 		this.setGameWorld(terrain);
-		System.out.println("for start");
 		Set<Block> checkSet = new HashSet<Block>();
 		for(ArrayList<Integer> key : terrain.keySet()){
 			Block block = terrain.get(key);
@@ -70,7 +69,6 @@ public class World {
 				}
 			}
 		}
-		System.out.println("for stop");
 		checkSet.removeAll(this.getStableSet());
 		this.checkWorldForCollapse(checkSet);
 		this.positionList = new ArrayList<ArrayList<Integer>>(terrain.keySet());
@@ -881,8 +879,6 @@ public class World {
 	 * 			this in the collapseSet.
 	 */
 	public void checkWorldForCollapse(Set<Block> checkSet){
-		System.out.println("check start");
-		System.out.println(checkSet.size());
 		for(Block block : checkSet){
 			if(block.isSolid())
 				this.updateCollapseAt(block);
@@ -893,7 +889,6 @@ public class World {
 				}
 			}
 		}
-		System.out.println("Done!");
 		Set<Block> newStableSet = this.getSolidBlocks();
 		newStableSet.removeAll(this.collapseSet);
 		this.setStableSet(newStableSet);

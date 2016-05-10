@@ -1367,7 +1367,7 @@ public class Unit {
 		Vector direction = targetBlock.getLocation().add(this.getBlock().getLocation().getOpposite());
 		if (this.getState() != State.WORKING){
 			this.setState(State.WORKING);
-			this.setWorkTime(500/this.getPrimStats().get("str"));
+			this.setWorkTime(1/this.getPrimStats().get("str"));
 			this.setTheta(Math.atan2(direction.getY(), direction.getX()));
 		}
 		
@@ -1969,8 +1969,8 @@ public class Unit {
 				this.opponent = null;
 			}
 		}
-			for(Unit attacker : this.getAttackers())
-				attacker.setOpponent(null);
+			for(Unit attacker : new ArrayList<Unit>(this.getAttackers()))
+				attacker.terminateAttack();
 		this.setState(State.FALLING);
 		this.setFallHeight((int)(this.getPosition().getZ()));
 	}
@@ -2399,8 +2399,8 @@ public class Unit {
 			opponent.removeAttacker(this);
 			this.opponent = null;
 		}
-		for(Unit attacker : this.getAttackers()){
-			attacker.setOpponent(null);
+		for(Unit attacker : new ArrayList<Unit>(this.getAttackers())){
+			attacker.terminateAttack();
 		}
 		this.dropAt(this.getBlock().getLocation());
 		this.getBlock().removeUnit(this);

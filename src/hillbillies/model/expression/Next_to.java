@@ -1,5 +1,7 @@
 package hillbillies.model.expression;
 
-public class Next_to extends UnaryExpression{
+import hillbillies.model.Vector;
+
+public class Next_to extends ComposedExpression<Vector>{
 
 }

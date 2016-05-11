@@ -1,5 +1,7 @@
 package hillbillies.model.expression;
 
-public abstract class PositionExpression extends BasicExpression{
+import hillbillies.model.Vector;
+
+public abstract class PositionExpression extends BasicExpression<Vector>{
 
 }

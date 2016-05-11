@@ -1,5 +1,7 @@
 package hillbillies.model.expression;
 
-public abstract class UnitExpression extends BasicExpression{
+import hillbillies.model.Unit;
+
+public abstract class UnitExpression extends BasicExpression<Unit>{
 
 }

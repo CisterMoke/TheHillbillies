@@ -1,5 +1,5 @@
 package hillbillies.model.expression;
 
-public class Or extends BinaryExpression{
+public class Or extends ComposedExpression<Boolean>{
 
 }

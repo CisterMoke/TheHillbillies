@@ -1,5 +1,5 @@
 package hillbillies.model.expression;
 
-public class Not extends UnaryExpression{
+public class Not extends ComposedExpression<Boolean>{
 
 }

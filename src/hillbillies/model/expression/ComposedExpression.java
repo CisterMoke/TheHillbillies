@@ -1,8 +1,10 @@
 package hillbillies.model.expression;
 
-public abstract class ComposedExpression<O> extends Expression<O>{
+import java.util.ArrayList;
+
+public abstract class ComposedExpression<O,I> extends Expression<O>{
 	
-	public Expression<?>[] subExpressions;
+	public ArrayList<Expression<I>> subExpressions = new ArrayList<Expression<I>>();
 	
 	@Override
 	public boolean hasSubExpression(){

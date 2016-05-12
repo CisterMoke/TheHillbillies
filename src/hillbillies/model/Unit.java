@@ -2408,6 +2408,111 @@ public class Unit {
 		this.terminated = true;
 	}
 	
+	public Unit getClosestUnit(){
+		if(this.getWorld() == null)
+			//TODO exception gooien?
+			return null;
+		Iterator<Unit> iterator = this.getWorld().getUnits().iterator();
+		Unit unit = iterator.next();
+		double distance = unit.getPosition().distance(this.getPosition());
+		while (iterator.hasNext()){
+			Unit tempUnit = iterator.next();
+			double tempDistance = tempUnit.getPosition().distance(this.getPosition());
+			if(tempDistance < distance)
+				unit = tempUnit;
+		}
+		return unit;
+	}
+	
+	public Unit getClosestEnemy(){
+		if(this.getWorld() == null)
+			//TODO exception gooien?
+			return null;
+		Set<Unit> enemies = this.getWorld().getUnits();
+		enemies.removeAll(this.getFaction().getUnits());
+		if(enemies.isEmpty())
+			//TODO exceprions gooien?
+			return null;
+		Iterator<Unit> iterator = enemies.iterator();
+		Unit unit = iterator.next();
+		double distance = unit.getPosition().distance(this.getPosition());
+		while (iterator.hasNext()){
+			Unit tempUnit = iterator.next();
+			double tempDistance = tempUnit.getPosition().distance(this.getPosition());
+			if(tempDistance < distance)
+				unit = tempUnit;
+		}
+		return unit;
+	}
+	
+	public Unit getClosestFriend(){
+		if(this.getWorld() == null)
+			//TODO exception gooien?
+			return null;
+		Set<Unit> friends = this.getFaction().getUnits();
+		friends.remove(this);
+		if(friends.isEmpty())
+			return null;
+		Iterator<Unit> iterator = friends.iterator();
+		Unit unit = iterator.next();
+		double distance = unit.getPosition().distance(this.getPosition());
+		while (iterator.hasNext()){
+			Unit tempUnit = iterator.next();
+			double tempDistance = tempUnit.getPosition().distance(this.getPosition());
+			if(tempDistance < distance)
+				unit = tempUnit;
+		}
+		return unit;
+	}
+	
+	public Boulder getClosestBoulder(){
+		if(this.getWorld() == null)
+			//TODO exception gooien?
+			return null;
+		Iterator<Boulder> iterator = this.getWorld().getBoulders().iterator();
+		Boulder boulder = iterator.next();
+		double distance = boulder.getPosition().distance(this.getPosition());
+		while (iterator.hasNext()){
+			Boulder tempBoulder = iterator.next();
+			double tempDistance = tempBoulder.getPosition().distance(this.getPosition());
+			if(tempDistance < distance)
+				boulder = tempBoulder;
+		}
+		return boulder;
+	}
+	
+	public Log getClosestLog(){
+		if(this.getWorld() == null)
+			//TODO exception gooien?
+			return null;
+		Iterator<Log> iterator = this.getWorld().getLogs().iterator();
+		Log log = iterator.next();
+		double distance = log.getPosition().distance(this.getPosition());
+		while (iterator.hasNext()){
+			Log tempLog = iterator.next();
+			double tempDistance = tempLog.getPosition().distance(this.getPosition());
+			if(tempDistance < distance)
+				log = tempLog;
+		}
+		return log;
+	}
+	
+	public Block getClosestWorkshop(){
+		if(this.getWorld() == null)
+			//TODO exception gooien?
+			return null;
+		Iterator<Block> iterator = this.getWorld().getWorkshops().iterator();
+		Block workshop = iterator.next();
+		double distance = workshop.getLocation().distance(this.getPosition());
+		while (iterator.hasNext()){
+			Block tempWorkshop = iterator.next();
+			double tempDistance = tempWorkshop.getLocation().distance(this.getPosition());
+			if(tempDistance < distance)
+				workshop = tempWorkshop;
+		}
+		return workshop;
+	}
+	
 	/**
 	 * Orientation of the unit in radians
 	 */

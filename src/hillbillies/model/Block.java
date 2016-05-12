@@ -43,7 +43,7 @@ public class Block{
 	 * Return location of this Block.
 	 */
 	@Basic
-	protected Vector getLocation(){
+	public Vector getLocation(){
 		return this.location;
 	}
 	

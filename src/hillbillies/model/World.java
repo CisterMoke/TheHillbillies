@@ -63,6 +63,8 @@ public class World {
 					this.addToStableSet(block);
 			}
 			else {
+				if(block.getBlockType() == BlockType.WORKSHOP)
+					this.workshops.add(block);
 				for(Block adjacent : this.getDirectlyAdjacent(block)){
 					if(adjacent.isSolid())
 						checkSet.add(adjacent);
@@ -291,7 +293,7 @@ public class World {
 	 * 			The given Block for which the
 	 * 			directly adjacent Blocks must be found.
 	 */
-	protected ArrayList<Block> getDirectlyAdjacent(Block block){		
+	public ArrayList<Block> getDirectlyAdjacent(Block block){		
 		ArrayList<Block> adjacent = new ArrayList<Block>();
 		ArrayList<Integer> clone1 = new ArrayList<Integer>();
 		ArrayList<Integer> clone2 = new ArrayList<Integer>();
@@ -897,6 +899,10 @@ public class World {
 		return this.stableSet.contains(block);
 	}
 	
+	public Set<Block> getWorkshops(){
+		return new HashSet<Block>(this.workshops);
+	}
+	
 	/**
 	 * This is used to notify the GUI of changes in the gameworld.
 	 */
@@ -951,6 +957,8 @@ public class World {
 	 * Set of all the solid blocks in the world
 	 */
 	private Set<Block> solidBlocks = new HashSet<Block>();
+	
+	private Set<Block> workshops = new HashSet<Block>();
 	
 
 	

@@ -1,8 +1,10 @@
 package hillbillies.model.expression;
 
-public class Brackets extends ComposedExpression<Expression<?>>{
+import hillbillies.model.Unit;
+
+public class Brackets extends ComposedExpression<Expression<?>, ?>{
 	public Brackets(Expression<?> e){
-		this.subExpressions = new Expression<?>[] {e};
+		this.subExpressions.add(e);
 	}
 	
 	public Expression<?>[] getExp(){

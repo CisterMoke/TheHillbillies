@@ -9,7 +9,7 @@ import be.kuleuven.cs.som.annotate.*;
  *
  */
 @Value
-public class Vector {
+public final class Vector {
 	/**
 	 * Initialize a three-dimensional vector having real coefficients. 
 	 * @param 	x
@@ -189,9 +189,15 @@ public class Vector {
 	/**
 	 * Return a vector which is opposite to this one.
 	 */
+	@Immutable
 	public Vector getOpposite(){
 		Vector opposite = this.multiply(-1);
 		return opposite;
+	}
+	
+	@Immutable
+	public Vector floor(){
+		return new Vector((int) this.x, (int) this.y, (int) this.z);
 	}
 	
 	private final double x;

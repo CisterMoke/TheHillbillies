@@ -1,7 +1,6 @@
 package hillbillies.model;
 
-import java.util.ArrayList;
-import java.util.Map;
+import java.util.*;
 
 import hillbillies.model.expression.*;
 import hillbillies.model.statement.*;

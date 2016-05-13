@@ -43,6 +43,7 @@ public class Faction {
 			creator.setFaction(this);
 			this.name = name;
 		}
+		this.scheduler = new Scheduler();
 	}
 	/**
 	 * Initialize this new Faction with given creator.
@@ -58,9 +59,10 @@ public class Faction {
 		if (!isValidUnit(creator))
 			terminate();
 		else{
-			creator.setFaction(this);;
+			creator.setFaction(this);
 			this.name = "Faction";
 		}
+		this.scheduler = new Scheduler();
 	}
 	/**
 	 * Return the set of Units belonging to this Faction.
@@ -202,6 +204,10 @@ public class Faction {
 			this.terminated = true;
 		return;
 	}
+	
+	public Scheduler getScheduler(){
+		return scheduler;
+	}
 	/**
 	 * Set of all the units in this faction
 	 */
@@ -223,4 +229,6 @@ public class Faction {
 	 * World this faction is part of
 	 */
 	private World world = null;
+	
+	private final Scheduler scheduler;
 	}

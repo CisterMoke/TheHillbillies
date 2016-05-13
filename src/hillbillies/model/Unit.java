@@ -2526,6 +2526,28 @@ public class Unit {
 			this.setFollowTarget(null);
 		}
 	}
+
+	public Task getTask(){
+		return this.task;
+	}
+	
+	protected void setTask(Task task){
+		this.task = task;
+	}
+	
+	public void pickTask(Task task){
+		if(!task.canBeAssignedTo(this))
+			//TODO exeption gooien ipv return?
+			return;
+		this.setTask(task);
+		task.setUnit(this);
+	}
+	
+	public void removeTask(){
+//		task.reset();
+		task.setUnit(null);
+		task = null;
+	}
 	
 	private Unit getFollowTarget() {
 		return followTarget;
@@ -2674,4 +2696,6 @@ public class Unit {
 	 * Unit this unit is currently following
 	 */
 	private Unit followTarget = null;
+	
+	private Task task;
 }

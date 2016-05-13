@@ -13,12 +13,6 @@ public class Task {
 		this.setSelected(newselected);
 	}
 	
-	private Unit unit = null;
-	
-	private Scheduler scheduler;
-	
-	private Vector selectedPosition;
-	
 	public boolean isAssigned(){
 		return this.getUnit() == null;
 	}
@@ -27,8 +21,9 @@ public class Task {
 		return this.unit;
 	}
 	
-	public void setUnit(Unit unit){
-		this.unit=unit;
+	protected void setUnit(Unit unit){
+		//TODO worldcheck enzo
+		this.unit = unit;
 	}
 	
 	public Vector getSelected(){
@@ -56,7 +51,7 @@ public class Task {
 		this.counter = this.counter -1;
 	}
 	
-	public double getCounter(){
+	public int getCounter(){
 		return this.counter;
 	}
 	
@@ -83,7 +78,40 @@ public class Task {
 	public Expression<?> readVariable(String name){
 		return this.getVariables().get(name);
 	}
-
+	
+	public int getPriority(){
+		return this.priority;
+	}
+	
+	public void setPriority(int priority){
+		for(Scheduler scheduler : schedulers){
+			scheduler.getTaskMap().remove(getPriority());
+			scheduler.getTaskMap().put(priority, this);
+		}
+		this.priority = priority;
+	}
+	
+	public Set<Scheduler> getSchedulers(){
+		return new HashSet<Scheduler>(this.schedulers);
+	}
+	
+	protected void addScheduler(Scheduler scheduler){
+		this.schedulers.add(scheduler);
+	}
+	
+	protected void removeScheduler(Scheduler scheduler){
+		this.schedulers.remove(scheduler);
+	}
+	
+	protected void setSchedulers(Set<Scheduler> newSet){
+		this.schedulers = newSet;
+	}
+	
+	public boolean canBeAssignedTo(Unit unit){
+		return getSchedulers().contains(unit.getFaction().getScheduler()) && unit.getTask() == null
+				&& this.getUnit() == null;
+	}
+	
 	public Integer getLoopDepth() {
 		return LoopDepth;
 	}
@@ -98,7 +126,7 @@ public class Task {
 	
 	public void interrupt(){
 		this.reset();
-		//this.setPriority(getPriority()-?)
+		this.setPriority(getPriority());
 	}
 
 	public boolean isCompleted() {
@@ -129,7 +157,7 @@ public class Task {
 	
 	private Statement activity;
 	
-	private double counter;
+	private int counter;
 	
 	private Integer LoopDepth=0;
 	
@@ -138,6 +166,13 @@ public class Task {
 	private String name;
 	
 	private Integer priority; 
+	
+	private Unit unit = null;
+	
+	private Set<Scheduler> schedulers = new HashSet<Scheduler>();
+	
+	private Vector selectedPosition;
+
 	
 
 }

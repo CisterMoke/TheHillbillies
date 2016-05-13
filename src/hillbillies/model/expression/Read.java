@@ -1,6 +1,6 @@
 package hillbillies.model.expression;
 
-public class Read extends ComposedExpression<Expression<?>, String>{
+public class Read extends BasicExpression<Expression<?>>{
 
 	public Read(String key){
 		this.setName(key);
@@ -8,7 +8,7 @@ public class Read extends ComposedExpression<Expression<?>, String>{
 
 	@Override
 	public Expression<?> getValue() {
-		return super.getTask().readVariable(this.getName());
+		return (Expression<?>) super.getTask().readVariable(this.getName()).getValue();
 	}
 
 	public String getName() {

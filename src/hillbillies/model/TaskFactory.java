@@ -1,6 +1,8 @@
 package hillbillies.model;
 
+import java.util.ArrayList;
 import java.util.List;
+
 
 import hillbillies.model.expression.*;
 import hillbillies.model.statement.*;
@@ -11,8 +13,12 @@ public class TaskFactory implements ITaskFactory<Expression<?>, Statement, Task>
 
 	@Override
 	public List<Task> createTasks(String name, int priority, Statement activity, List<int[]> selectedCubes) {
-		// TODO Auto-generated method stub
-		return null;
+		List<Task> list = new ArrayList<Task>();
+		for (int[] selected : selectedCubes){
+			Vector selectedVector = new Vector(selected[0], selected[1], selected[2]);
+			list.add(new Task(name, priority, activity, selectedVector));
+		}
+		return list;
 	}
 
 	@Override
@@ -22,19 +28,30 @@ public class TaskFactory implements ITaskFactory<Expression<?>, Statement, Task>
 
 	@Override
 	public Statement createWhile(Expression<?> condition, Statement body, SourceLocation sourceLocation) {
-		return new While(condition, body);
+		try{
+			return new While((Expression<Boolean>)condition, body);
+		}
+		catch(ClassCastException exc){
+			System.out.println("Incorrect type error at line: " + sourceLocation.getLine());
+		}
+		return null;
 	}
 
 	@Override
 	public Statement createIf(Expression<?> condition, Statement ifBody, Statement elseBody,
 			SourceLocation sourceLocation) {
-		return new If(condition, ifBody, elseBody);
+		try{
+			return new If((Expression<Boolean>)condition, ifBody, elseBody);		
+		}
+		catch(ClassCastException exc){
+			System.out.println("Incorrect type error at line: " + sourceLocation.getLine());
+		}
+		return null;
 	}
 
 	@Override
 	public Statement createBreak(SourceLocation sourceLocation) {
-		// TODO Auto-generated method stub
-		return null;
+		return new Break();
 	}
 
 	@Override
@@ -49,22 +66,46 @@ public class TaskFactory implements ITaskFactory<Expression<?>, Statement, Task>
 
 	@Override
 	public Statement createMoveTo(Expression<?> position, SourceLocation sourceLocation) {
-		return new MoveTo(position);
+		try{		
+			return new MoveTo((Expression<Vector>)position);
+		}
+		catch(ClassCastException exc){
+			System.out.println("Incorrect type error at line: " + sourceLocation.getLine());
+		}
+		return null;
 	}
 
 	@Override
 	public Statement createWork(Expression<?> position, SourceLocation sourceLocation) {
-		return new Work(position);
+		try{
+			return new Work((Expression<Vector>)position);
+		}
+		catch(ClassCastException exc){
+			System.out.println("Incorrect type error at line: " + sourceLocation.getLine());
+		}
+		return null;
 	}
 
 	@Override
 	public Statement createFollow(Expression<?> unit, SourceLocation sourceLocation) {
-		return new Follow(unit);
+		try{
+			return new Follow((Expression<Unit>)unit);
+		}
+		catch(ClassCastException exc){
+			System.out.println("Incorrect type error at line: " + sourceLocation.getLine());
+		}
+		return null;
 	}
 
 	@Override
 	public Statement createAttack(Expression<?> unit, SourceLocation sourceLocation) {
-		return new Attack(unit);
+		try{
+			return new Attack((Expression<Unit>)unit);
+		}
+		catch(ClassCastException exc){
+			System.out.println("Incorrect type error at line: " + sourceLocation.getLine());
+		}
+		return null;
 	}
 
 	@Override
@@ -73,141 +114,184 @@ public class TaskFactory implements ITaskFactory<Expression<?>, Statement, Task>
 	}
 
 	@Override
-	public Expression<?> createIsSolid(Expression<?> position, SourceLocation sourceLocation) {
-		// TODO Auto-generated method stub
+	public Expression<Boolean> createIsSolid(Expression<?> position, SourceLocation sourceLocation) {
+		try{
+			return new Is_solid((Expression<Vector>) position);
+		}
+		catch(ClassCastException exc){
+			System.out.println("Incorrect type error at line: " + sourceLocation.getLine());
+		}
 		return null;
 	}
 
 	@Override
-	public Expression<?> createIsPassable(Expression<?> position, SourceLocation sourceLocation) {
-		// TODO Auto-generated method stub
+	public Expression<Boolean> createIsPassable(Expression<?> position, SourceLocation sourceLocation) {
+		try{
+			return new Is_passable((Expression<Vector>) position);
+		}
+		catch(ClassCastException exc){
+			System.out.println("Incorrect type error at line: " + sourceLocation.getLine());
+		}
 		return null;
 	}
 
 	@Override
-	public Expression<?> createIsFriend(Expression<?> unit, SourceLocation sourceLocation) {
-		// TODO Auto-generated method stub
+	public Expression<Boolean> createIsFriend(Expression<?> unit, SourceLocation sourceLocation) {
+		try{
+			return new Is_friend((Expression<Unit>) unit);
+		}
+		catch(ClassCastException exc){
+			System.out.println("Incorrect type error at line: " + sourceLocation.getLine());
+		}
 		return null;
 	}
 
 	@Override
-	public Expression<?> createIsEnemy(Expression<?> unit, SourceLocation sourceLocation) {
-		// TODO Auto-generated method stub
+	public Expression<Boolean> createIsEnemy(Expression<?> unit, SourceLocation sourceLocation) {
+		try{
+			return new Is_enemy((Expression<Unit>) unit);
+		}
+		catch(ClassCastException exc){
+			System.out.println("Incorrect type error at line: " + sourceLocation.getLine());
+		}
 		return null;
 	}
 
 	@Override
-	public Expression<?> createIsAlive(Expression<?> unit, SourceLocation sourceLocation) {
-		// TODO Auto-generated method stub
+	public Expression<Boolean> createIsAlive(Expression<?> unit, SourceLocation sourceLocation) {
+		try{
+			return new Is_alive((Expression<Unit>) unit);
+		}
+		catch(ClassCastException exc){
+			System.out.println("Incorrect type error at line: " + sourceLocation.getLine());
+		}
 		return null;
 	}
 
 	@Override
-	public Expression<?> createCarriesItem(Expression<?> unit, SourceLocation sourceLocation) {
-		// TODO Auto-generated method stub
+	public Expression<Boolean> createCarriesItem(Expression<?> unit, SourceLocation sourceLocation) {
+		try{
+			return new Carries_item((Expression<Unit>) unit); 
+		}
+		catch(ClassCastException exc){
+			System.out.println("Incorrect type error at line: " + sourceLocation.getLine());
+		}
 		return null;
 	}
 
 	@Override
-	public Expression<?> createAnd(Expression<?> left, Expression<?> right, SourceLocation sourceLocation) {
-		// TODO Auto-generated method stub
+	public Expression<Boolean> createAnd(Expression<?> left, Expression<?> right, SourceLocation sourceLocation) {
+		try{
+			return new And((Expression<Boolean>)left, (Expression<Boolean>)right);
+		}
+		catch(ClassCastException exc){
+			System.out.println("Incorrect type error at line: " + sourceLocation.getLine());
+		}
 		return null;
 	}
 
 	@Override
-	public Expression<?> createOr(Expression<?> left, Expression<?> right, SourceLocation sourceLocation) {
-		// TODO Auto-generated method stub
+	public Expression<Boolean> createOr(Expression<?> left, Expression<?> right, SourceLocation sourceLocation) {
+		try{
+			return new Or((Expression<Boolean>)left, (Expression<Boolean>)right);
+		}
+		catch(ClassCastException exc){
+			System.out.println("Incorrect type error at line: " + sourceLocation.getLine());
+		}
 		return null;
 	}
 
 	@Override
-	public Expression<?> createHerePosition(SourceLocation sourceLocation) {
-		// TODO Auto-generated method stub
+	public Expression<Boolean> createNot(Expression<?> expression, SourceLocation sourceLocation) {
+		try{
+			return new Not((Expression<Boolean>) expression);
+		}
+		catch(ClassCastException exc){
+			System.out.println("Incorrect type error at line: " + sourceLocation.getLine());
+		}
+		return null;
+	}
+	
+	@Override
+	public Expression<Vector> createHerePosition(SourceLocation sourceLocation) {
+		return new Here();
+	}
+
+	@Override
+	public Expression<Vector> createLogPosition(SourceLocation sourceLocation) {
+		return new LogLiteral();
+	}
+
+	@Override
+	public Expression<Vector> createBoulderPosition(SourceLocation sourceLocation) {
+		return new BoulderLiteral();
+	}
+
+	@Override
+	public Expression<Vector> createWorkshopPosition(SourceLocation sourceLocation) {
+		return new WorkshopLiteral();
+	}
+
+	@Override
+	public Expression<Vector> createSelectedPosition(SourceLocation sourceLocation) {
+		return new Selected();
+	}
+
+	@Override
+	public Expression<Vector> createNextToPosition(Expression<?> position, SourceLocation sourceLocation) {
+		try{
+			return new Next_to((Expression<Vector>) position);
+		}
+		catch(ClassCastException exc){
+			System.out.println("Incorrect type error at line: " + sourceLocation.getLine());
+		}
 		return null;
 	}
 
 	@Override
-	public Expression<?> createLogPosition(SourceLocation sourceLocation) {
-		// TODO Auto-generated method stub
+	public Expression<Vector> createPositionOf(Expression<?> unit, SourceLocation sourceLocation) {
+		try{
+			return new Position_of((Expression<Unit>) unit);
+		}
+		catch(ClassCastException exc){
+			System.out.println("Incorrect type error at line: " + sourceLocation.getLine());
+		}
 		return null;
 	}
 
 	@Override
-	public Expression<?> createBoulderPosition(SourceLocation sourceLocation) {
-		// TODO Auto-generated method stub
-		return null;
+	public Expression<Vector> createLiteralPosition(int x, int y, int z, SourceLocation sourceLocation) {
+		return new PositionLiteral(new Vector(x, y, z));
 	}
 
 	@Override
-	public Expression<?> createWorkshopPosition(SourceLocation sourceLocation) {
-		// TODO Auto-generated method stub
-		return null;
+	public Expression<Unit> createThis(SourceLocation sourceLocation) {
+		return new This();
 	}
 
 	@Override
-	public Expression<?> createSelectedPosition(SourceLocation sourceLocation) {
-		// TODO Auto-generated method stub
-		return null;
+	public Expression<Unit> createFriend(SourceLocation sourceLocation) {
+		return new Friend();
 	}
 
 	@Override
-	public Expression<?> createNextToPosition(Expression<?> position, SourceLocation sourceLocation) {
-		// TODO Auto-generated method stub
-		return null;
+	public Expression<Unit> createEnemy(SourceLocation sourceLocation) {
+		return new Enemy();
 	}
 
 	@Override
-	public Expression<?> createPositionOf(Expression<?> unit, SourceLocation sourceLocation) {
-		// TODO Auto-generated method stub
-		return null;
+	public Expression<Unit> createAny(SourceLocation sourceLocation) {
+		return new Any();
 	}
 
 	@Override
-	public Expression<?> createLiteralPosition(int x, int y, int z, SourceLocation sourceLocation) {
-		// TODO Auto-generated method stub
-		return null;
+	public Expression<Boolean> createTrue(SourceLocation sourceLocation) {
+		return new BooleanLiteral(true);
 	}
 
 	@Override
-	public Expression<?> createThis(SourceLocation sourceLocation) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Expression<?> createFriend(SourceLocation sourceLocation) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Expression<?> createEnemy(SourceLocation sourceLocation) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Expression<?> createAny(SourceLocation sourceLocation) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Expression<?> createTrue(SourceLocation sourceLocation) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Expression<?> createFalse(SourceLocation sourceLocation) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Expression<?> createNot(Expression<?> expression, SourceLocation sourceLocation) {
-		// TODO Auto-generated method stub
-		return null;
+	public Expression<Boolean> createFalse(SourceLocation sourceLocation) {
+		return new BooleanLiteral(false);
 	}
 
 }

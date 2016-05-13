@@ -4,6 +4,19 @@ import hillbillies.model.Task;
 
 public abstract class Statement {
 	
+	public void reset(){
+		this.setCompleted(false);
+	}
+	
+	protected Statement superStatement = null;
+	
+	public void setSuperStatment(Statement stat){
+		this.superStatement = stat;
+	}
+	
+	public Statement getSuperStatement(){
+		return this.superStatement;
+	}
 	
 	public abstract void execute();
 	

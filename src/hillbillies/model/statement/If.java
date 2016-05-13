@@ -2,9 +2,9 @@ package hillbillies.model.statement;
 
 import hillbillies.model.expression.*;
 
-public class If extends ComposedStatement{
+public class If extends Statement{
 
-	public If(Expression<?> condition2, Statement IB, Statement EB){
+	public If(Expression<Boolean> condition2, Statement IB, Statement EB){
 		condition2.setTask(super.getTask());
 		this.setCondition(condition2);
 		this.setIfBody(IB);
@@ -13,8 +13,9 @@ public class If extends ComposedStatement{
 	}
 	@Override
 	public void execute(){
-		if (super.getCompleted())
+		if (super.getCompleted() || super.getTask().getCounter()<1)
 			return;
+		super.task.countDown();
 		if ((boolean) this.getCondition().getValue())
 			this.getIfBody().execute();
 		else
@@ -22,11 +23,11 @@ public class If extends ComposedStatement{
 		super.setCompleted(true);
 	}
 
-	public Expression<?> getCondition() {
+	public Expression<Boolean> getCondition() {
 		return condition;
 	}
 	
-	public void setCondition(Expression<?> condition2) {
+	public void setCondition(Expression<Boolean> condition2) {
 		this.condition = condition2;
 	}
 
@@ -46,7 +47,7 @@ public class If extends ComposedStatement{
 		ElseBody = elseBody;
 	}
 
-	private Expression<?> condition;
+	private Expression<Boolean> condition;
 	private Statement IfBody;
 	private Statement ElseBody;
 }

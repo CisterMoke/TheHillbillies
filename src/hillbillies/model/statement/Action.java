@@ -3,7 +3,7 @@ package hillbillies.model.statement;
 import hillbillies.model.Unit;
 import hillbillies.model.expression.Expression;
 
-public abstract class Action extends SimpleStatement{
+public abstract class Action extends Statement{
 	
 	@Override
 	public abstract void execute();

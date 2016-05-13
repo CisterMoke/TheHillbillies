@@ -2,7 +2,7 @@ package hillbillies.model.statement;
 
 import hillbillies.model.expression.Expression;
 
-public class Print extends SimpleStatement{
+public class Print extends Statement{
 	
 	public Print(Expression<?> T){
 		T.setTask(super.getTask());
@@ -11,8 +11,9 @@ public class Print extends SimpleStatement{
 
 	@Override
 	public void execute() {
-		if (super.getCompleted())
+		if (super.getCompleted() || super.getTask().getCounter()<1)
 			return;
+		super.task.countDown();
 		System.out.println(this.getText());
 		super.setCompleted(true);
 	}

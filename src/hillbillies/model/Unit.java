@@ -1108,7 +1108,7 @@ public class Unit {
 	 * 		the unit will move towards by setting new targets.
 	 */
 	@Basic 
-	protected Vector getFinTarget(){
+	public Vector getFinTarget(){
 		if (this.finTarget == null)
 				return null;
 		return this.finTarget;
@@ -2513,6 +2513,27 @@ public class Unit {
 		return workshop;
 	}
 	
+	public void startFollow(Unit unit){
+		this.setFollowTarget(unit);
+		this.move2(unit.getPosition());
+	}
+	
+	public void follow(){
+		if (this.getWorld().getAdjacent(this.getBlock()).contains(this.getFollowTarget().getBlock())){
+			this.setFollowTarget(null);
+		}
+		if (this.getFollowTarget().isTerminated()){
+			this.setFollowTarget(null);
+		}
+	}
+	
+	private Unit getFollowTarget() {
+		return followTarget;
+	}
+	private void setFollowTarget(Unit followTarget) {
+		this.followTarget = followTarget;
+	}
+
 	/**
 	 * Orientation of the unit in radians
 	 */
@@ -2649,4 +2670,8 @@ public class Unit {
 	 * Boolean indicating whether this unit is dead or not.
 	 */
 	private boolean terminated = false;
+	/**
+	 * Unit this unit is currently following
+	 */
+	private Unit followTarget = null;
 }

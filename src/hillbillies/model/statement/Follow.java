@@ -1,21 +1,24 @@
 package hillbillies.model.statement;
 
 import hillbillies.model.Unit;
+import hillbillies.model.Vector;
 import hillbillies.model.expression.Expression;
 
 public class Follow extends Action{
 
-	public Follow(Expression<?> unit){
-		unit.setTask(super.getTask());
+	public Follow(Expression<Unit> unit){
 		super.setTarget(unit);
 	}
 
 	@Override
 	public void execute() {
-		if (super.getCompleted())
+		if (super.getCompleted() || super.getTask().getCounter()<1)
 			return;
-		super.getActor().move2(((Unit) super.getTarget().getValue()).getPosition());
-		super.setCompleted(true);
+		super.task.countDown();
+		this.getTarget().setTask(super.getTask());
+		super.getActor().startFollow((Unit) super.getTarget().getValue());
+		if (getActor().getFinTarget()==null)
+			super.setCompleted(true);
 	}
 
 

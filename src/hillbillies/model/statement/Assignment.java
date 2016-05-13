@@ -2,7 +2,7 @@ package hillbillies.model.statement;
 
 import hillbillies.model.expression.Expression;
 
-public class Assignment extends SimpleStatement{
+public class Assignment extends Statement{
 	
 	public Assignment(String n, Expression<?> v){
 		v.setTask(super.getTask());
@@ -14,6 +14,7 @@ public class Assignment extends SimpleStatement{
 	public void execute() {
 		if (super.getCompleted())
 			return;
+		super.task.countDown();
 		super.task.addVariable(this.getName(), this.getValue());
 		super.setCompleted(true);
 	}

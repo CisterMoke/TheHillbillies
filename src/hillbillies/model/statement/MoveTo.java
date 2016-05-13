@@ -5,16 +5,18 @@ import hillbillies.model.expression.Expression;
 
 public class MoveTo extends Action{
 
-	public MoveTo(Expression<?> position){
-		position.setTask(super.getTask());
+	public MoveTo(Expression<Vector> position){
 		super.setTarget(position);
 	}
 
 	@Override
 	public void execute() {
-		if (super.getCompleted())
+		if (super.getCompleted() || super.getTask().getCounter()<1)
 			return;
+		super.task.countDown();
+		this.getTarget().setTask(super.getTask());
 		super.getActor().move2((Vector) super.getTarget().getValue());
-		super.setCompleted(true);
+		if (getActor().getFinTarget()==null)
+			super.setCompleted(true);
 	}
 }

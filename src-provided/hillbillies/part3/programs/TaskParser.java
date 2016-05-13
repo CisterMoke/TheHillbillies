@@ -72,7 +72,7 @@ public class TaskParser<E, S, T> {
 
 	private final List<String> errors = new ArrayList<>();
 
-	protected TaskParser(ITaskFactory<E, S, T> factory) {
+	public TaskParser(ITaskFactory<E, S, T> factory) {
 		this.factory = factory;
 	}
 

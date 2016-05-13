@@ -84,10 +84,6 @@ public class Task {
 	}
 	
 	public void setPriority(int priority){
-		for(Scheduler scheduler : schedulers){
-			scheduler.getTaskMap().remove(getPriority());
-			scheduler.getTaskMap().put(priority, this);
-		}
 		this.priority = priority;
 	}
 	

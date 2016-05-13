@@ -8,26 +8,19 @@ public class Scheduler {
 	
 	public void scheduleTask(Task task){
 		task.addScheduler(this);
-		this.taskMap.put(task.getPriority(), task);
+		this.tasks.add(task);
 	}
 	
 	public void removeTask(Task task){
 		if(!task.getSchedulers().contains(this))
 			return;
-		this.taskMap.remove(task.getPriority());
+		this.tasks.remove(task);
 		task.removeScheduler(this);
 		task.getUnit().removeTask();
 	}
 		
-	protected Map<Integer, Task> getTaskMap(){
-		return this.taskMap;
-	}
-	
 	public Set<Task> getTasks(){
-		Set <Task> tasks = new HashSet<Task>();
-		for(int key: taskMap.keySet())
-			tasks.add(taskMap.get(key));
-		return tasks;
+		return this.tasks;
 	}
 	
 //	public void assignTask(Task task, Unit unit){
@@ -46,20 +39,20 @@ public class Scheduler {
 //	}
 	
 	public Iterator<Task> iterator(){
-		ArrayList<Integer> priorities = new ArrayList<Integer>(taskMap.keySet());
-		priorities.sort(null);
+		ArrayList<Task> taskList = new ArrayList<Task>(tasks);
+		taskList.sort(getPriorityComparator());
 		return new Iterator<Task>(){
 			
 			@Override
 			public boolean hasNext(){
-				return !priorities.isEmpty();
+				return !taskList.isEmpty();
 			}
 
 			@Override
 			public Task next() {
-				int key = priorities.get(0);
-				priorities.remove(0);
-				return taskMap.get(key);
+				Task first = taskList.get(0);
+				taskList.remove(0);
+				return first;
 			}			
 		};
 	}
@@ -75,6 +68,17 @@ public class Scheduler {
 		return null;
 	}
 	
+	private Comparator<Task> getPriorityComparator(){
+		return new Comparator<Task>(){
+
+			@Override
+			public int compare(Task task1, Task task2) {
+				return (int) Math.signum(task1.getPriority() - task2.getPriority());
+			}
+			
+		};
+	}
+	
 //	public void setTaskPriority(Task task, int priority){
 //		if(!task.getSchedulers().contains(this))
 //			return;
@@ -85,6 +89,6 @@ public class Scheduler {
 	
 //	private Faction faction;
 	
-	private Map<Integer, Task> taskMap = new HashMap<Integer, Task>();
+	private Set<Task> tasks = new HashSet<Task>();
 
 }

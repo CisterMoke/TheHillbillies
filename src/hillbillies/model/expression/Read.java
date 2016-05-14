@@ -1,6 +1,6 @@
 package hillbillies.model.expression;
 
-import hillbillies.model.statement.SuperStatement;
+import hillbillies.model.statement.WrapStatement;
 
 public class Read extends BasicExpression<Expression<?>>{
 
@@ -21,15 +21,15 @@ public class Read extends BasicExpression<Expression<?>>{
 		this.name = name;
 	}
 	
-	public void setStatement(SuperStatement newstat){
+	public void setStatement(WrapStatement newstat){
 		this.statement=newstat;
 	}
 	
-	public SuperStatement getStatement(){
+	public WrapStatement getStatement(){
 		return this.statement;
 	}
 	
-	private SuperStatement statement;
+	private WrapStatement statement;
 
 	private String name;
 }

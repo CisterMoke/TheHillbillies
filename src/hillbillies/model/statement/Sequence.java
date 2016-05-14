@@ -3,7 +3,7 @@ package hillbillies.model.statement;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Sequence extends SuperStatement{
+public class Sequence extends WrapStatement{
 	
 	public Sequence(List<Statement> Seq){
 		this.setStatementSequence(Seq);
@@ -11,6 +11,7 @@ public class Sequence extends SuperStatement{
 
 	@Override
 	public void execute() {
+		System.out.println(this.getClass());
 		if (super.getCompleted() || super.getTask().getCounter()<1)
 			return;
 		this.initSupers();

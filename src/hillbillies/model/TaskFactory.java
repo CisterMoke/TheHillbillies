@@ -22,7 +22,9 @@ public class TaskFactory implements ITaskFactory<Expression<?>, Statement, Task>
 			list.add(new Task(name, priority, activity, null));
 		for (int[] selected : selectedCubes){
 			Vector selectedVector = new Vector(selected[0], selected[1], selected[2]);
-			list.add(new Task(name, priority, activity, selectedVector));
+			Task task = new Task(name, priority, activity, selectedVector);
+			System.out.println(task);
+			list.add(task);
 		}
 		return list;
 	}

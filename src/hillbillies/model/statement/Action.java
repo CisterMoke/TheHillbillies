@@ -3,17 +3,10 @@ package hillbillies.model.statement;
 import hillbillies.model.Unit;
 import hillbillies.model.expression.Expression;
 
-public abstract class Action extends Statement{
-	
-	@Override
-	public abstract void execute();
+public abstract class Action extends BasicStatement{
 
 	public Unit getActor() {
-		return Actor;
-	}
-
-	public void setActor(Unit actor) {
-		Actor = actor;
+		return this.getTask().getUnit();
 	}
 
 	public Expression<?> getTarget() {
@@ -24,7 +17,16 @@ public abstract class Action extends Statement{
 		super.Expressions.add(target);
 		Target = target;
 	}
+	
+	@Override	
+	public void execute(){
+		System.out.println(this.getClass());
+		if (super.getCompleted() || super.getTask().getCounter()<1)
+			return;
+//		this.getTarget().setTask(super.getTask());
+		super.task.countDown();
+		this.executeSpecific();
+	}
 
-	private Unit Actor;
 	private Expression<?> Target;
 }

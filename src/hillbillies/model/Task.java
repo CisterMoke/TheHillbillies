@@ -35,6 +35,7 @@ public class Task {
 	}
 	
 	public void executeTask(double dt){
+		System.out.println("exe");
 		this.setCounter(dt);
 		this.getActivity().setTask(this);
 		this.getActivity().execute();

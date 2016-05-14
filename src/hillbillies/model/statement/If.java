@@ -2,7 +2,7 @@ package hillbillies.model.statement;
 
 import hillbillies.model.expression.*;
 
-public class If extends SuperStatement{
+public class If extends WrapStatement{
 
 	public If(Expression<Boolean> condition2, Statement IB, Statement EB){
 		this.setCondition(condition2);
@@ -11,6 +11,7 @@ public class If extends SuperStatement{
 	}
 	@Override
 	public void execute(){
+		System.out.println(this.getClass());
 //		this.getCondition().setTask(this.getTask());
 //		this.getIfBody().setTask(this.getTask());
 //		if (this.getElseBody()!=null){
@@ -20,15 +21,18 @@ public class If extends SuperStatement{
 			return;
 		this.initSupers();
 		super.task.countDown();
-		if ((boolean) this.getCondition().getValue())
+		if ((boolean) this.getCondition().getValue()){
 			this.getIfBody().execute();
-		else{
-			if (this.getElseBody()!=null)
-				this.getElseBody().execute();
+			this.setCompleted(this.getIfBody().getCompleted());
 		}
-		if (this.getElseBody()!=null)
-			super.setCompleted(this.getIfBody().getCompleted() || this.getElseBody().getCompleted());
-		else {super.setCompleted(this.getIfBody().getCompleted());}
+		else{
+			if (this.getElseBody()!=null){
+				this.getElseBody().execute();
+				this.setCompleted(this.getElseBody().getCompleted());
+			}
+			else{this.setCompleted(true);}
+		}
+		
 	}
 
 	public Expression<Boolean> getCondition() {

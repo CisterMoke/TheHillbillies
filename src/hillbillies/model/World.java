@@ -577,7 +577,7 @@ public class World {
 	 * @return	True if and only if there exists a solid Block
 	 * 			adjacent to the given Block.
 	 */
-	protected boolean isWalkable(Block block){
+	public boolean isWalkable(Block block){
 		if(block.isSolid()){
 			return false;
 		}

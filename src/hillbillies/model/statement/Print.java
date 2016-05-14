@@ -2,20 +2,19 @@ package hillbillies.model.statement;
 
 import hillbillies.model.expression.Expression;
 
-public class Print extends Statement{
+public class Print extends BasicStatement{
 	
 	public Print(Expression<?> T){
-		T.setTask(super.getTask());
 		this.setText(T);
 	}
 
 	@Override
-	public void execute() {
-		if (super.getCompleted() || super.getTask().getCounter()<1)
-			return;
-		super.task.countDown();
-		System.out.println(this.getText());
-		super.setCompleted(true);
+	public void executeSpecific() {
+//		if (super.getCompleted() || super.getTask().getCounter()<1)
+//			return;
+//		super.task.countDown();
+		System.out.println(this.getText().getValue());
+//		super.setCompleted(true);
 	}
 	
 	public Expression<?> getText() {

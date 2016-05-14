@@ -7,7 +7,7 @@ import java.util.Set;
 import hillbillies.model.Task;
 import hillbillies.model.expression.Expression;
 
-public abstract class SuperStatement extends Statement{
+public abstract class WrapStatement extends Statement{
 	
 	protected Set<Statement> Substatements = new HashSet<Statement>();
 	
@@ -31,8 +31,8 @@ public abstract class SuperStatement extends Statement{
 	}
 	
 	public void stopLoop(){
-		if (this.getSuperStatement()!=null)
-			this.getSuperStatement().stopLoop();
+		if (this.getWrapStatement()!=null)
+			this.getWrapStatement().stopLoop();
 		else {System.out.println("place break inside a loop");}
 	}
 	
@@ -52,8 +52,8 @@ public abstract class SuperStatement extends Statement{
 		if (this.getVariables().containsKey(name))
 			return this.getVariables().get(name);
 		else {
-			if (this.getSuperStatement()!=null)
-				return this.getSuperStatement().readVariable(name);
+			if (this.getWrapStatement()!=null)
+				return this.getWrapStatement().readVariable(name);
 			else {
 				System.out.println("Unassigned variable: " + name);
 				return null;
@@ -63,7 +63,7 @@ public abstract class SuperStatement extends Statement{
 	
 	public void initSupers(){
 		for (Statement sub : Substatements){
-			sub.setSuperStatment(this);
+			sub.setWrapStatment(this);
 		} 
 	}
 

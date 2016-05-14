@@ -151,7 +151,7 @@ public class Unit {
 		if (this.getAttackCooldown() > 0){
 			this.setAttackCooldown(this.getAttackCooldown() - dt);
 		}
-		if (this.getTask()!=null)
+		if (this.getTask()!=null && isTruelyIdle())
 			this.getTask().executeTask(dt);
 		if(this.shouldFall() && this.getState() != State.FALLING){
 			this.fall();
@@ -609,11 +609,14 @@ public class Unit {
 	 * 			| else moveToAdjacent(newBlock.getX(), newBlock.getY(), newBlock.getZ()
 	 */
 	public void move2(Vector pos){
-		if(!isValidPosition(pos))
+		if(!isValidPosition(pos)) {
+			System.out.println(1);
 			return;
+		}
 		if (this.getPosition().equals(this.getFinTarget())){
 			this.finTarget = null;
 			this.Path.clear();
+			System.out.println(2);
 			return;
 		}
 		if(!this.getPath().isEmpty() && this.getBlock() == this.getPath().get(0)){
@@ -625,6 +628,7 @@ public class Unit {
 			this.setFinTarget(newTarget);
 		}
 		catch(IllegalArgumentException exc){
+			System.out.println(3);
 			return;
 		}
 		if (this.getPosition().equals(this.getTarget())){
@@ -633,8 +637,10 @@ public class Unit {
 				this.pathFinding();
 			}
 		}
-		if (this.getPath().isEmpty())
+		if (this.getPath().isEmpty()){
+			System.out.println(4);
 			return;
+		}
 		Vector currentStep = this.getWorld().getBlockAtPos(this.getTarget()).getLocation();
 		Vector nextStep = this.getPath().get(0).getLocation();
 		Vector newPos = nextStep.add(currentStep.getOpposite());
@@ -643,6 +649,7 @@ public class Unit {
 		}
 		catch(IllegalArgumentException exc){
 			System.out.println("??????");
+			System.out.println(5);
 			return;
 		}
 	}
@@ -1358,9 +1365,11 @@ public class Unit {
 	 * 			|	setTheta(arctan(direction.getY()/direction.getX()))
 	 */
 	public void workAt(Vector target){
-		if (this.isMoving() || this.getState() == State.COMBAT || this.getState() == State.FALLING)
+		if (this.isMoving() || this.getState() == State.COMBAT || this.getState() == State.FALLING){
+			System.out.println("work error");
+			System.out.println(this.isMoving());
 			return;
-
+		}
 		Block targetBlock = this.getWorld().getBlockAtPos(target);
 		if(!this.getWorld().getAdjacent(this.getBlock()).contains(targetBlock) && targetBlock != this.getBlock())
 			return;
@@ -2568,6 +2577,10 @@ public class Unit {
 	}
 	private void setFollowTarget(Unit followTarget) {
 		this.followTarget = followTarget;
+	}
+	
+	public boolean isTruelyIdle(){
+		return finTarget == null && followTarget == null && state == State.IDLE && target == pos;
 	}
 
 	/**

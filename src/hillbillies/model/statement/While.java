@@ -2,7 +2,7 @@ package hillbillies.model.statement;
 
 import hillbillies.model.expression.*;
 
-public class While extends SuperStatement{
+public class While extends WrapStatement{
 
 	public While(Expression<Boolean> condition2, Statement b){
 		this.setBody(b);
@@ -11,11 +11,12 @@ public class While extends SuperStatement{
 	
 	@Override
 	public void execute() {
-		this.initSupers();
+		System.out.println(this.getClass());
 //		this.getCondition().setTask(super.task);
 //		this.getBody().setTask(super.task);
 		if (super.getCompleted() || super.getTask().getCounter()<1)
 			return;
+		this.initSupers();
 		while ((boolean) this.getCondition().getValue() && this.isInLoop()){
 			super.task.countDown();
 //			this.body.setSuperStatment(this);

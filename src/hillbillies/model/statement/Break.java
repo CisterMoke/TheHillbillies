@@ -1,14 +1,17 @@
 package hillbillies.model.statement;
 
-public class Break extends Statement{
+public class Break extends BasicStatement{
+	
+	public Break(){
+	}
 
 	@Override
-	public void execute() {
-		if (super.getCompleted() || super.getTask().getCounter()<1)
-			return;
-		super.task.countDown();
-		this.getSuperStatement().stopLoop();
-		super.setCompleted(true);
+	public void executeSpecific() {
+//		if (super.getCompleted() || super.getTask().getCounter()<1)
+//			return;
+//		super.task.countDown();
+		this.getWrapStatement().stopLoop();
+//		super.setCompleted(true);
 	}
 
 }

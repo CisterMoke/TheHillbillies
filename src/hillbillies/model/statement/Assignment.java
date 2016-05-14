@@ -2,21 +2,20 @@ package hillbillies.model.statement;
 
 import hillbillies.model.expression.Expression;
 
-public class Assignment extends Statement{
+public class Assignment extends BasicStatement{
 	
 	public Assignment(String n, Expression<?> v){
-		v.setTask(super.getTask());
 		this.setName(n);
 		this.setValue(v);
 	}
 	
 	@Override
-	public void execute() {
-		if (super.getCompleted())
-			return;
-		super.task.countDown();
-		this.getSuperStatement().addVariable(this.getName(), this.getValue());
-		super.setCompleted(true);
+	public void executeSpecific() {
+//		if (super.getCompleted())
+//			return;
+//		super.task.countDown();
+		this.getWrapStatement().addVariable(this.getName(), this.getValue());
+//		super.setCompleted(true);
 	}
 	
 	public String getName() {

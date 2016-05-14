@@ -10,11 +10,11 @@ public class Follow extends Action{
 	}
 
 	@Override
-	public void execute() {
-		if (super.getCompleted() || super.getTask().getCounter()<1)
-			return;
-		super.task.countDown();
-		this.getTarget().setTask(super.getTask());
+	public void executeSpecific() {
+//		if (super.getCompleted() || super.getTask().getCounter()<1)
+//			return;
+//		super.task.countDown();
+//		this.getTarget().setTask(super.getTask());
 		super.getActor().startFollow((Unit) super.getTarget().getValue());
 		if (getActor().getFinTarget()==null)
 			super.setCompleted(true);

@@ -9,7 +9,7 @@ public class Is_solid extends ComposedExpression<Boolean,Vector>{
 
 		@Override
 		public Boolean getValue() {
-			return !this.getUnit().getWorld().getBlockAtPos(this.subExpressions.get(0).getValue()).isSolid();
+			return this.getUnit().getWorld().getBlockAtPos(this.subExpressions.get(0).getValue()).isSolid();
 		}
 
 }

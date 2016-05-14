@@ -12,7 +12,7 @@ public class Scheduler {
 	}
 	
 	public void removeTask(Task task){
-		if(!task.getSchedulers().contains(this))
+		if(!task.inSchedulerSet(this))
 			return;
 		this.tasks.remove(task);
 		task.removeScheduler(this);
@@ -20,7 +20,15 @@ public class Scheduler {
 	}
 		
 	public Set<Task> getTasks(){
-		return this.tasks;
+		return new HashSet<Task> (this.tasks);
+	}
+	
+	public boolean inTaskSet(Task task){
+		return tasks.contains(task);
+	}
+	
+	public boolean inTaskSet(Collection<Task> c){
+		return tasks.containsAll(c);
 	}
 	
 //	public void assignTask(Task task, Unit unit){
@@ -62,7 +70,7 @@ public class Scheduler {
 		Task task;
 		while(iter.hasNext()){
 			task = iter.next();
-			if(task.getUnit() == null)
+			if(!task.isAssigned())
 				return task;
 		}
 		return null;
@@ -73,21 +81,11 @@ public class Scheduler {
 
 			@Override
 			public int compare(Task task1, Task task2) {
-				return (int) Math.signum(task1.getPriority() - task2.getPriority());
+				return (int) Math.signum(task2.getPriority() - task1.getPriority());
 			}
 			
 		};
 	}
-	
-//	public void setTaskPriority(Task task, int priority){
-//		if(!task.getSchedulers().contains(this))
-//			return;
-//		taskMap.remove(task.getPriority());
-//		task.setPriority(priority);
-//		taskMap.put(task.getPriority(), task);
-//	}
-	
-//	private Faction faction;
 	
 	private Set<Task> tasks = new HashSet<Task>();
 

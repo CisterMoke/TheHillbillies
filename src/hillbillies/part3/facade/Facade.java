@@ -427,7 +427,7 @@ public class Facade implements IFacade {
 
 	@Override
 	public boolean areTasksPartOf(Scheduler scheduler, Collection<Task> tasks) throws ModelException {
-		return scheduler.getTasks().contains(tasks);
+		return scheduler.inTaskSet(tasks);
 	}
 
 	@Override

@@ -103,8 +103,16 @@ public class Task {
 		this.schedulers = newSet;
 	}
 	
+	public boolean inSchedulerSet(Scheduler scheduler){
+		return schedulers.contains(scheduler);
+	}
+	
+	public boolean inSchedulerSet(Collection<Scheduler> c){
+		return schedulers.containsAll(c);
+	}
+	
 	public boolean canBeAssignedTo(Unit unit){
-		return getSchedulers().contains(unit.getFaction().getScheduler()) && unit.getTask() == null
+		return schedulers.contains(unit.getFaction().getScheduler()) && unit.getTask() == null
 				&& this.getUnit() == null;
 	}
 	

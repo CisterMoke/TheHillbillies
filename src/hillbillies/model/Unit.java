@@ -151,7 +151,8 @@ public class Unit {
 		if (this.getAttackCooldown() > 0){
 			this.setAttackCooldown(this.getAttackCooldown() - dt);
 		}
-		
+		if (this.getTask()!=null)
+			this.getTask().executeTask(dt);
 		if(this.shouldFall() && this.getState() != State.FALLING){
 			this.fall();
 		}
@@ -1367,7 +1368,7 @@ public class Unit {
 		Vector direction = targetBlock.getLocation().add(this.getBlock().getLocation().getOpposite());
 		if (this.getState() != State.WORKING){
 			this.setState(State.WORKING);
-			this.setWorkTime(1/this.getPrimStats().get("str"));
+			this.setWorkTime(500/this.getPrimStats().get("str"));
 			this.setTheta(Math.atan2(direction.getY(), direction.getX()));
 		}
 		
@@ -2211,50 +2212,17 @@ public class Unit {
 			}
 			return;
 		}
-		if(this.getFinTarget() != null)
+		if(this.getFinTarget() != null || this.getState() != State.IDLE)
 			return;
-		if(this.getState() != State.IDLE)
+		if (this.getTask()==null){
+			Task task = faction.getScheduler().getHighestPriority();
+			if(task == null)
+				pickActivity();
+			else
+				pickTask(task);
 			return;
-		ArrayList<State> stateList = new ArrayList<State>(Unit.stateList);
-		if(this.getEnemyInRange()== null)
-			stateList.remove(stateList.indexOf(State.COMBAT));
-		if(this.getHp() == this.getMaxHp() && this.getStam() == this.getMaxStam())
-			stateList.remove(stateList.indexOf(State.RESTING));			
-		Collections.shuffle(stateList);
-		State state = stateList.get(0);
-		if (state == State.WALKING){
-			this.setState(State.WALKING);
-			ArrayList<ArrayList<Integer>> positions = this.getWorld().getPositionList();
-			Collections.shuffle(positions);
-			int idx = 0;
-			Block finTarget = this.getWorld().getBlockAtPos(positions.get(idx));
-			while(this.getPath().isEmpty()){
-				boolean flag = true;
-				while((!this.getWorld().isWalkable(finTarget) || flag) && idx < positions.size() - 1){
-					idx += 1;
-					finTarget = this.getWorld().getBlockAtPos(positions.get(idx));
-					flag = false;
-				}
-				this.move2(finTarget.getLocation());
-			}
 		}
-		if (state== State.WORKING){
-			ArrayList<Block> surrounding = new ArrayList<Block>();
-			for (Block block : this.getWorld().getAdjacent(this.getBlock())){
-				surrounding.add(block);
-			}
-			int random = (int) Math.floor(Math.random()*surrounding.size());
-			Block selected = surrounding.get(random);
-			this.workAt(selected.getLocation());
-		}
-		if (state == State.RESTING){
-			this.rest();
-		}
-		if(state == State.COMBAT){
-			this.attack(this.getEnemyInRange());
-			}
 	}
-	
 	/**
 	 * Return an enemy in range of this unit.
 	 */
@@ -2526,6 +2494,51 @@ public class Unit {
 			this.setFollowTarget(null);
 		}
 	}
+	
+	public void pickActivity() {
+		ArrayList<State> stateList = new ArrayList<State>(Unit.stateList);
+		if(this.getEnemyInRange()== null)
+			stateList.remove(stateList.indexOf(State.COMBAT));
+		if(this.getHp() == this.getMaxHp() && this.getStam() == this.getMaxStam())
+			stateList.remove(stateList.indexOf(State.RESTING));			
+		Collections.shuffle(stateList);
+		State state = stateList.get(0);
+		
+		if (state == State.WALKING){
+			this.setState(State.WALKING);
+			ArrayList<ArrayList<Integer>> positions = this.getWorld().getPositionList();
+			Collections.shuffle(positions);
+			int idx = 0;
+			Block finTarget = this.getWorld().getBlockAtPos(positions.get(idx));
+			while(this.getPath().isEmpty()){
+				boolean flag = true;
+				while((!this.getWorld().isWalkable(finTarget) || flag) && idx < positions.size() - 1){
+					idx += 1;
+					finTarget = this.getWorld().getBlockAtPos(positions.get(idx));
+					flag = false;
+				}
+				this.move2(finTarget.getLocation());
+			}
+		}
+		
+		if (state== State.WORKING){
+			ArrayList<Block> surrounding = new ArrayList<Block>();
+			for (Block block : this.getWorld().getAdjacent(this.getBlock())){
+				surrounding.add(block);
+			}
+			int random = (int) Math.floor(Math.random()*surrounding.size());
+			Block selected = surrounding.get(random);
+			this.workAt(selected.getLocation());
+		}
+		
+		if (state == State.RESTING){
+			this.rest();
+		}
+		
+		if(state == State.COMBAT){
+			this.attack(this.getEnemyInRange());
+			}
+	}
 
 	public Task getTask(){
 		return this.task;
@@ -2536,9 +2549,10 @@ public class Unit {
 	}
 	
 	public void pickTask(Task task){
-		if(!task.canBeAssignedTo(this))
+		if(!task.canBeAssignedTo(this)){
 			//TODO exeption gooien ipv return?
 			return;
+		}
 		this.setTask(task);
 		task.setUnit(this);
 	}

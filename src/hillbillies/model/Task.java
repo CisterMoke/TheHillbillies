@@ -14,7 +14,7 @@ public class Task {
 	}
 	
 	public boolean isAssigned(){
-		return this.getUnit() == null;
+		return this.getUnit() != null;
 	}
 	
 	public Unit getUnit(){
@@ -38,8 +38,12 @@ public class Task {
 		this.setCounter(dt);
 		this.getActivity().setTask(this);
 		this.getActivity().execute();
-		if (this.getActivity().getCompleted())
+		if (this.getActivity().getCompleted()){
+			for (Scheduler s : this.getSchedulers()){
+				s.removeTask(this);
+			}
 			this.setCompleted(true);
+		}
 	}
 	
 	
@@ -62,33 +66,29 @@ public class Task {
 	public void setActivity(Statement activity) {
 		this.activity = activity;
 	}
-
-	public Map<String, Expression<?>> getVariables() {
-		return variables;
-	}
-
-	public void setVariables(Map<String, Expression<?>> variables) {
-		this.variables = variables;
-	}
 	
-	public void addVariable(String name, Expression<?> value){
-		this.variables.put(name, value);
-	}
+//	public int getPriority(){
+//		return this.priority;
+//	}
 	
-	public Expression<?> readVariable(String name){
-		return this.getVariables().get(name);
-	}
-	
-	public int getPriority(){
-		return this.priority;
-	}
-	
-	public void setPriority(int priority){
-		this.priority = priority;
-	}
+//	public void setPriority(int priority){
+//		for(Scheduler scheduler : schedulers){
+////			scheduler.getTaskMap().remove(getPriority());
+////			scheduler.getTaskMap().put(priority, this);
+//		}
+//		this.priority = priority;
+//	}
 	
 	public Set<Scheduler> getSchedulers(){
 		return new HashSet<Scheduler>(this.schedulers);
+	}
+	
+	public boolean inSchedulerSet(Scheduler scheduler){
+		return schedulers.contains(scheduler);
+	}
+	
+	public boolean inSchedulerSet(Collection<Scheduler> c){
+		return schedulers.containsAll(c);
 	}
 	
 	protected void addScheduler(Scheduler scheduler){
@@ -103,25 +103,9 @@ public class Task {
 		this.schedulers = newSet;
 	}
 	
-	public boolean inSchedulerSet(Scheduler scheduler){
-		return schedulers.contains(scheduler);
-	}
-	
-	public boolean inSchedulerSet(Collection<Scheduler> c){
-		return schedulers.containsAll(c);
-	}
-	
 	public boolean canBeAssignedTo(Unit unit){
 		return schedulers.contains(unit.getFaction().getScheduler()) && unit.getTask() == null
 				&& this.getUnit() == null;
-	}
-	
-	public Integer getLoopDepth() {
-		return LoopDepth;
-	}
-
-	public void setLoopDepth(Integer loopDepth) {
-		LoopDepth = loopDepth;
 	}
 	
 	public void reset(){
@@ -138,6 +122,8 @@ public class Task {
 	}
 
 	public void setCompleted(boolean completed) {
+		if (completed)
+			System.out.println("completed");
 		this.completed = completed;
 	}
 	
@@ -153,17 +139,14 @@ public class Task {
 		this.priority=newpriority;
 	}
 	
-	public Integer getpriority(){
+	public Integer getPriority(){
 		return this.priority;
 	}
 
-	private Map<String, Expression<?>> variables;
 	
 	private Statement activity;
 	
 	private int counter;
-	
-	private Integer LoopDepth=0;
 	
 	private boolean completed;
 	
@@ -176,6 +159,7 @@ public class Task {
 	private Set<Scheduler> schedulers = new HashSet<Scheduler>();
 	
 	private Vector selectedPosition;
+
 
 	
 

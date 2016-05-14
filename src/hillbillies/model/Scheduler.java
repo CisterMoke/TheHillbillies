@@ -18,7 +18,7 @@ public class Scheduler {
 		task.removeScheduler(this);
 		task.getUnit().removeTask();
 	}
-		
+	
 	public Set<Task> getTasks(){
 		return new HashSet<Task> (this.tasks);
 	}
@@ -86,6 +86,30 @@ public class Scheduler {
 			
 		};
 	}
+
+	
+//	public Task getHighestUnassignedTask(){
+//		Iterator<Task> iter = iterator();
+//		Task task = null;
+//		while(iter.hasNext() && task == null){
+//			Task temp = iter.next();
+//			if(!temp.isAssigned()){
+//				task = temp;
+//			}
+//		}
+//		return task;
+//	}
+	
+//	public void setTaskPriority(Task task, int priority){
+//		if(!task.getSchedulers().contains(this))
+//			return;
+//		taskMap.remove(task.getPriority());
+//		task.setPriority(priority);
+//		taskMap.put(task.getPriority(), task);
+//	}
+	
+//	private Faction faction;
+
 	
 	private Set<Task> tasks = new HashSet<Task>();
 

@@ -4,7 +4,7 @@ import hillbillies.model.Task;
 import hillbillies.model.Unit;
 public abstract class Expression<O>{
 	
-	private Task assignedTask;
+	protected Task assignedTask;
 	
 	public Task getTask(){
 		return this.assignedTask;

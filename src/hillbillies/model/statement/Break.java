@@ -7,7 +7,7 @@ public class Break extends Statement{
 		if (super.getCompleted() || super.getTask().getCounter()<1)
 			return;
 		super.task.countDown();
-		super.task.setLoopDepth(super.task.getLoopDepth()-1);
+		this.getSuperStatement().stopLoop();
 		super.setCompleted(true);
 	}
 

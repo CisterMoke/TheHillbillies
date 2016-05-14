@@ -11,7 +11,6 @@ public class Work extends Action{
 
 	@Override
 	public void execute() {
-		this.getTarget().setTask(super.getTask());
 		if (super.getCompleted() || super.getTask().getCounter()<1)
 			return;
 		super.task.countDown();

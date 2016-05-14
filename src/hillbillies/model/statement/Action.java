@@ -19,8 +19,9 @@ public abstract class Action extends Statement{
 	public Expression<?> getTarget() {
 		return Target;
 	}
-
+	
 	public void setTarget(Expression<?> target) {
+		super.Expressions.add(target);
 		Target = target;
 	}
 

@@ -23,6 +23,7 @@ public class Print extends Statement{
 	}
 
 	public void setText(Expression<?> text) {
+		this.Expressions.add(text);
 		Text = text;
 	}
 

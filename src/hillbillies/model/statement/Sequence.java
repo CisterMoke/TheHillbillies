@@ -14,17 +14,22 @@ public class Sequence extends WrapStatement{
 		System.out.println(this.getClass());
 		if (super.getCompleted() || super.getTask().getCounter()<1)
 			return;
+		if(hasNullExpressions()){
+			getTask().getActivity().setCompleted(true);
+			return;
+		}
 		this.initSupers();
-		boolean prevCompleted = true;
 		for (Statement stat : this.getStatementSequence()){
 //			stat.setTask(this.getTask());
-			if (super.task.getCounter()<1 || prevCompleted == false)
+			if (super.task.getCounter()<1)
 				return;			
 //			stat.setSuperStatment(this);
-			stat.execute();
-			prevCompleted = stat.getCompleted();
+			if(!stat.getCompleted())
+				stat.execute();
+			if(!stat.getCompleted())
+				return;
 		}
-		this.setCompleted(prevCompleted);
+		this.setCompleted(true);
 	}
 	
 //	@Override 

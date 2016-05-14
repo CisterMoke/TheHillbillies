@@ -6,7 +6,7 @@ import hillbillies.model.Task;
 
 public abstract class ComposedExpression<O,I> extends Expression<O>{
 	
-	public ArrayList<Expression<I>> subExpressions = new ArrayList<Expression<I>>();
+	protected ArrayList<Expression<I>> subExpressions = new ArrayList<Expression<I>>();
 	
 	@Override
 	public boolean hasSubExpression(){

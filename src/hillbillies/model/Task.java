@@ -43,6 +43,7 @@ public class Task {
 			for (Scheduler s : this.getSchedulers()){
 				s.removeTask(this);
 			}
+			this.reset();
 			this.setCompleted(true);
 		}
 	}

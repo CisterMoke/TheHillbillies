@@ -24,7 +24,7 @@ public abstract class WrapStatement extends Statement{
 	
 	@Override 
 	public void reset(){
-		this.setCompleted(false);;
+		this.setCompleted(false);
 		for (Statement sub : Substatements){
 			sub.setCompleted(false);
 		} 

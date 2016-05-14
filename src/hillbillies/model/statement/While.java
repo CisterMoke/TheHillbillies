@@ -16,6 +16,10 @@ public class While extends WrapStatement{
 //		this.getBody().setTask(super.task);
 		if (super.getCompleted() || super.getTask().getCounter()<1)
 			return;
+		if(hasNullExpressions()){
+			getTask().getActivity().setCompleted(true);
+			return;
+		}
 		this.initSupers();
 		while ((boolean) this.getCondition().getValue() && this.isInLoop()){
 			super.task.countDown();

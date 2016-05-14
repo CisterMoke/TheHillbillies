@@ -19,6 +19,10 @@ public class If extends WrapStatement{
 //		}
 		if (super.getCompleted() || super.getTask().getCounter()<1)
 			return;
+		if(hasNullExpressions()){
+			getTask().getActivity().setCompleted(true);
+			return;
+		}
 		this.initSupers();
 		super.task.countDown();
 		if ((boolean) this.getCondition().getValue()){

@@ -20,12 +20,13 @@ public class Next_to extends ComposedExpression<Vector,Vector>{
 			}
 		}
 		int idx = (int) Math.floor(Math.random()*accesible.size());
-		this.value = this.value==null? accesible.get(idx).getLocation() : this.value;
+		this.value = (!accesible.isEmpty() ? accesible.get(idx).getLocation() : null);
 	}
 	
 	@Override
 	public Vector getValue() {
 		this.setValue();
+		System.out.println("NextTo Value: " + (value == null ? null : value.getCoeff()));
 		return value;
 	}
 	

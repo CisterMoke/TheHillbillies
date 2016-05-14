@@ -1,5 +1,6 @@
 package hillbillies.model.statement;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -29,7 +30,7 @@ public abstract class Statement {
 		return this.completed;
 	}
 	
-	protected Set<Expression<?>> Expressions = new HashSet<Expression<?>>();
+	protected ArrayList<Expression<?>> Expressions = new ArrayList<Expression<?>>();
 	
 	public void addExression(Expression<?> e){
 		this.Expressions.add(e);
@@ -49,6 +50,14 @@ public abstract class Statement {
 		for (Expression<?> exp : Expressions){
 			exp.setTask(newtask);
 		}
+	}
+	
+	protected boolean hasNullExpressions(){
+		for(Expression<?> e : Expressions){
+			if(e.getValue() == null)
+				return true;
+		}
+		return false;
 	}
 	
 	public Task getTask(){

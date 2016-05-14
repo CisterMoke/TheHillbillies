@@ -151,8 +151,7 @@ public class Unit {
 		if (this.getAttackCooldown() > 0){
 			this.setAttackCooldown(this.getAttackCooldown() - dt);
 		}
-		if (this.getTask()!=null && isTruelyIdle())
-			this.getTask().executeTask(dt);
+		
 		if(this.shouldFall() && this.getState() != State.FALLING){
 			this.fall();
 		}
@@ -167,7 +166,9 @@ public class Unit {
 		
 		if(this.DefaultOn())
 			this.defaultBehaviour();
-			
+		
+		if (this.getTask()!=null && isTruelyIdle())
+			this.getTask().executeTask(dt);	
 		
 		if(this.getState() == State.COMBAT){
 			if(this.opponent == null){
@@ -178,6 +179,10 @@ public class Unit {
 			return;
 		}
 		if (this.restTime >= 180){
+			if(task != null){
+				task.interrupt();
+				this.removeTask();
+			}
 			this.rest();
 		}
 		else {
@@ -720,6 +725,10 @@ public class Unit {
 		}
 		catch(IllegalArgumentException exc){
 			return;
+		}
+		if(defender.getTask() != null){
+			defender.getTask().interrupt();
+			defender.removeTask();
 		}
 		double dy = defender.getPosition().getY()-this.getPosition().getY();
 		double dx = defender.getPosition().getX()-this.getPosition().getX();
@@ -1973,6 +1982,10 @@ public class Unit {
 	  * 		| new.getFallHeight == floor(getPosition().getZ())
 	  */
 	private void fall(){
+		if(task != null){
+			task.interrupt();
+			this.removeTask();
+		}
 		if(this.getState() == State.COMBAT){
 			if(this.opponent != null){
 				opponent.removeAttacker(this);
@@ -2562,6 +2575,8 @@ public class Unit {
 			//TODO exeption gooien ipv return?
 			return;
 		}
+		this.finTarget = null;
+		this.followTarget = null;
 		this.setTask(task);
 		task.setUnit(this);
 	}

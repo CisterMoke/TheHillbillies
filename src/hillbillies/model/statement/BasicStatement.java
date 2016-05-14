@@ -6,6 +6,10 @@ public abstract class BasicStatement extends Statement{
 	
 	@Override	
 	public void execute(){
+		if(hasNullExpressions()){
+			getTask().getActivity().setCompleted(true);
+			return;
+		}
 		System.out.println(this.getClass());
 		if (super.getCompleted() || super.getTask().getCounter()<1)
 			return;

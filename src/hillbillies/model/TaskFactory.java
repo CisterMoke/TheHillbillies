@@ -26,6 +26,8 @@ public class TaskFactory implements ITaskFactory<Expression<?>, Statement, Task>
 			System.out.println(task);
 			list.add(task);
 		}
+		for(Task task : list)
+			System.out.println(task.getSelected().getCoeff());
 		return list;
 	}
 
@@ -48,6 +50,7 @@ public class TaskFactory implements ITaskFactory<Expression<?>, Statement, Task>
 	@Override
 	public Statement createIf(Expression<?> condition, Statement ifBody, Statement elseBody,
 			SourceLocation sourceLocation) {
+		System.out.println("If gemaakt");
 		try{
 			return new If((Expression<Boolean>)condition, ifBody, elseBody);		
 		}
@@ -74,6 +77,7 @@ public class TaskFactory implements ITaskFactory<Expression<?>, Statement, Task>
 
 	@Override
 	public Statement createMoveTo(Expression<?> position, SourceLocation sourceLocation) {
+		System.out.println("MoveTo position: " + position);
 		try{		
 			return new MoveTo((Expression<Vector>)position);
 		}

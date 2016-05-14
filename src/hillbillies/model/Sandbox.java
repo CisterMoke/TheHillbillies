@@ -28,7 +28,7 @@ public class Sandbox {
 		
 		Optional<List<Task>> T = parser.parseString(text, list);
 		
-		System.out.println(T.get().get(0).getActivity().ge);
+		System.out.println(T.get().get(0).getActivity());
 	
 
 

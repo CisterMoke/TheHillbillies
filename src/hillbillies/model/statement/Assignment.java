@@ -15,7 +15,7 @@ public class Assignment extends Statement{
 		if (super.getCompleted())
 			return;
 		super.task.countDown();
-		super.task.addVariable(this.getName(), this.getValue());
+		this.getSuperStatement().addVariable(this.getName(), this.getValue());
 		super.setCompleted(true);
 	}
 	
@@ -30,6 +30,7 @@ public class Assignment extends Statement{
 		return value;
 	}
 	public void setValue(Expression<?> value) {
+		this.Expressions.add(value);
 		this.value = value;
 	}
 

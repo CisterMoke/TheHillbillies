@@ -151,7 +151,8 @@ public class Unit {
 		if (this.getAttackCooldown() > 0){
 			this.setAttackCooldown(this.getAttackCooldown() - dt);
 		}
-		
+		if (this.getTask()!=null)
+			this.getTask().executeTask(dt);
 		if(this.shouldFall() && this.getState() != State.FALLING){
 			this.fall();
 		}
@@ -2203,6 +2204,8 @@ public class Unit {
 	 * 			|	workAt(getBlock())
 	 */
 	protected void defaultBehaviour(){
+		if (this.getState()== State.IDLE && this.getTask()==null && !this.getFaction().getScheduler().getTasks().isEmpty())
+			this.pickTask(this.getFaction().getScheduler().getHighestPriority());
 		if(this.getState() == State.WALKING){
 			double sprintRoll = Math.random();
 			double sprintChance = 0.001;
@@ -2536,9 +2539,10 @@ public class Unit {
 	}
 	
 	public void pickTask(Task task){
-		if(!task.canBeAssignedTo(this))
+		if(!task.canBeAssignedTo(this)){
 			//TODO exeption gooien ipv return?
 			return;
+		}
 		this.setTask(task);
 		task.setUnit(this);
 	}

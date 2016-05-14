@@ -2,7 +2,7 @@ package hillbillies.model.statement;
 
 import hillbillies.model.expression.*;
 
-public class While extends Statement{
+public class While extends SuperStatement{
 
 	public While(Expression<Boolean> condition2, Statement b){
 		this.setBody(b);
@@ -11,14 +11,13 @@ public class While extends Statement{
 	
 	@Override
 	public void execute() {
-		this.getCondition().setTask(super.task);
+//		this.getCondition().setTask(super.task);
+//		this.getBody().setTask(super.task);
 		if (super.getCompleted() || super.getTask().getCounter()<1)
 			return;
-		super.task.countDown();
-		super.task.setLoopDepth(super.task.getLoopDepth()+1);
-		Integer depth = super.task.getLoopDepth();
-		while ((boolean) this.getCondition().getValue() && depth==super.task.getLoopDepth()){
-			this.body.setSuperStatment(this);
+		while ((boolean) this.getCondition().getValue() && this.isInLoop()){
+			super.task.countDown();
+//			this.body.setSuperStatment(this);
 			this.getBody().execute();
 			if (super.getTask().getCounter()<1)
 				return;
@@ -27,15 +26,21 @@ public class While extends Statement{
 	}
 	
 	@Override
-	public void reset(){
-		this.setCompleted(false);
-		this.getBody().setCompleted(false);
+	public void stopLoop(){
+		this.setInLoop(false);
 	}
 	
+//	@Override
+//	public void reset(){
+//		this.setCompleted(false);
+//		this.getBody().setCompleted(false);
+//	}
+		
 	public Expression<Boolean> getCondition() {
 		return condition;
 	}
 	public void setCondition(Expression<Boolean> condition) {
+		this.Expressions.add(condition);
 		this.condition = condition;
 	}
 
@@ -43,9 +48,20 @@ public class While extends Statement{
 		return body;
 	}
 	public void setBody(Statement body) {
+		this.Substatements.add(body);
 		this.body = body;
+		body.setSuperStatment(this);
+	}
+	
+	public boolean isInLoop() {
+		return inLoop;
 	}
 
+	public void setInLoop(boolean inLoop) {
+		this.inLoop = inLoop;
+	}
+
+	private boolean inLoop = true;
 	private Expression<Boolean> condition;
 	private Statement body;
 	

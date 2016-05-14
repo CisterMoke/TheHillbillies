@@ -3,7 +3,7 @@ package hillbillies.model.statement;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Sequence extends Statement{
+public class Sequence extends SuperStatement{
 	
 	public Sequence(List<Statement> Seq){
 		this.setStatementSequence(Seq);
@@ -15,22 +15,22 @@ public class Sequence extends Statement{
 			return;
 		boolean prevCompleted = true;
 		for (Statement stat : this.getStatementSequence()){
+//			stat.setTask(this.getTask());
 			if (super.task.getCounter()<1 || prevCompleted == false)
 				return;			
-			stat.setTask(this.getTask());
-			stat.setSuperStatment(this);
+//			stat.setSuperStatment(this);
 			stat.execute();
 			prevCompleted = stat.getCompleted();
 		}
-		this.setCompleted(true);
+		this.setCompleted(prevCompleted);
 	}
 	
-	@Override 
-	public void reset(){
-		for (Statement stat : this.getStatementSequence())
-			stat.reset();
-		this.setCompleted(false);
-	}
+//	@Override 
+//	public void reset(){
+//		for (Statement stat : this.getStatementSequence())
+//			stat.reset();
+//		this.setCompleted(false);
+//	}
 	
 	public List<Statement> getStatementSequence(){
 		List<Statement> list = new ArrayList<Statement>();
@@ -42,6 +42,10 @@ public class Sequence extends Statement{
 	
 	public void setStatementSequence(List<Statement> newlist){
 		this.statementSequence = newlist;
+		for (Statement stat : newlist){
+			this.Substatements.add(stat);
+			stat.setSuperStatment(this);
+		}
 	}
 	
 	public void removeFromStatementSequence(Statement S){

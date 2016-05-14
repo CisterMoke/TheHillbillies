@@ -2,10 +2,9 @@ package hillbillies.model.statement;
 
 import hillbillies.model.expression.*;
 
-public class If extends Statement{
+public class If extends SuperStatement{
 
 	public If(Expression<Boolean> condition2, Statement IB, Statement EB){
-		condition2.setTask(super.getTask());
 		this.setCondition(condition2);
 		this.setIfBody(IB);
 		this.setElseBody(EB);
@@ -13,13 +12,20 @@ public class If extends Statement{
 	}
 	@Override
 	public void execute(){
+//		this.getCondition().setTask(this.getTask());
+//		this.getIfBody().setTask(this.getTask());
+//		if (this.getElseBody()!=null){
+//			this.getElseBody().setTask(this.getTask());
+//		}
 		if (super.getCompleted() || super.getTask().getCounter()<1)
 			return;
 		super.task.countDown();
 		if ((boolean) this.getCondition().getValue())
 			this.getIfBody().execute();
-		else
-			this.getElseBody().execute();
+		else{
+			if (this.getElseBody()!=null)
+				this.getElseBody().execute();
+		}
 		super.setCompleted(true);
 	}
 
@@ -28,6 +34,7 @@ public class If extends Statement{
 	}
 	
 	public void setCondition(Expression<Boolean> condition2) {
+		this.Expressions.add(condition2);
 		this.condition = condition2;
 	}
 
@@ -37,6 +44,8 @@ public class If extends Statement{
 
 	public void setIfBody(Statement ifBody) {
 		IfBody = ifBody;
+		this.Substatements.add(ifBody);
+		ifBody.setSuperStatment(this);
 	}
 
 	public Statement getElseBody() {
@@ -45,6 +54,8 @@ public class If extends Statement{
 
 	public void setElseBody(Statement elseBody) {
 		ElseBody = elseBody;
+		this.Substatements.add(elseBody);
+		elseBody.setSuperStatment(this);
 	}
 
 	private Expression<Boolean> condition;

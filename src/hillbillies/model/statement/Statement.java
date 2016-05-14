@@ -1,6 +1,10 @@
 package hillbillies.model.statement;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import hillbillies.model.Task;
+import hillbillies.model.expression.Expression;
 
 public abstract class Statement {
 	
@@ -8,13 +12,13 @@ public abstract class Statement {
 		this.setCompleted(false);
 	}
 	
-	protected Statement superStatement = null;
+	protected SuperStatement superStatement = null;
 	
-	public void setSuperStatment(Statement stat){
+	public void setSuperStatment(SuperStatement stat){
 		this.superStatement = stat;
 	}
 	
-	public Statement getSuperStatement(){
+	public SuperStatement getSuperStatement(){
 		return this.superStatement;
 	}
 	
@@ -24,6 +28,8 @@ public abstract class Statement {
 		return this.completed;
 	}
 	
+	protected Set<Expression<?>> Expressions = new HashSet<Expression<?>>();
+	
 	public void setCompleted(boolean value){
 		this.completed=value;
 	}
@@ -32,6 +38,9 @@ public abstract class Statement {
 	
 	public void setTask(Task newtask){
 		this.task = newtask;
+		for (Expression<?> exp : Expressions){
+			exp.setTask(newtask);
+		}
 	}
 	
 	public Task getTask(){

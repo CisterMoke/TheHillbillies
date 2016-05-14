@@ -13,6 +13,7 @@ public class Sequence extends SuperStatement{
 	public void execute() {
 		if (super.getCompleted() || super.getTask().getCounter()<1)
 			return;
+		this.initSupers();
 		boolean prevCompleted = true;
 		for (Statement stat : this.getStatementSequence()){
 //			stat.setTask(this.getTask());
@@ -44,7 +45,6 @@ public class Sequence extends SuperStatement{
 		this.statementSequence = newlist;
 		for (Statement stat : newlist){
 			this.Substatements.add(stat);
-			stat.setSuperStatment(this);
 		}
 	}
 	

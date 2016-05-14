@@ -11,6 +11,7 @@ public class While extends SuperStatement{
 	
 	@Override
 	public void execute() {
+		this.initSupers();
 //		this.getCondition().setTask(super.task);
 //		this.getBody().setTask(super.task);
 		if (super.getCompleted() || super.getTask().getCounter()<1)
@@ -50,7 +51,6 @@ public class While extends SuperStatement{
 	public void setBody(Statement body) {
 		this.Substatements.add(body);
 		this.body = body;
-		body.setSuperStatment(this);
 	}
 	
 	public boolean isInLoop() {

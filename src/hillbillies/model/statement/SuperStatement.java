@@ -60,6 +60,12 @@ public abstract class SuperStatement extends Statement{
 			}
 		}
 	}
+	
+	public void initSupers(){
+		for (Statement sub : Substatements){
+			sub.setSuperStatment(this);
+		} 
+	}
 
 	private Map<String, Expression<?>> variables;
 }

@@ -1,7 +1,6 @@
 package hillbillies.model.statement;
 
 import hillbillies.model.Unit;
-import hillbillies.model.Vector;
 import hillbillies.model.expression.Expression;
 
 public class Follow extends Action{

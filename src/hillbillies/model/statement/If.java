@@ -8,7 +8,6 @@ public class If extends SuperStatement{
 		this.setCondition(condition2);
 		this.setIfBody(IB);
 		this.setElseBody(EB);
-
 	}
 	@Override
 	public void execute(){
@@ -19,6 +18,7 @@ public class If extends SuperStatement{
 //		}
 		if (super.getCompleted() || super.getTask().getCounter()<1)
 			return;
+		this.initSupers();
 		super.task.countDown();
 		if ((boolean) this.getCondition().getValue())
 			this.getIfBody().execute();
@@ -26,7 +26,9 @@ public class If extends SuperStatement{
 			if (this.getElseBody()!=null)
 				this.getElseBody().execute();
 		}
-		super.setCompleted(true);
+		if (this.getElseBody()!=null)
+			super.setCompleted(this.getIfBody().getCompleted() || this.getElseBody().getCompleted());
+		else {super.setCompleted(this.getIfBody().getCompleted());}
 	}
 
 	public Expression<Boolean> getCondition() {
@@ -45,7 +47,6 @@ public class If extends SuperStatement{
 	public void setIfBody(Statement ifBody) {
 		IfBody = ifBody;
 		this.Substatements.add(ifBody);
-		ifBody.setSuperStatment(this);
 	}
 
 	public Statement getElseBody() {
@@ -54,8 +55,8 @@ public class If extends SuperStatement{
 
 	public void setElseBody(Statement elseBody) {
 		ElseBody = elseBody;
-		this.Substatements.add(elseBody);
-		elseBody.setSuperStatment(this);
+		if (elseBody!=null)
+			this.Substatements.add(elseBody);
 	}
 
 	private Expression<Boolean> condition;

@@ -3,8 +3,11 @@ package hillbillies.model.statement;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.hamcrest.core.IsInstanceOf;
+
 import hillbillies.model.Task;
 import hillbillies.model.expression.Expression;
+import hillbillies.model.expression.Read;
 
 public abstract class Statement {
 	
@@ -29,6 +32,13 @@ public abstract class Statement {
 	}
 	
 	protected Set<Expression<?>> Expressions = new HashSet<Expression<?>>();
+	
+	public void addExression(Expression<?> e){
+		this.Expressions.add(e);
+		if (e instanceof Read){
+			((Read) e).setStatement(this.getSuperStatement());
+		}
+	}
 	
 	public void setCompleted(boolean value){
 		this.completed=value;

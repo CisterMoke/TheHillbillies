@@ -10,7 +10,9 @@ public class LogLiteral extends PositionExpression{
 
 	@Override
 	public Vector getValue() {
-		return this.getUnit().getClosestLog().getPosition().floor();
+		if (!(this.getUnit().getClosestLog()==null))
+			return this.getUnit().getClosestLog().getPosition().floor();
+		else return null;
 	}
 	
 	

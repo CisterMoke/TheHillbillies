@@ -20,14 +20,14 @@ public class TaskFactory implements ITaskFactory<Expression<?>, Statement, Task>
 		List<Task> list = new ArrayList<Task>();
 		if(selectedCubes.isEmpty())
 			list.add(new Task(name, priority, activity, null));
-		for (int[] selected : selectedCubes){
-			Vector selectedVector = new Vector(selected[0], selected[1], selected[2]);
-			Task task = new Task(name, priority, activity, selectedVector);
-			System.out.println(task);
-			list.add(task);
+		else{
+			for (int[] selected : selectedCubes){
+				Vector selectedVector = new Vector(selected[0], selected[1], selected[2]);
+				Task task = new Task(name, priority, activity, selectedVector);
+				System.out.println(task);
+				list.add(task);
+			}
 		}
-		for(Task task : list)
-			System.out.println(task.getSelected().getCoeff());
 		return list;
 	}
 

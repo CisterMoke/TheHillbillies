@@ -7,6 +7,7 @@ import java.util.Set;
 
 import hillbillies.model.Task;
 import hillbillies.model.expression.Expression;
+import hillbillies.model.expression.Read;
 
 public abstract class WrapStatement extends Statement{
 	
@@ -32,10 +33,27 @@ public abstract class WrapStatement extends Statement{
 		} 
 	}
 	
-	public void stopLoop(){
+	public boolean stopLoop(){
 		if (this.getWrapStatement()!=null)
-			this.getWrapStatement().stopLoop();
-		else {System.out.println("place break inside a loop");}
+			return this.getWrapStatement().stopLoop();
+		else {
+			System.out.println("Place break inside a loop");
+			return false;
+		}
+	}
+	
+	@Override
+	public boolean isWellFormed(){
+		boolean Check = true;
+		for (Expression<?> exp : this.Expressions){
+			if (exp instanceof Read){
+				Check = (exp.getWrapStatement().readVariable(((Read) exp).getName())!=null) && Check;
+			}
+		}
+		for (Statement stat : this.Substatements){
+			Check = stat.isWellFormed() && Check ;
+		}
+		return Check;
 	}
 	
 	@Override
@@ -48,7 +66,7 @@ public abstract class WrapStatement extends Statement{
 		} 
 		for (Expression<?> exp : Expressions){
 			exp.setTask(newTask);
-			exp.setStatement(this);
+			exp.setWrapStatement(this);
 		}
 		if (!this.getCompletedTotal().containsKey(this.getTask()))
 			this.setCompleted(false);
@@ -60,7 +78,12 @@ public abstract class WrapStatement extends Statement{
 		}
 	
 	public Expression<?> readVariable(String name){
-		return this.getWrapStatement().readVariable(name);
+		if (this.getWrapStatement()!=null)
+			return this.getWrapStatement().readVariable(name);
+		else {
+			System.out.println("Unassigned variable: " + name);
+			return null;
+		}
 	}
 
 }

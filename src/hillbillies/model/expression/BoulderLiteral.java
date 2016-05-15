@@ -10,7 +10,9 @@ public class BoulderLiteral extends PositionExpression{
 
 	@Override
 	public Vector getValue() {
-		return this.getUnit().getClosestBoulder().getPosition().floor();
+		if (!(this.getUnit().getClosestBoulder()==null))
+			return this.getUnit().getClosestBoulder().getPosition().floor();
+		else return null;
 	}
 	
 	

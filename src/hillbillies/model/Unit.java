@@ -1386,7 +1386,8 @@ public class Unit {
 		Vector direction = targetBlock.getLocation().add(this.getBlock().getLocation().getOpposite());
 		if (this.getState() != State.WORKING){
 			this.setState(State.WORKING);
-			this.setWorkTime(500/this.getPrimStats().get("str"));
+			// TODO set worktime back to correct value
+			this.setWorkTime(50/this.getPrimStats().get("str"));
 			this.setTheta(Math.atan2(direction.getY(), direction.getX()));
 		}
 		
@@ -2236,6 +2237,8 @@ public class Unit {
 			}
 			return;
 		}
+		if(this.getFollowTarget()!=null)
+			this.follow();
 		if(this.getFinTarget() != null || this.getState() != State.IDLE)
 			return;
 		if (this.getTask()==null){
@@ -2682,13 +2685,15 @@ public class Unit {
 		this.move2(unit.getPosition());
 	}
 	
+	public boolean endFollow(){
+		return this.getWorld().getAdjacent(this.getBlock()).contains(this.getFollowTarget().getBlock()) || this.getFollowTarget().isTerminated();
+	}
+	
 	public void follow(){
-		if (this.getWorld().getAdjacent(this.getBlock()).contains(this.getFollowTarget().getBlock())){
+		if (this.endFollow())
 			this.setFollowTarget(null);
-		}
-		if (this.getFollowTarget().isTerminated()){
-			this.setFollowTarget(null);
-		}
+		else this.move2(this.getFollowTarget().getPosition());
+
 	}
 	
 	public void pickActivity() {

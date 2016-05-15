@@ -10,8 +10,15 @@ public class Read extends BasicExpression<Object>{
 
 	@Override
 	public Object getValue() {
-		System.out.println(statement);
-		return statement.readVariable(this.getName()).getValue();
+		if (this.statement!=null)
+			if (this.statement.readVariable(this.getName()) !=null)
+				return statement.readVariable(this.getName()).getValue();
+			else {
+				return null;
+			}
+		else {
+			return null;
+		}
 	}
 
 	public String getName() {

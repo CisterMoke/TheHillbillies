@@ -8,6 +8,7 @@ import java.util.Set;
 
 import hillbillies.model.Task;
 import hillbillies.model.expression.Expression;
+import hillbillies.model.expression.Read;
 
 public abstract class Statement {
 	
@@ -21,8 +22,18 @@ public abstract class Statement {
 		this.wrapStatement = stat;
 		for (Expression<?> exp : this.Expressions){
 			if (this.getWrapStatement()!=null)
-				exp.setStatement(this.getWrapStatement());
+				exp.setWrapStatement(this.getWrapStatement());
 		}
+	}
+	
+	public boolean isWellFormed(){
+		boolean Check = true;
+		for (Expression<?> exp : this.Expressions){
+			if (exp instanceof Read){
+				Check = (exp.getWrapStatement().readVariable(((Read) exp).getName())!=null) && Check;
+			}
+		}
+		return Check;
 	}
 	
 	public WrapStatement getWrapStatement(){
@@ -62,8 +73,12 @@ public abstract class Statement {
 	
 	protected boolean hasNullExpressions(){
 		for(Expression<?> e : Expressions){
-			if(e.getValue() == null)
-				return true;
+			if (!this.getTask().getCheckedExpression().contains(e)){
+				if(e.getValue() == null){
+					return true;
+				}
+			this.getTask().addCheckedExpression(e);
+			}
 		}
 		return false;
 	}
@@ -79,7 +94,6 @@ public abstract class Statement {
 		}
 		if (!this.getCompletedTotal().containsKey(this.getTask()))
 			this.setCompleted(false);
-		
 	}
 	
 	protected Task task;

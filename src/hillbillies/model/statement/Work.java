@@ -14,4 +14,11 @@ public class Work extends Action{
 		super.getActor().workAt((Vector) super.getTarget().getValue());
 	}
 
+	@Override
+	public boolean complete() {
+		if (this.getTask().getUnit().getWorkTime()<=0)
+			return true;
+		return false;
+	}
+
 }

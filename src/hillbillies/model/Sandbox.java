@@ -14,7 +14,7 @@ import hillbillies.part3.programs.TaskParser;
 public class Sandbox {
 	public static void main(String[] args){
 		
-		String text = "name: \"test\" priority: 1 activities: moveTo here; work boulder;";
+		String text = "name : \"test\" priority : 1000 activities : while true do if true then print v; fi done break; ";
 
 		
 		ITaskFactory<Expression<?>, Statement, Task> factory = new TaskFactory();
@@ -28,7 +28,7 @@ public class Sandbox {
 		
 		Optional<List<Task>> T = parser.parseString(text, list);
 		
-		System.out.println(T.get().get(0).getActivity());
+		System.out.println(T.get().get(0).isWellFormed());
 	
 
 

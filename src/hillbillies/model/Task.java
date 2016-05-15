@@ -48,6 +48,24 @@ public class Task {
 		}
 	}
 	
+	public boolean isWellFormed(){
+		this.getActivity().initialise(this);
+		return this.getActivity().isWellFormed();
+	}
+	
+	public void addCheckedExpression(Expression<?> e){
+		this.checkedExpression.add(e);
+	}
+	
+	public Set<Expression<?>> getCheckedExpression() {
+		return checkedExpression;
+	}
+
+	public void setCheckedExpression(Set<Expression<?>> checkedExpression) {
+		this.checkedExpression = checkedExpression;
+	}
+	
+	private Set<Expression<?>> checkedExpression = new HashSet<Expression<?>>();
 	
 	public void setCounter(double dt){
 		this.counter = (int) Math.floor(dt/0.001);
@@ -146,6 +164,7 @@ public class Task {
 	}
 
 	
+
 	private Statement activity;
 	
 	private int counter;

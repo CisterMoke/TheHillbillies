@@ -11,36 +11,31 @@ public class While extends WrapStatement{
 	
 	@Override
 	public void execute() {
-		System.out.println(this.getClass());
-//		this.getCondition().setTask(super.task);
-//		this.getBody().setTask(super.task);
 		if (super.getCompleted() || super.getTask().getCounter()<1)
 			return;
 		if(hasNullExpressions()){
 			getTask().getActivity().setCompleted(true);
 			return;
 		}
-		while ((boolean) this.getCondition().getValue() && this.isInLoop()){
+		boolean prevCompleted=true;
+		while ((boolean) this.getCondition().getValue() && this.isInLoop() && prevCompleted){
+			this.getBody().reset();
 			super.task.countDown();
-//			this.body.setSuperStatment(this);
 			this.getBody().execute();
 			if (super.getTask().getCounter()<1)
 				return;
+			prevCompleted=this.getBody().getCompleted();
+			
 		}
-		super.setCompleted(true);
+		super.setCompleted(prevCompleted && !(this.getCondition().getValue()));
 	}
 	
 	@Override
-	public void stopLoop(){
+	public boolean stopLoop(){
 		this.setInLoop(false);
+		return true;
 	}
 	
-//	@Override
-//	public void reset(){
-//		this.setCompleted(false);
-//		this.getBody().setCompleted(false);
-//	}
-		
 	public Expression<Boolean> getCondition() {
 		return condition;
 	}

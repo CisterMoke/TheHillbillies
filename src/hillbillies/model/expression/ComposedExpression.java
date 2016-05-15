@@ -10,11 +10,11 @@ public abstract class ComposedExpression<O,I> extends Expression<O>{
 	protected ArrayList<Expression<I>> subExpressions = new ArrayList<Expression<I>>();
 	
 	@Override
-	public void setStatement(WrapStatement newstat) {
+	public void setWrapStatement(WrapStatement newstat) {
 		this.statement=newstat;
 		if (this.hasSubExpression()){
 			for (Expression<I> expr : subExpressions){
-				expr.setStatement(newstat);
+				expr.setWrapStatement(newstat);
 			}
 		}
 	}

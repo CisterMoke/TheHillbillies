@@ -23,23 +23,14 @@ public class Sequence extends WrapStatement{
 			return;
 		}
 		for (Statement stat : this.getStatementSequence()){
-//			stat.setTask(this.getTask());
 			if (super.task.getCounter()<1)
 				return;			
-//			stat.setSuperStatment(this);
 			stat.execute();
 			if(!stat.getCompleted())
 				return;
 		}
 		this.setCompleted(true);
 	}
-	
-//	@Override 
-//	public void reset(){
-//		for (Statement stat : this.getStatementSequence())
-//			stat.reset();
-//		this.setCompleted(false);
-//	}
 	
 	public List<Statement> getStatementSequence(){
 		List<Statement> list = new ArrayList<Statement>();
@@ -75,7 +66,6 @@ public class Sequence extends WrapStatement{
 	
 	@Override
 	public Expression<?> readVariable(String name){
-		System.out.println(1);
 		if (this.getVariables().containsKey(name))
 			return this.getVariables().get(name);
 		else {

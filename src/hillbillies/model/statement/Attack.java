@@ -16,4 +16,11 @@ public class Attack extends Action{
 		
 	}
 
+	@Override
+	public boolean complete() {
+		if (this.getTask().getUnit().getAttackCooldown()<=0)
+			return true;
+		return false;
+	}
+
 }

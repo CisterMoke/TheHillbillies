@@ -1,0 +1,1 @@
+name : "battle" priority : 200 activities : v := enemy ; follow v ; while is_alive v do follow v ; attack v; done

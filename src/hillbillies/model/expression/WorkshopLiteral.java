@@ -10,7 +10,9 @@ public class WorkshopLiteral extends PositionExpression{
 
 	@Override
 	public Vector getValue() {
-		return this.getTask().getUnit().getClosestWorkshop().getLocation();
+		if (!(this.getTask().getUnit().getClosestWorkshop()==null))
+			return this.getTask().getUnit().getClosestWorkshop().getLocation();
+		else return null;
 	}
 
 }

@@ -19,11 +19,11 @@ public abstract class Expression<O>{
 		return this.assignedTask.getUnit();
 	}
 	
-	public void setStatement(WrapStatement newstat){
+	public void setWrapStatement(WrapStatement newstat){
 		this.statement=newstat;
 	}
 	
-	public WrapStatement getStatement(){
+	public WrapStatement getWrapStatement(){
 		return this.statement;
 	}
 	

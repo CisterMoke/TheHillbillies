@@ -15,5 +15,12 @@ public class Follow extends Action{
 		super.getActor().startFollow((Unit) super.getTarget().getValue());
 	}
 
+	@Override
+	public boolean complete() {
+		if (this.getTask().getUnit().endFollow())
+			return true;
+		return false;
+	}
+
 
 }

@@ -1430,7 +1430,7 @@ public class Unit {
 	private void workCompleted(){
 		boolean worked = false;
 		if (this.getWorkBlock().getBlockType()==BlockType.WORKSHOP){
-			if (!this.getWorkBlock().getBouldersInBlock().isEmpty() && !this.getWorkBlock().getLogsInBlock().isEmpty()){
+			if (this.getWorkBlock().containsBoulder() && this.getWorkBlock().containsLog()){
 				this.operateWorkshop(this.getWorkBlock());
 				worked = true;
 			}
@@ -1444,7 +1444,7 @@ public class Unit {
 			this.dropAt(this.getWorkBlock().getLocation());
 			worked = true;
 		}
-		if ((!this.getWorkBlock().getBouldersInBlock().isEmpty() || !this.getWorkBlock().getLogsInBlock().isEmpty())&& worked==false){
+		if ((this.getWorkBlock().containsBoulder() || this.getWorkBlock().containsLog())&& worked==false){
 			this.pickup(this.getWorkBlock());
 			worked = true;
 		}
@@ -2054,6 +2054,7 @@ public class Unit {
 	protected Block getBlock(){
 		return this.getWorld().getBlockAtPos(this.getBlockCentre());
 	}
+	
 	/**
 	 * Return a list of blocks representing the shortest path
 	 *  from this unit's position to its final target.
@@ -2080,6 +2081,7 @@ public class Unit {
 	 * 			| else !new.getPath().isEmpty()
 	 * 
 	 */
+	
 	protected void pathFinding(){
 		if (this.getFinTarget()==null)
 			return;
@@ -2098,7 +2100,7 @@ public class Unit {
 		}
 		while (!((current==end) || (toBeChecked.isEmpty()))){
 			toBeChecked.remove(current);
-			double lowestCost = 9999999;
+			double lowestCost = Double.MAX_VALUE;
 			for (Block block : toBeChecked){
 				if (finalCost.get(block)< lowestCost){
 					lowestCost = finalCost.get(block);
@@ -2402,106 +2404,278 @@ public class Unit {
 		if(this.getWorld() == null)
 			//TODO exception gooien?
 			return null;
-		Iterator<Unit> iterator = this.getWorld().getUnits().iterator();
-		Unit unit = iterator.next();
-		double distance = unit.getPosition().distance(this.getPosition());
-		while (iterator.hasNext()){
-			Unit tempUnit = iterator.next();
-			double tempDistance = tempUnit.getPosition().distance(this.getPosition());
-			if(tempDistance < distance)
-				unit = tempUnit;
+		Block current = this.getBlock();
+		Map<Block, Double> finalCost = new HashMap<Block, Double>();
+		Set<Block> toBeChecked = new HashSet<Block>();
+		for (Block block : this.getNext(current, finalCost)){
+			toBeChecked.add(block);
+			double newcost = current.getLocation().distance(block.getLocation());
+			finalCost.put(block, newcost);
 		}
-		return unit;
+		while ((!current.containsUnit() || (current.containsUnit(this) && current.getUnitsInCube().size() == 1)) 
+				&& !toBeChecked.isEmpty()){
+			toBeChecked.remove(current);
+			double lowestCost = Double.MAX_VALUE;
+			for (Block block : toBeChecked){
+				if (finalCost.get(block)< lowestCost){
+					lowestCost = finalCost.get(block);
+					current = block;
+				}
+			}				
+			for (Block block : this.getNext(current, finalCost)){
+				toBeChecked.add(block);
+				double newcost = lowestCost + current.getLocation().distance(block.getLocation());
+				finalCost.put(block, newcost);
+			}
+		}
+		
+		for(Unit unit : current.getUnitsInCube())
+			if(unit != this)
+				return unit;
+		return null;
 	}
+//		Iterator<Unit> iterator = this.getWorld().getUnits().iterator();
+//		Unit unit = iterator.next();
+//		double distance = unit.getPosition().distance(this.getPosition());
+//		while (iterator.hasNext()){
+//			Unit tempUnit = iterator.next();
+//			double tempDistance = tempUnit.getPosition().distance(this.getPosition());
+//			if(tempDistance < distance)
+//				unit = tempUnit;
+//		}
+//		return unit;
+//	}
 	
 	public Unit getClosestEnemy(){
 		if(this.getWorld() == null)
 			//TODO exception gooien?
 			return null;
-		Set<Unit> enemies = this.getWorld().getUnits();
-		enemies.removeAll(this.getFaction().getUnits());
-		if(enemies.isEmpty())
-			//TODO exceprions gooien?
-			return null;
-		Iterator<Unit> iterator = enemies.iterator();
-		Unit unit = iterator.next();
-		double distance = unit.getPosition().distance(this.getPosition());
-		while (iterator.hasNext()){
-			Unit tempUnit = iterator.next();
-			double tempDistance = tempUnit.getPosition().distance(this.getPosition());
-			if(tempDistance < distance)
-				unit = tempUnit;
+		Block current = this.getBlock();
+		Map<Block, Double> finalCost = new HashMap<Block, Double>();
+		Set<Block> toBeChecked = new HashSet<Block>();
+		for (Block block : this.getNext(current, finalCost)){
+			toBeChecked.add(block);
+			double newcost = current.getLocation().distance(block.getLocation());
+			finalCost.put(block, newcost);
 		}
-		return unit;
+		while (!current.containsEnemies(this) && !toBeChecked.isEmpty()){
+			toBeChecked.remove(current);
+			double lowestCost = Double.MAX_VALUE;
+			for (Block block : toBeChecked){
+				if (finalCost.get(block)< lowestCost){
+					lowestCost = finalCost.get(block);
+					current = block;
+				}
+			}				
+			for (Block block : this.getNext(current, finalCost)){
+				toBeChecked.add(block);
+				double newcost = lowestCost + current.getLocation().distance(block.getLocation());
+				finalCost.put(block, newcost);
+			}
+		}
+		
+		for(Unit unit : current.getUnitsInCube())
+			if(unit.getFaction() != faction){
+				return unit;
+			}
+		return null;
 	}
+//		Set<Unit> enemies = this.getWorld().getUnits();
+//		enemies.removeAll(this.getFaction().getUnits());
+//		if(enemies.isEmpty())
+//			//TODO exceprions gooien?
+//			return null;
+//		Iterator<Unit> iterator = enemies.iterator();
+//		Unit unit = iterator.next();
+//		double distance = unit.getPosition().distance(this.getPosition());
+//		while (iterator.hasNext()){
+//			Unit tempUnit = iterator.next();
+//			double tempDistance = tempUnit.getPosition().distance(this.getPosition());
+//			if(tempDistance < distance)
+//				unit = tempUnit;
+//		}
+//		return unit;
+//	}
 	
 	public Unit getClosestFriend(){
 		if(this.getWorld() == null)
 			//TODO exception gooien?
 			return null;
-		Set<Unit> friends = this.getFaction().getUnits();
-		friends.remove(this);
-		if(friends.isEmpty())
-			return null;
-		Iterator<Unit> iterator = friends.iterator();
-		Unit unit = iterator.next();
-		double distance = unit.getPosition().distance(this.getPosition());
-		while (iterator.hasNext()){
-			Unit tempUnit = iterator.next();
-			double tempDistance = tempUnit.getPosition().distance(this.getPosition());
-			if(tempDistance < distance)
-				unit = tempUnit;
+		Block current = this.getBlock();
+		Map<Block, Double> finalCost = new HashMap<Block, Double>();
+		Set<Block> toBeChecked = new HashSet<Block>();
+		for (Block block : this.getNext(current, finalCost)){
+			toBeChecked.add(block);
+			double newcost = current.getLocation().distance(block.getLocation());
+			finalCost.put(block, newcost);
 		}
-		return unit;
+		while (!current.containsFriends(this) && !toBeChecked.isEmpty()){
+			toBeChecked.remove(current);
+			double lowestCost = Double.MAX_VALUE;
+			for (Block block : toBeChecked){
+				if (finalCost.get(block)< lowestCost){
+					lowestCost = finalCost.get(block);
+					current = block;
+				}
+			}				
+			for (Block block : this.getNext(current, finalCost)){
+				toBeChecked.add(block);
+				double newcost = lowestCost + current.getLocation().distance(block.getLocation());
+				finalCost.put(block, newcost);
+			}
+		}
+		
+		for(Unit unit : current.getUnitsInCube())
+			if(unit.getFaction() == faction){
+				return unit;
+			}
+		return null;
 	}
+//		Set<Unit> friends = this.getFaction().getUnits();
+//		friends.remove(this);
+//		if(friends.isEmpty())
+//			return null;
+//		Iterator<Unit> iterator = friends.iterator();
+//		Unit unit = iterator.next();
+//		double distance = unit.getPosition().distance(this.getPosition());
+//		while (iterator.hasNext()){
+//			Unit tempUnit = iterator.next();
+//			double tempDistance = tempUnit.getPosition().distance(this.getPosition());
+//			if(tempDistance < distance)
+//				unit = tempUnit;
+//		}
+//		return unit;
+//	}
 	
 	public Boulder getClosestBoulder(){
 		if(this.getWorld() == null)
 			//TODO exception gooien?
 			return null;
-		Iterator<Boulder> iterator = this.getWorld().getBoulders().iterator();
-		Boulder boulder = iterator.next();
-		double distance = boulder.getPosition().distance(this.getPosition());
-		while (iterator.hasNext()){
-			Boulder tempBoulder = iterator.next();
-			double tempDistance = tempBoulder.getPosition().distance(this.getPosition());
-			if(tempDistance < distance)
-				boulder = tempBoulder;
+		Block current = this.getBlock();
+		Map<Block, Double> finalCost = new HashMap<Block, Double>();
+		Set<Block> toBeChecked = new HashSet<Block>();
+		for (Block block : this.getNext(current, finalCost)){
+			toBeChecked.add(block);
+			double newcost = current.getLocation().distance(block.getLocation());
+			finalCost.put(block, newcost);
 		}
-		return boulder;
+		while (!current.containsBoulder() && !toBeChecked.isEmpty()){
+			toBeChecked.remove(current);
+			double lowestCost = Double.MAX_VALUE;
+			for (Block block : toBeChecked){
+				if (finalCost.get(block)< lowestCost){
+					lowestCost = finalCost.get(block);
+					current = block;
+				}
+			}				
+			for (Block block : this.getNext(current, finalCost)){
+				toBeChecked.add(block);
+				double newcost = lowestCost + current.getLocation().distance(block.getLocation());
+				finalCost.put(block, newcost);
+			}
+		}
+		for(Boulder boulder : current.getBouldersInBlock())
+			return boulder;
+		return null;
+		
+//		Iterator<Boulder> iterator = this.getWorld().getBoulders().iterator();
+//		Boulder boulder = iterator.next();
+//		double distance = boulder.getPosition().distance(this.getPosition());
+//		while (iterator.hasNext()){
+//			Boulder tempBoulder = iterator.next();
+//			double tempDistance = tempBoulder.getPosition().distance(this.getPosition());
+//			if(tempDistance < distance)
+//				boulder = tempBoulder;
+//		}
+//		return boulder;
 	}
 	
 	public Log getClosestLog(){
 		if(this.getWorld() == null)
 			//TODO exception gooien?
 			return null;
-		Iterator<Log> iterator = this.getWorld().getLogs().iterator();
-		Log log = iterator.next();
-		double distance = log.getPosition().distance(this.getPosition());
-		while (iterator.hasNext()){
-			Log tempLog = iterator.next();
-			double tempDistance = tempLog.getPosition().distance(this.getPosition());
-			if(tempDistance < distance)
-				log = tempLog;
+		Block current = this.getBlock();
+		Map<Block, Double> finalCost = new HashMap<Block, Double>();
+		Set<Block> toBeChecked = new HashSet<Block>();
+		for (Block block : this.getNext(current, finalCost)){
+			toBeChecked.add(block);
+			double newcost = current.getLocation().distance(block.getLocation());
+			finalCost.put(block, newcost);
 		}
-		return log;
+		while (!current.containsLog() && !toBeChecked.isEmpty()){
+			toBeChecked.remove(current);
+			double lowestCost = Double.MAX_VALUE;
+			for (Block block : toBeChecked){
+				if (finalCost.get(block)< lowestCost){
+					lowestCost = finalCost.get(block);
+					current = block;
+				}
+			}				
+			for (Block block : this.getNext(current, finalCost)){
+				toBeChecked.add(block);
+				double newcost = lowestCost + current.getLocation().distance(block.getLocation());
+				finalCost.put(block, newcost);
+			}
+		}
+		for(Log log : current.getLogsInBlock())
+			return log;
+		return null;
 	}
+//		Iterator<Log> iterator = this.getWorld().getLogs().iterator();
+//		Log log = iterator.next();
+//		double distance = log.getPosition().distance(this.getPosition());
+//		while (iterator.hasNext()){
+//			Log tempLog = iterator.next();
+//			double tempDistance = tempLog.getPosition().distance(this.getPosition());
+//			if(tempDistance < distance)
+//				log = tempLog;
+//		}
+//		return log;
+//	}
 	
 	public Block getClosestWorkshop(){
 		if(this.getWorld() == null)
 			//TODO exception gooien?
 			return null;
-		Iterator<Block> iterator = this.getWorld().getWorkshops().iterator();
-		Block workshop = iterator.next();
-		double distance = workshop.getLocation().distance(this.getPosition());
-		while (iterator.hasNext()){
-			Block tempWorkshop = iterator.next();
-			double tempDistance = tempWorkshop.getLocation().distance(this.getPosition());
-			if(tempDistance < distance)
-				workshop = tempWorkshop;
+		Block current = this.getBlock();
+		Map<Block, Double> finalCost = new HashMap<Block, Double>();
+		Set<Block> toBeChecked = new HashSet<Block>();
+		for (Block block : this.getNext(current, finalCost)){
+			toBeChecked.add(block);
+			double newcost = current.getLocation().distance(block.getLocation());
+			finalCost.put(block, newcost);
 		}
-		return workshop;
+		while (current.getBlockType() != BlockType.WORKSHOP && !toBeChecked.isEmpty()){
+			toBeChecked.remove(current);
+			double lowestCost = Double.MAX_VALUE;
+			for (Block block : toBeChecked){
+				if (finalCost.get(block)< lowestCost){
+					lowestCost = finalCost.get(block);
+					current = block;
+				}
+			}				
+			for (Block block : this.getNext(current, finalCost)){
+				toBeChecked.add(block);
+				double newcost = lowestCost + current.getLocation().distance(block.getLocation());
+				finalCost.put(block, newcost);
+			}
+		}
+		if(current.getBlockType() != BlockType.WORKSHOP){
+			return null;
+		}
+		return current;
 	}
+//		Iterator<Block> iterator = this.getWorld().getWorkshops().iterator();
+//		Block workshop = iterator.next();
+//		double distance = workshop.getLocation().distance(this.getPosition());
+//		while (iterator.hasNext()){
+//			Block tempWorkshop = iterator.next();
+//			double tempDistance = tempWorkshop.getLocation().distance(this.getPosition());
+//			if(tempDistance < distance)
+//				workshop = tempWorkshop;
+//		}
+//		return workshop;
+//	}
 	
 	public void startFollow(Unit unit){
 		this.setFollowTarget(unit);

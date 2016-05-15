@@ -24,8 +24,7 @@ public class Sequence extends WrapStatement{
 			if (super.task.getCounter()<1)
 				return;			
 //			stat.setSuperStatment(this);
-			if(!stat.getCompleted())
-				stat.execute();
+			stat.execute();
 			if(!stat.getCompleted())
 				return;
 		}

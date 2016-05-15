@@ -1,6 +1,8 @@
 package hillbillies.model;
 
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 
 import be.kuleuven.cs.som.annotate.*;
@@ -60,6 +62,36 @@ public class Block{
 	@Basic
 	public Set<Unit> getUnitsInCube(){
 		return new HashSet<Unit>(this.unitsInBlock);
+	}
+	public boolean containsUnit(){
+		return !unitsInBlock.isEmpty();
+	}
+	
+	public boolean containsUnit(Unit unit){
+		return unitsInBlock.contains(unit);
+	}
+	
+	public boolean containsUnit(Collection<Unit> c){
+		return unitsInBlock.containsAll(c);
+	}
+	
+	public boolean containsFriends(Unit unit){
+		Iterator<Unit> iter = unitsInBlock.iterator();
+		while(iter.hasNext()){
+			Unit next = iter.next();
+			if(next.getFaction() == unit.getFaction() && next != unit)
+				return true;
+		}
+		return false;
+	}
+	
+	public boolean containsEnemies(Unit unit){
+		Iterator<Unit> iter = unitsInBlock.iterator();
+		while(iter.hasNext()){
+			if(iter.next().getFaction() != unit.getFaction())
+				return true;
+		}
+		return false;
 	}
 	
 	/**
@@ -146,12 +178,37 @@ public class Block{
 	public Set<Boulder> getBouldersInBlock(){
 		return new HashSet<Boulder>(this.bouldersInBlock);
 	}
+	
+	public boolean containsBoulder(){
+		return !bouldersInBlock.isEmpty();
+	}
+	
+	public boolean containsBoulder(Boulder boulder){
+		return bouldersInBlock.contains(boulder);
+	}
+	
+	public boolean containsBoulder(Collection<Boulder> c){
+		return bouldersInBlock.containsAll(c);
+	}
+	
 	/**
 	 * Return a set of Boulders positioned in this Log.
 	 */
 	@Basic
 	public Set<Log> getLogsInBlock(){
 		return new HashSet<Log>(this.logsInBlock);
+	}
+	
+	public boolean containsLog(){
+		return !logsInBlock.isEmpty();
+	}
+	
+	public boolean containsLog(Log log){
+		return logsInBlock.contains(log);
+	}
+	
+	public boolean containsLog(Collection<Log> c){
+		return logsInBlock.containsAll(c);
 	}
 	
 	/**

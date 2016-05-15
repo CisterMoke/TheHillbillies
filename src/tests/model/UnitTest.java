@@ -246,8 +246,8 @@ public class UnitTest {
 			checkWgt = true;
 		assertTrue(checkTgh);
 		assertTrue(checkWgt);
-		assertTrue(testWorld.getBlockAtPos(v).getBouldersInBlock().isEmpty());
-		assertTrue(testWorld.getBlockAtPos(v).getLogsInBlock().isEmpty());
+		assertFalse(testWorld.getBlockAtPos(v).containsBoulder());
+		assertFalse(testWorld.getBlockAtPos(v).containsLog());
 		int checkLvlUp = -200;
 		for (Map.Entry<String, Integer> entry : testUnit.getPrimStats().entrySet()){
 			checkLvlUp+=entry.getValue();
@@ -267,7 +267,7 @@ public class UnitTest {
 			testUnit.advanceTime(0.2);
 			testUnit.advanceTime(0.2);
 		} 
-		assertTrue(testWorld.getBlockAtPos(v).getLogsInBlock().isEmpty());
+		assertFalse(testWorld.getBlockAtPos(v).containsLog());
 		assertTrue(testUnit.getLog()==log);
 		int checkLvlUp = -200;
 		for (Map.Entry<String, Integer> entry : testUnit.getPrimStats().entrySet()){
@@ -288,7 +288,7 @@ public class UnitTest {
 			testUnit.advanceTime(0.2);
 			testUnit.advanceTime(0.2);
 		} 
-		assertTrue(testWorld.getBlockAtPos(v).getBouldersInBlock().isEmpty());
+		assertFalse(testWorld.getBlockAtPos(v).containsBoulder());
 		assertTrue(testUnit.getBoulder()==boulder);
 		int checkLvlUp = -200;
 		for (Map.Entry<String, Integer> entry : testUnit.getPrimStats().entrySet()){
@@ -310,7 +310,7 @@ public class UnitTest {
 			testUnit.advanceTime(0.2);
 			testUnit.advanceTime(0.2);
 		} 
-		assertTrue(testWorld.getBlockAtPos(v).getBouldersInBlock().contains(boulder));
+		assertTrue(testWorld.getBlockAtPos(v).containsBoulder(boulder));
 		assertTrue(testUnit.getBoulder()==null);
 		int checkLvlUp = -200;
 		for (Map.Entry<String, Integer> entry : testUnit.getPrimStats().entrySet()){
@@ -332,7 +332,7 @@ public class UnitTest {
 			testUnit.advanceTime(0.2);
 		}
 		assertEquals(BlockType.AIR, testWorld.getBlockAtPos(v).getBlockType());
-		assertFalse(testWorld.getBlockAtPos(v).getBouldersInBlock().isEmpty());
+		assertTrue(testWorld.getBlockAtPos(v).containsBoulder());
 		int checkLvlUp = -200;
 		for (Map.Entry<String, Integer> entry : testUnit.getPrimStats().entrySet()){
 			checkLvlUp+=entry.getValue();
@@ -353,7 +353,7 @@ public class UnitTest {
 			testUnit.advanceTime(0.2);
 		}
 		assertEquals(BlockType.AIR, testWorld.getBlockAtPos(v).getBlockType());
-		assertFalse(testWorld.getBlockAtPos(v).getLogsInBlock().isEmpty());
+		assertTrue(testWorld.getBlockAtPos(v).containsLog());
 		int checkLvlUp = -200;
 		for (Map.Entry<String, Integer> entry : testUnit.getPrimStats().entrySet()){
 			checkLvlUp+=entry.getValue();
@@ -367,7 +367,7 @@ public class UnitTest {
 		testUnit.lift(boulder);
 		testUnit.setHp(0);
 		assertFalse(testWorld.getUnits().contains(testUnit));
-		assertTrue(testWorld.getBlockAtPos(w).getBouldersInBlock().contains(boulder));
+		assertTrue(testWorld.getBlockAtPos(w).containsBoulder(boulder));
 		assertTrue(testUnit.isTerminated());
 	}
 	@Test

@@ -1,7 +1,11 @@
 package hillbillies.model.statement;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
+import hillbillies.model.expression.Expression;
 
 public class Sequence extends WrapStatement{
 	
@@ -18,7 +22,6 @@ public class Sequence extends WrapStatement{
 			getTask().getActivity().setCompleted(true);
 			return;
 		}
-		this.initSupers();
 		for (Statement stat : this.getStatementSequence()){
 //			stat.setTask(this.getTask());
 			if (super.task.getCounter()<1)
@@ -56,6 +59,36 @@ public class Sequence extends WrapStatement{
 	public void removeFromStatementSequence(Statement S){
 		statementSequence.remove(S);
 	}
+	
+	public Map<String, Expression<?>> getVariables() {
+		return variables;
+	}
+
+	public void setVariables(Map<String, Expression<?>> variables) {
+		this.variables = variables;
+	}
+	
+	@Override
+	public void addVariable(String name, Expression<?> value){
+		this.variables.put(name, value);
+	}
+	
+	@Override
+	public Expression<?> readVariable(String name){
+		System.out.println(1);
+		if (this.getVariables().containsKey(name))
+			return this.getVariables().get(name);
+		else {
+			if (this.getWrapStatement()!=null)
+				return this.getWrapStatement().readVariable(name);
+			else {
+				System.out.println("Unassigned variable: " + name);
+				return null;
+			}
+		}
+	}
+
+	private Map<String, Expression<?>> variables = new HashMap<String, Expression<?>>();
 	
 	private List<Statement> statementSequence;
 

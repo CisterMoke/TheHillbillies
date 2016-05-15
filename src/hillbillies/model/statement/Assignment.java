@@ -29,7 +29,8 @@ public class Assignment extends BasicStatement{
 		return value;
 	}
 	public void setValue(Expression<?> value) {
-		this.Expressions.add(value);
+		System.out.println("add 1");
+		super.addExpression(value);
 		this.value = value;
 	}
 

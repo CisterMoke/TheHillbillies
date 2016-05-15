@@ -22,7 +22,7 @@ public class Print extends BasicStatement{
 	}
 
 	public void setText(Expression<?> text) {
-		this.Expressions.add(text);
+		super.addExpression(text);
 		Text = text;
 	}
 

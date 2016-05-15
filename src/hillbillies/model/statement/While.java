@@ -20,7 +20,6 @@ public class While extends WrapStatement{
 			getTask().getActivity().setCompleted(true);
 			return;
 		}
-		this.initSupers();
 		while ((boolean) this.getCondition().getValue() && this.isInLoop()){
 			super.task.countDown();
 //			this.body.setSuperStatment(this);
@@ -46,7 +45,7 @@ public class While extends WrapStatement{
 		return condition;
 	}
 	public void setCondition(Expression<Boolean> condition) {
-		this.Expressions.add(condition);
+		super.addExpression(condition);
 		this.condition = condition;
 	}
 

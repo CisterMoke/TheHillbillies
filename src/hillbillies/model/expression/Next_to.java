@@ -20,7 +20,7 @@ public class Next_to extends ComposedExpression<Vector,Vector>{
 			}
 		}
 		int idx = (int) Math.floor(Math.random()*accesible.size());
-		this.value = (!accesible.isEmpty() ? accesible.get(idx).getLocation() : null);
+		this.value = accesible.get(idx).getLocation();
 	}
 	
 	@Override

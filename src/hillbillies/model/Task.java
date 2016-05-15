@@ -37,7 +37,7 @@ public class Task {
 	public void executeTask(double dt){
 		System.out.println("exe");
 		this.setCounter(dt);
-		this.getActivity().setTask(this);
+		this.getActivity().initialise(this);
 		this.getActivity().execute();
 		if (this.getActivity().getCompleted()){
 			for (Scheduler s : this.getSchedulers()){

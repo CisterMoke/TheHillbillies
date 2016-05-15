@@ -1,5 +1,6 @@
 package hillbillies.model.statement;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -14,12 +15,13 @@ public abstract class WrapStatement extends Statement{
 	@Override
 	public void setTask(Task newtask){
 		this.task=newtask;
-		for (Statement sub : Substatements){
-			sub.setTask(newtask);
-		}
-		for (Expression<?> exp : Expressions){
-			exp.setTask(newtask);
-		}
+//		for (Statement sub : Substatements){
+//			sub.setTask(newtask);
+//		}
+//		for (Expression<?> exp : Expressions){
+//			exp.setTask(newtask);
+//		}
+		
 	}
 	
 	@Override 
@@ -36,37 +38,30 @@ public abstract class WrapStatement extends Statement{
 		else {System.out.println("place break inside a loop");}
 	}
 	
-	public Map<String, Expression<?>> getVariables() {
-		return variables;
-	}
-
-	public void setVariables(Map<String, Expression<?>> variables) {
-		this.variables = variables;
+	@Override
+	public void initialise(Task newTask){
+		System.out.println("init");
+		this.setTask(newTask);
+		for (Statement sub : Substatements){
+			sub.setWrapStatement(this);
+			sub.initialise(newTask);
+		} 
+		for (Expression<?> exp : Expressions){
+			exp.setTask(newTask);
+			exp.setStatement(this);
+		}
+		if (!this.getCompletedTotal().containsKey(this.getTask()))
+			this.setCompleted(false);
 	}
 	
+
 	public void addVariable(String name, Expression<?> value){
-		this.variables.put(name, value);
-	}
+		this.getWrapStatement().addVariable(name, value);	
+		}
 	
 	public Expression<?> readVariable(String name){
-		if (this.getVariables().containsKey(name))
-			return this.getVariables().get(name);
-		else {
-			if (this.getWrapStatement()!=null)
-				return this.getWrapStatement().readVariable(name);
-			else {
-				System.out.println("Unassigned variable: " + name);
-				return null;
-			}
-		}
-	}
-	
-	public void initSupers(){
-		for (Statement sub : Substatements){
-			sub.setWrapStatment(this);
-		} 
+		return this.getWrapStatement().readVariable(name);
 	}
 
-	private Map<String, Expression<?>> variables;
 }
 

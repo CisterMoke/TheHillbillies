@@ -23,7 +23,6 @@ public class If extends WrapStatement{
 			getTask().getActivity().setCompleted(true);
 			return;
 		}
-		this.initSupers();
 		super.task.countDown();
 		if ((boolean) this.getCondition().getValue()){
 			this.getIfBody().execute();
@@ -44,7 +43,7 @@ public class If extends WrapStatement{
 	}
 	
 	public void setCondition(Expression<Boolean> condition2) {
-		this.Expressions.add(condition2);
+		super.addExpression(condition2);
 		this.condition = condition2;
 	}
 

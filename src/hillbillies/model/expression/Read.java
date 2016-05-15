@@ -2,15 +2,16 @@ package hillbillies.model.expression;
 
 import hillbillies.model.statement.WrapStatement;
 
-public class Read extends BasicExpression<Expression<?>>{
+public class Read extends BasicExpression<Object>{
 
 	public Read(String key){
 		this.setName(key);
 	}
 
 	@Override
-	public Expression<?> getValue() {
-		return (Expression<?>) statement.readVariable(this.getName()).getValue();
+	public Object getValue() {
+		System.out.println(statement);
+		return statement.readVariable(this.getName()).getValue();
 	}
 
 	public String getName() {
@@ -20,16 +21,6 @@ public class Read extends BasicExpression<Expression<?>>{
 	public void setName(String name) {
 		this.name = name;
 	}
-	
-	public void setStatement(WrapStatement newstat){
-		this.statement=newstat;
-	}
-	
-	public WrapStatement getStatement(){
-		return this.statement;
-	}
-	
-	private WrapStatement statement;
 
 	private String name;
 }

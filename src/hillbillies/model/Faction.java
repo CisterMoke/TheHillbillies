@@ -20,6 +20,7 @@ import be.kuleuven.cs.som.annotate.*;
  * 			World.
  * @invar	If this Faction doesn't belong to a World, none of its
  * 			members do either.
+ * @invar	A Faction alsways has one Scheduler associated with it.
  */
 public class Faction {
 
@@ -204,7 +205,9 @@ public class Faction {
 			this.terminated = true;
 		return;
 	}
-	
+	/**
+	 * Returns the Scheduler of this Faction.
+	 */
 	public Scheduler getScheduler(){
 		return scheduler;
 	}
@@ -229,6 +232,8 @@ public class Faction {
 	 * World this faction is part of
 	 */
 	private World world = null;
-	
+	/**
+	 * The Scheduler of this faction.
+	 */
 	private final Scheduler scheduler;
 	}

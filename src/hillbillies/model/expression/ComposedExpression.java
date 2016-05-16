@@ -33,4 +33,14 @@ public abstract class ComposedExpression<O,I> extends Expression<O>{
 			}
 		}
 	}
+	
+	@Override
+	public boolean hasNullExpressions(){
+		for (Expression<?> e : subExpressions){
+			if(e.hasNullExpressions())
+				return true;
+		}
+		return false;
+			
+	}
 }

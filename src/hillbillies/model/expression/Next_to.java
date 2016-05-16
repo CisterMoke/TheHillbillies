@@ -15,16 +15,19 @@ public class Next_to extends ComposedExpression<Vector,Vector>{
 		ArrayList<Block> neighbours = world.getDirectlyAdjacent(world.getBlockAtPos(this.subExpressions.get(0).getValue()));
 		ArrayList<Block> accesible = new ArrayList<Block>();
 		for (Block block : neighbours){
+			System.out.println(block.getLocation());
 			if (world.isWalkable(block)){
+				System.out.println("Added");
 				accesible.add(block);
 			}
 		}
 		int idx = (int) Math.floor(Math.random()*accesible.size());
-		this.value = (accesible.isEmpty() ? null : accesible.get(idx).getLocation());	
-		}
+		this.value = (accesible.isEmpty() ? null : accesible.get(idx).getLocation());
+	}
 	
 	@Override
 	public Vector getValue() {
+		System.out.println(subExpressions.get(0).getValue().getCoeff());
 		this.setValue();
 		System.out.println("NextTo Value: " + (value == null ? null : value.getCoeff()));
 		return value;

@@ -7,4 +7,9 @@ public abstract class BasicExpression<O> extends Expression<O>{
 		return false;
 	}
 	
+	@Override
+	public boolean hasNullExpressions(){
+		return getValue() == null;
+	}
+	
 }

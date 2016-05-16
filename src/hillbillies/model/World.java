@@ -104,7 +104,7 @@ public class World {
 	 * 			The position the be checked.
 	 * @return 	True if every coordinate lies within the borders of this World.
 	 */
-	protected boolean isValidPosition(ArrayList<Integer> pos){
+	public boolean isValidPosition(ArrayList<Integer> pos){
 		boolean checker = true;
 		for(int i=0; i<3; i++){
 			if (pos.get(i)>= this.getBorders().get(i) || pos.get(i) <0)
@@ -121,7 +121,7 @@ public class World {
 	 * @return 	True if every coefficient of the given Vector
 	 * 			lies within the borders of this World.
 	 */
-	protected boolean isValidPosition(Vector pos){
+	public boolean isValidPosition(Vector pos){
 		boolean checker = true;
 		for(int i=0; i<3; i++){
 			if (pos.getCoeff().get(i)>= this.getBorders().get(i) || pos.getCoeff().get(i) <0)
@@ -305,13 +305,13 @@ public class World {
 			clone1.set(i, clone1.get(i)+1);
 			if (this.isValidPosition(clone1)){
 				adjacent.add(this.getBlockAtPos(clone1));
-			clone1.set(i, clone1.get(i) -1);
 			}
+			clone1.set(i, clone1.get(i) -1);
 			clone2.set(i, clone2.get(i)-1);
 			if (this.isValidPosition(clone2)){
 				adjacent.add(this.getBlockAtPos(clone2));
-				clone2.set(i, clone2.get(i) + 1);
 			}
+			clone2.set(i, clone2.get(i) + 1);
 
 		}
 		return adjacent;

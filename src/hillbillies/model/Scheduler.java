@@ -2,23 +2,55 @@ package hillbillies.model;
 
 import java.util.*;
 
+/**
+ * Class representing a Scheduler
+ * @author Joost Croonen & Ruben Dedoncker
+ *
+ */
 public class Scheduler {
+	/**
+	 * Initialize a Scheduler.
+	 */
 	public Scheduler() {	
 	}
-	
+	/**
+	 * Schedule a given Task.
+	 * @param 	task
+	 * 			The given Task to be Scheduled.
+	 * @post	The Task is added to the set of Tasks of this Scheduler
+	 * 			and this Scheduler is added to the set of Schedulers of the
+	 * 			given Task.
+	 * 			| getTasks().contains(task) && task.getSchedulers().contains(this)
+	 */
 	public void scheduleTask(Task task){
 		task.addScheduler(this);
 		this.tasks.add(task);
 	}
-	
+	/**
+	 * Remove a Task from this Scheduler.
+	 * @param 	task
+	 * 			The given Task to be removed.
+	 * @post	The given Task is removed from this Scheduler's set of Tasks
+	 * 			and this Scheduler is removed from the given Tasks set of
+	 * 			Schedulers.
+	 * 			| !getTasks().contains(task) && !task.getSchedulers().contains(this)
+	 * @effect	If the given Task has a Unit assigned to it, the Unit will remove
+	 * 			the given Task.
+	 * 			| if (task.getUnit() != null)
+	 * 			|	then task.getUnit().removeTask()
+	 */
 	public void removeTask(Task task){
 		if(!task.inSchedulerSet(this))
 			return;
 		this.tasks.remove(task);
 		task.removeScheduler(this);
-		task.getUnit().removeTask();
+		if(task.getUnit() != null)
+			task.getUnit().removeTask();
 	}
-	
+	/**
+	 * 
+	 * @return
+	 */
 	public Set<Task> getTasks(){
 		return new HashSet<Task> (this.tasks);
 	}

@@ -73,11 +73,11 @@ public abstract class Statement {
 	
 	protected boolean hasNullExpressions(){
 		for(Expression<?> e : Expressions){
-			if (!this.getTask().getCheckedExpression().contains(e)){
-				if(e.getValue() == null){
-					return true;
-				}
-			this.getTask().addCheckedExpression(e);
+//			if (!this.getTask().getCheckedExpression().contains(e)){
+			if(e.hasNullExpressions()){
+				return true;
+//				}
+//			this.getTask().addCheckedExpression(e);
 			}
 		}
 		return false;

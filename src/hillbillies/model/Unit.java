@@ -615,13 +615,11 @@ public class Unit {
 	 */
 	public void move2(Vector pos){
 		if(!isValidPosition(pos)) {
-			System.out.println(1);
 			return;
 		}
 		if (this.getPosition().equals(this.getFinTarget())){
 			this.finTarget = null;
 			this.Path.clear();
-			System.out.println(2);
 			return;
 		}
 		if(!this.getPath().isEmpty() && this.getBlock() == this.getPath().get(0)){
@@ -633,7 +631,6 @@ public class Unit {
 			this.setFinTarget(newTarget);
 		}
 		catch(IllegalArgumentException exc){
-			System.out.println(3);
 			return;
 		}
 		if (this.getPosition().equals(this.getTarget())){
@@ -643,7 +640,6 @@ public class Unit {
 			}
 		}
 		if (this.getPath().isEmpty()){
-			System.out.println(4);
 			return;
 		}
 		Vector currentStep = this.getWorld().getBlockAtPos(this.getTarget()).getLocation();
@@ -654,7 +650,6 @@ public class Unit {
 		}
 		catch(IllegalArgumentException exc){
 			System.out.println("??????");
-			System.out.println(5);
 			return;
 		}
 	}
@@ -1375,8 +1370,6 @@ public class Unit {
 	 */
 	public void workAt(Vector target){
 		if (this.isMoving() || this.getState() == State.COMBAT || this.getState() == State.FALLING){
-			System.out.println("work error");
-			System.out.println(this.isMoving());
 			return;
 		}
 		Block targetBlock = this.getWorld().getBlockAtPos(target);

@@ -5,8 +5,8 @@ import hillbillies.model.expression.Expression;
 public class Assignment extends BasicStatement{
 	
 	public Assignment(String n, Expression<?> v){
+		addExpression(v);
 		this.setName(n);
-		this.setValue(v);
 	}
 	
 	@Override
@@ -25,17 +25,15 @@ public class Assignment extends BasicStatement{
 		this.name = name;
 	}
 
-	public Expression<?> getValue() {
-		return value;
+	public Object getValue() {
+		return Expressions.get(0).getValue();
 	}
-	public void setValue(Expression<?> value) {
-		System.out.println("add 1");
-		super.addExpression(value);
-		this.value = value;
-	}
+//	public void setValue() {
+//		this.value = Expressions.get(0).getValue();
+//	}
 
 	private String name;
 	
-	private Expression<?> value;
+//	private Object value;
 
 }

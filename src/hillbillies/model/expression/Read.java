@@ -1,6 +1,5 @@
 package hillbillies.model.expression;
 
-import hillbillies.model.statement.WrapStatement;
 
 public class Read extends BasicExpression<Object>{
 
@@ -12,7 +11,7 @@ public class Read extends BasicExpression<Object>{
 	public Object getValue() {
 		if (this.statement!=null)
 			if (this.statement.readVariable(this.getName()) !=null)
-				return statement.readVariable(this.getName()).getValue();
+				return statement.readVariable(this.getName());
 			else {
 				return null;
 			}

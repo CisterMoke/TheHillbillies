@@ -2675,11 +2675,12 @@ public class Unit {
 	
 	public void startFollow(Unit unit){
 		this.setFollowTarget(unit);
-		this.move2(unit.getPosition());
+		this.follow();
 	}
 	
 	public boolean endFollow(){
-		return this.getWorld().getAdjacent(this.getBlock()).contains(this.getFollowTarget().getBlock()) || this.getFollowTarget().isTerminated();
+		return this.getFollowTarget().isTerminated()
+				|| inRange(followTarget);
 	}
 	
 	public void follow(){

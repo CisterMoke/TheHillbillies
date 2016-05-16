@@ -2,7 +2,6 @@ package hillbillies.model;
 
 import java.util.*;
 
-import hillbillies.model.expression.*;
 import hillbillies.model.statement.*;
 
 public class Task {
@@ -134,7 +133,7 @@ public class Task {
 	
 	public void interrupt(){
 		this.reset();
-		this.setPriority(getPriority());
+		this.setPriority(getPriority() - 10);
 	}
 
 	public boolean isCompleted() {

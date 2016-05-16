@@ -1,8 +1,6 @@
 package hillbillies.model.statement;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.*;
 import java.util.Set;
 
 import hillbillies.model.Task;
@@ -73,11 +71,11 @@ public abstract class WrapStatement extends Statement{
 	}
 	
 
-	public void addVariable(String name, Expression<?> value){
+	public void addVariable(String name, Object value){
 		this.getWrapStatement().addVariable(name, value);	
 		}
 	
-	public Expression<?> readVariable(String name){
+	public Object readVariable(String name){
 		if (this.getWrapStatement()!=null)
 			return this.getWrapStatement().readVariable(name);
 		else {

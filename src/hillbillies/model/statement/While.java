@@ -11,6 +11,7 @@ public class While extends WrapStatement{
 	
 	@Override
 	public void execute() {
+		System.out.println(this.getClass());
 		if (super.getCompleted() || super.getTask().getCounter()<1)
 			return;
 		if(hasNullExpressions()){
@@ -27,7 +28,7 @@ public class While extends WrapStatement{
 			prevCompleted=this.getBody().getCompleted();
 			
 		}
-		super.setCompleted(prevCompleted && !(this.getCondition().getValue()));
+		super.setCompleted(!(this.getCondition().getValue()));
 	}
 	
 	@Override

@@ -1,10 +1,6 @@
 package hillbillies.model.statement;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import hillbillies.model.Task;
 import hillbillies.model.expression.Expression;

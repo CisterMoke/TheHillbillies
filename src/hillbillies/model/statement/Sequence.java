@@ -5,8 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import hillbillies.model.expression.Expression;
-
 public class Sequence extends WrapStatement{
 	
 	public Sequence(List<Statement> Seq){
@@ -51,21 +49,21 @@ public class Sequence extends WrapStatement{
 		statementSequence.remove(S);
 	}
 	
-	public Map<String, Expression<?>> getVariables() {
+	public Map<String, Object> getVariables() {
 		return variables;
 	}
 
-	public void setVariables(Map<String, Expression<?>> variables) {
+	public void setVariables(Map<String, Object> variables) {
 		this.variables = variables;
 	}
 	
 	@Override
-	public void addVariable(String name, Expression<?> value){
+	public void addVariable(String name, Object value){
 		this.variables.put(name, value);
 	}
 	
 	@Override
-	public Expression<?> readVariable(String name){
+	public Object readVariable(String name){
 		if (this.getVariables().containsKey(name))
 			return this.getVariables().get(name);
 		else {
@@ -78,7 +76,7 @@ public class Sequence extends WrapStatement{
 		}
 	}
 
-	private Map<String, Expression<?>> variables = new HashMap<String, Expression<?>>();
+	private Map<String, Object> variables = new HashMap<String, Object>();
 	
 	private List<Statement> statementSequence;
 

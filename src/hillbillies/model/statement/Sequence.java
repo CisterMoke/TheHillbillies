@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import hillbillies.model.Task;
+
 public class Sequence extends WrapStatement{
 	
 	public Sequence(List<Statement> Seq){
@@ -50,21 +52,25 @@ public class Sequence extends WrapStatement{
 	}
 	
 	public Map<String, Object> getVariables() {
-		return variables;
+		return variables.get(this.getTask());
 	}
 
-	public void setVariables(Map<String, Object> variables) {
+	public void setVariables(Map<Task, Map<String, Object>> variables) {
 		this.variables = variables;
 	}
 	
 	@Override
 	public void addVariable(String name, Object value){
-		this.variables.put(name, value);
+		if (!this.variables.containsKey(task)){
+			Map<String, Object> init = new HashMap<String, Object>();
+			variables.put(this.getTask(), init);
+		}
+		this.variables.get(this.getTask()).put(name, value);
 	}
 	
 	@Override
 	public Object readVariable(String name){
-		if (this.getVariables().containsKey(name))
+		if (this.variables.containsKey(task) && getVariables().containsKey(name))
 			return this.getVariables().get(name);
 		else {
 			if (this.getWrapStatement()!=null)
@@ -75,8 +81,8 @@ public class Sequence extends WrapStatement{
 			}
 		}
 	}
-
-	private Map<String, Object> variables = new HashMap<String, Object>();
+	
+	private Map<Task, Map<String, Object>> variables = new HashMap<Task, Map<String, Object>>();
 	
 	private List<Statement> statementSequence;
 

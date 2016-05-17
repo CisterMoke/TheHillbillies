@@ -11,6 +11,9 @@ import hillbillies.part2.listener.TerrainChangeListener;
 
 public class sandbox {
 	public static void main(String[] args){
+		Object test = new PositionLiteral(new Vector(1, 2, 3));
+		BooleanLiteral tost = (BooleanLiteral) test;
+		System.out.println(tost.getValue());
 		Scheduler s = new Scheduler();
 		s.scheduleTask(new Task("a", 5, new Break(), null));
 		s.scheduleTask(new Task("b", 50, new Break(), null));
@@ -55,6 +58,7 @@ public class sandbox {
 				+ u5.getPosition().distance(testUnit.getPosition()));
 		System.out.println(testUnit.getClosestEnemy().getPosition().distance(testUnit.getPosition()));
 		System.out.println(testUnit.getClosestFriend().getPosition().distance(testUnit.getPosition()));
+		System.out.println(testUnit.getClosestUnit().getPosition().distance(testUnit.getPosition()));
 		
 	}
 

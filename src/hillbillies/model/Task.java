@@ -9,7 +9,7 @@ public class Task {
 		this.setPriority(newpriority);
 		this.setName(newname);
 		this.setActivity(newactiviy);
-		this.setSelected(newselected);
+		this.selectedPosition = newselected;
 	}
 	
 	public boolean isAssigned(){
@@ -21,7 +21,10 @@ public class Task {
 	}
 	
 	protected void setUnit(Unit unit){
-		//TODO worldcheck enzo
+		if(this.unit != null)
+			this.unit.setTask(null);
+		if(unit != null)
+			unit.setTask(this);
 		this.unit = unit;
 	}
 	
@@ -29,12 +32,8 @@ public class Task {
 		return this.selectedPosition;
 	}
 	
-	public void setSelected(Vector pos){
-		this.selectedPosition = pos;
-	}
-	
 	public void executeTask(double dt){
-		System.out.println("exe");
+		System.out.println("exe: " + this);
 		this.setCounter(dt);
 		this.getActivity().initialise(this);
 		this.getActivity().execute();
@@ -42,7 +41,7 @@ public class Task {
 			for (Scheduler s : this.getSchedulers()){
 				s.removeTask(this);
 			}
-			this.reset();
+			this.terminate();
 			this.setCompleted(true);
 		}
 	}
@@ -128,12 +127,18 @@ public class Task {
 	}
 	
 	public void reset(){
+		this.setUnit(null);
 		this.getActivity().reset();
 	}
 	
 	public void interrupt(){
 		this.reset();
 		this.setPriority(getPriority() - 10);
+	}
+	
+	public void terminate(){
+		this.setUnit(null);
+		this.getActivity().terminate();
 	}
 
 	public boolean isCompleted() {

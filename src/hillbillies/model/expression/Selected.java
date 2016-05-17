@@ -9,11 +9,13 @@ public class Selected extends PositionExpression{
 
 	@Override
 	public Vector getValue() {
-		if(getTask().getUnit() == null || getTask().getUnit().getWorld() == null)
+		if(getTask().getUnit() == null || getTask().getUnit().getWorld() == null){
 			return null;
+		}
 		World world = getTask().getUnit().getWorld();
-		if(world.isValidPosition(getTask().getSelected()))
+		if(world.isValidPosition(getTask().getSelected())){
 			return this.getTask().getSelected();
+		}
 		return null;
 	}
 

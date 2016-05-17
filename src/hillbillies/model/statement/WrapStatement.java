@@ -18,10 +18,17 @@ public abstract class WrapStatement extends Statement{
 	
 	@Override 
 	public void reset(){
-		this.setCompleted(false);
+		setCompleted(false);
 		for (Statement sub : Substatements){
 			sub.reset();
 		} 
+	}
+	
+	@Override
+	public void terminate(){
+		this.completed.remove(task);
+		for(Statement sub : Substatements)
+			sub.terminate();
 	}
 	
 	public boolean stopLoop(){
@@ -49,7 +56,7 @@ public abstract class WrapStatement extends Statement{
 	
 	@Override
 	public void initialise(Task newTask){
-		System.out.println("init");
+		System.out.println("init " + this);
 		this.setTask(newTask);
 		for (Statement sub : Substatements){
 			sub.setWrapStatement(this);

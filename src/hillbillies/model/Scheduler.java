@@ -44,21 +44,36 @@ public class Scheduler {
 			return;
 		this.tasks.remove(task);
 		task.removeScheduler(this);
-		if(task.getUnit() != null)
-			task.getUnit().removeTask();
+		task.setUnit(null);
 	}
 	/**
-	 * 
-	 * @return
+	 * Return a copy of the set of Tasks scheduled in this Scheduler.
 	 */
 	public Set<Task> getTasks(){
 		return new HashSet<Task> (this.tasks);
 	}
-	
+	/**
+	 * Return a boolean stating whether or not a Task is scheduled
+	 * 	in this Scheduler.
+	 * @param 	task
+	 * 			The given Task to be checked.
+	 * @return	True if and only if the given Task is in the set of
+	 * 			scheduled Tasks of this Scheduler.
+	 * 			| result == this.getTasks().contains(task)
+	 */
 	public boolean inTaskSet(Task task){
 		return tasks.contains(task);
 	}
-	
+	/**
+	 * Return a boolean stating whether or not a given Collection of
+	 * 	Tasks are scheduled in this Scheduler.
+	 * @param 	c
+	 * 			The given Collection of Tasks to be checked.
+	 * @return	True if and only if all the elements of te given Collection
+	 * 			of Tasks are in the set of scheduled Tasks of this Scheduler.
+	 * 			| for each task in c : (
+	 * 			|	this.getTasks().contains(c)
+	 */
 	public boolean inTaskSet(Collection<Task> c){
 		return tasks.containsAll(c);
 	}
@@ -77,7 +92,13 @@ public class Scheduler {
 //	public Faction getFaction(){
 //		return this.faction;
 //	}
-	
+	/**
+	 * Return an Iterator of Tasks.
+	 * @return The returned Iterator contains all the Tasks of this Scheduler
+	 * 			sorted from high priority to low priority.
+	 * 			| result.next().getPriority() >= result.next().getPriority()
+	 * 
+	 */
 	public Iterator<Task> iterator(){
 		ArrayList<Task> taskList = new ArrayList<Task>(tasks);
 		taskList.sort(getPriorityComparator());
@@ -96,7 +117,16 @@ public class Scheduler {
 			}			
 		};
 	}
-	
+	/**
+	 * Return the unassigned Task scheduled in this Scheduler with the
+	 * 	highest priority of all unnasigned Tasks.
+	 * @return The returned Task is unassigned and has the highest priority
+	 * 			of all unassigned Tasks.
+	 * 			| for each task in this.getTasks() :(
+	 * 			|	result.getActor() == null && (
+	 * 			|	(result.getPriority() >= task.getPriority()
+	 * 			|		&& task.getActor() == null) || (task.getActor() != null)))
+	 */
 	public Task getHighestPriority(){
 		Iterator<Task> iter = iterator();
 		Task task;
@@ -107,7 +137,10 @@ public class Scheduler {
 		}
 		return null;
 	}
-	
+	/**
+	 * Return a Comparator between Tasks. The Comparator is used to sort Tasks
+	 * 	from high priority to low priority.
+	 */
 	private Comparator<Task> getPriorityComparator(){
 		return new Comparator<Task>(){
 
@@ -142,7 +175,9 @@ public class Scheduler {
 	
 //	private Faction faction;
 
-	
+	/**
+	 * The set of Tasks scheduled in this Scheduler.
+	 */
 	private Set<Task> tasks = new HashSet<Task>();
 
 }

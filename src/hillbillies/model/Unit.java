@@ -13,9 +13,9 @@ import hillbillies.model.Block.BlockType;
  * @invar 	The unit has a valid position.
  * 			|isValidPosition(getPosition())
  * @invar	The unit's primary stats lie between 1 and 200 inclusively
- * 			| for (key in unit.getPrimStats())
+ * 			| for each key in unit.getPrimStats(): (
  * 			|	(getPrimStats.get(key) >=1) &&
- * 			|	(getPrimStats.get(key) <= 200)
+ * 			|	(getPrimStats.get(key) <= 200))
  * @invar	The unit has a valid amount of hitpoints and stamina points
  * 			| isValidHp(getHp()) && isValidStam(getStam())
  * @invar	The weight of the unit is bigger than or equal to
@@ -181,7 +181,6 @@ public class Unit {
 		if (this.restTime >= 180){
 			if(task != null){
 				task.interrupt();
-				this.removeTask();
 			}
 		this.rest();
 		}
@@ -225,6 +224,8 @@ public class Unit {
 				
 			
 		}
+		if(this.getFollowTarget()!=null)
+			this.follow();
 		if (this.getState() == State.IDLE){
 			if(this.getFinTarget() != null){
 				move2(this.getFinTarget());
@@ -723,7 +724,6 @@ public class Unit {
 		}
 		if(defender.getTask() != null){
 			defender.getTask().interrupt();
-			defender.removeTask();
 		}
 		double dy = defender.getPosition().getY()-this.getPosition().getY();
 		double dx = defender.getPosition().getX()-this.getPosition().getX();
@@ -1004,6 +1004,8 @@ public class Unit {
 	 */
 	public void stopDefault(){
 		this.Default = false;
+		if(task != null)
+			task.reset();
 	}
 	
 	/**
@@ -1138,10 +1140,12 @@ public class Unit {
 	 * 				|!isValidPosition(target)
 	 */
 	private void setFinTarget(Vector target) throws IllegalArgumentException{
-		if(target.equals(this.getTarget()))
+		if(target.equals(this.getTarget())){
 			return;
-		if (!this.isValidPosition(target) && !this.getWorld().isWalkable(this.getWorld().getBlockAtPos(target)))
+		}
+		if (!this.isValidPosition(target) && !this.getWorld().isWalkable(this.getWorld().getBlockAtPos(target))){
 			throw new IllegalArgumentException("Invalid Target!");
+		}
 		this.finTarget = target;
 	}
 	
@@ -1373,8 +1377,9 @@ public class Unit {
 			return;
 		}
 		Block targetBlock = this.getWorld().getBlockAtPos(target);
-		if(!this.getWorld().getAdjacent(this.getBlock()).contains(targetBlock) && targetBlock != this.getBlock())
+		if(!this.getWorld().getAdjacent(this.getBlock()).contains(targetBlock) && targetBlock != this.getBlock()){
 			return;
+		}
 		this.setWorkBlock(targetBlock);
 		Vector direction = targetBlock.getLocation().add(this.getBlock().getLocation().getOpposite());
 		if (this.getState() != State.WORKING){
@@ -1978,7 +1983,6 @@ public class Unit {
 	private void fall(){
 		if(task != null){
 			task.interrupt();
-			this.removeTask();
 		}
 		if(this.getState() == State.COMBAT){
 			if(this.opponent != null){
@@ -2077,45 +2081,12 @@ public class Unit {
 	 */
 	
 	protected void pathFinding(){
-		if (this.getFinTarget()==null)
+		if(finTarget == null)
 			return;
-		Block current = this.getBlock();
-		Block end = getWorld().getBlockAtPos((this.getFinTarget()));
-		Map<Block, ArrayList<Block>> shortestPath = new HashMap<Block, ArrayList<Block>>();
-		shortestPath.put(current, new ArrayList<Block>(Arrays.asList(current)));
-		Map<Block, Double> finalCost = new HashMap<Block, Double>();
-		Set<Block> toBeChecked = new HashSet<Block>();
-		for (Block block : this.getNext(current, finalCost)){
-			toBeChecked.add(block);
-			double newcost = current.getLocation().distance(block.getLocation());
-			finalCost.put(block, newcost);
-			ArrayList<Block> path = new ArrayList<Block>(Arrays.asList(block));
-			shortestPath.put(block, path);
-		}
-		while (!((current==end) || (toBeChecked.isEmpty()))){
-			toBeChecked.remove(current);
-			double lowestCost = Double.MAX_VALUE;
-			for (Block block : toBeChecked){
-				if (finalCost.get(block)< lowestCost){
-					lowestCost = finalCost.get(block);
-					current = block;
-				}
-			}				
-			for (Block block : this.getNext(current, finalCost)){
-				toBeChecked.add(block);
-				double newcost = lowestCost + current.getLocation().distance(block.getLocation());
-				finalCost.put(block, newcost);
-				ArrayList<Block> path = new ArrayList<Block>(shortestPath.get(current));
-				path.add(block);
-				shortestPath.put(block, path);
-			}
-		}
-		ArrayList<Block> finalPath = new ArrayList<Block>(shortestPath.get(current));
-		if(current != end){
-			finalPath.clear();
-			this.finTarget = null;
-		}
-		this.Path= finalPath;
+		ArrayList<Block> path = getClosestPath(world.getBlockAtPos(finTarget));
+		if (path.isEmpty())
+			finTarget = null;		
+		this.Path= path;
 	}
 	/**
 	 * Return the set of blocks that must be checked surrounding the current block.
@@ -2230,14 +2201,13 @@ public class Unit {
 			}
 			return;
 		}
-		if(this.getFollowTarget()!=null)
-			this.follow();
 		if(this.getFinTarget() != null || this.getState() != State.IDLE)
 			return;
 		if (this.getTask()==null){
 			Task task = faction.getScheduler().getHighestPriority();
 			if(task == null)
-				pickActivity();
+//				pickActivity();
+				return;
 			else
 				pickTask(task);
 			return;
@@ -2396,9 +2366,54 @@ public class Unit {
 		this.terminated = true;
 	}
 	
+	public ArrayList<Block> getClosestPath(Block block){
+		Set<Block> c = new HashSet<Block>();
+		c.add(block);
+		return getClosestPath(c);
+	}
+	
+	public ArrayList<Block> getClosestPath(Collection<Block> c){
+		if (c == null || c.isEmpty())
+			return new ArrayList<Block>();
+		Block current = this.getBlock();
+		Map<Block, ArrayList<Block>> shortestPath = new HashMap<Block, ArrayList<Block>>();
+		shortestPath.put(current, new ArrayList<Block>(Arrays.asList(current)));
+		Map<Block, Double> finalCost = new HashMap<Block, Double>();
+		Set<Block> toBeChecked = new HashSet<Block>();
+		for (Block next : this.getNext(current, finalCost)){
+			toBeChecked.add(next);
+			double newcost = current.getLocation().distance(next.getLocation());
+			finalCost.put(next, newcost);
+			ArrayList<Block> path = new ArrayList<Block>(Arrays.asList(next));
+			shortestPath.put(next, path);
+		}
+		while (!c.contains(current) && !toBeChecked.isEmpty()){
+			toBeChecked.remove(current);
+			double lowestCost = Double.MAX_VALUE;
+			for (Block next : toBeChecked){
+				if (finalCost.get(next)< lowestCost){
+					lowestCost = finalCost.get(next);
+					current = next;
+				}
+			}				
+			for (Block next : this.getNext(current, finalCost)){
+				toBeChecked.add(next);
+				double newcost = lowestCost + current.getLocation().distance(next.getLocation());
+				finalCost.put(next, newcost);
+				ArrayList<Block> path = new ArrayList<Block>(shortestPath.get(current));
+				path.add(next);
+				shortestPath.put(next, path);
+			}
+		}
+		ArrayList<Block> finalPath = new ArrayList<Block>(shortestPath.get(current));
+		if(!c.contains(current)){
+			finalPath.clear();
+		}
+		return finalPath;
+	}
+	
 	public Unit getClosestUnit(){
 		if(this.getWorld() == null)
-			//TODO exception gooien?
 			return null;
 		Block current = this.getBlock();
 		Map<Block, Double> finalCost = new HashMap<Block, Double>();
@@ -2430,21 +2445,9 @@ public class Unit {
 				return unit;
 		return null;
 	}
-//		Iterator<Unit> iterator = this.getWorld().getUnits().iterator();
-//		Unit unit = iterator.next();
-//		double distance = unit.getPosition().distance(this.getPosition());
-//		while (iterator.hasNext()){
-//			Unit tempUnit = iterator.next();
-//			double tempDistance = tempUnit.getPosition().distance(this.getPosition());
-//			if(tempDistance < distance)
-//				unit = tempUnit;
-//		}
-//		return unit;
-//	}
 	
 	public Unit getClosestEnemy(){
 		if(this.getWorld() == null)
-			//TODO exception gooien?
 			return null;
 		Block current = this.getBlock();
 		Map<Block, Double> finalCost = new HashMap<Block, Double>();
@@ -2476,26 +2479,9 @@ public class Unit {
 			}
 		return null;
 	}
-//		Set<Unit> enemies = this.getWorld().getUnits();
-//		enemies.removeAll(this.getFaction().getUnits());
-//		if(enemies.isEmpty())
-//			//TODO exceprions gooien?
-//			return null;
-//		Iterator<Unit> iterator = enemies.iterator();
-//		Unit unit = iterator.next();
-//		double distance = unit.getPosition().distance(this.getPosition());
-//		while (iterator.hasNext()){
-//			Unit tempUnit = iterator.next();
-//			double tempDistance = tempUnit.getPosition().distance(this.getPosition());
-//			if(tempDistance < distance)
-//				unit = tempUnit;
-//		}
-//		return unit;
-//	}
 	
 	public Unit getClosestFriend(){
 		if(this.getWorld() == null)
-			//TODO exception gooien?
 			return null;
 		Block current = this.getBlock();
 		Map<Block, Double> finalCost = new HashMap<Block, Double>();
@@ -2527,25 +2513,9 @@ public class Unit {
 			}
 		return null;
 	}
-//		Set<Unit> friends = this.getFaction().getUnits();
-//		friends.remove(this);
-//		if(friends.isEmpty())
-//			return null;
-//		Iterator<Unit> iterator = friends.iterator();
-//		Unit unit = iterator.next();
-//		double distance = unit.getPosition().distance(this.getPosition());
-//		while (iterator.hasNext()){
-//			Unit tempUnit = iterator.next();
-//			double tempDistance = tempUnit.getPosition().distance(this.getPosition());
-//			if(tempDistance < distance)
-//				unit = tempUnit;
-//		}
-//		return unit;
-//	}
 	
 	public Boulder getClosestBoulder(){
 		if(this.getWorld() == null)
-			//TODO exception gooien?
 			return null;
 		Block current = this.getBlock();
 		Map<Block, Double> finalCost = new HashMap<Block, Double>();
@@ -2573,22 +2543,10 @@ public class Unit {
 		for(Boulder boulder : current.getBouldersInBlock())
 			return boulder;
 		return null;
-		
-//		Iterator<Boulder> iterator = this.getWorld().getBoulders().iterator();
-//		Boulder boulder = iterator.next();
-//		double distance = boulder.getPosition().distance(this.getPosition());
-//		while (iterator.hasNext()){
-//			Boulder tempBoulder = iterator.next();
-//			double tempDistance = tempBoulder.getPosition().distance(this.getPosition());
-//			if(tempDistance < distance)
-//				boulder = tempBoulder;
-//		}
-//		return boulder;
 	}
 	
 	public Log getClosestLog(){
 		if(this.getWorld() == null)
-			//TODO exception gooien?
 			return null;
 		Block current = this.getBlock();
 		Map<Block, Double> finalCost = new HashMap<Block, Double>();
@@ -2617,21 +2575,9 @@ public class Unit {
 			return log;
 		return null;
 	}
-//		Iterator<Log> iterator = this.getWorld().getLogs().iterator();
-//		Log log = iterator.next();
-//		double distance = log.getPosition().distance(this.getPosition());
-//		while (iterator.hasNext()){
-//			Log tempLog = iterator.next();
-//			double tempDistance = tempLog.getPosition().distance(this.getPosition());
-//			if(tempDistance < distance)
-//				log = tempLog;
-//		}
-//		return log;
-//	}
 	
 	public Block getClosestWorkshop(){
 		if(this.getWorld() == null)
-			//TODO exception gooien?
 			return null;
 		Block current = this.getBlock();
 		Map<Block, Double> finalCost = new HashMap<Block, Double>();
@@ -2661,17 +2607,6 @@ public class Unit {
 		}
 		return current;
 	}
-//		Iterator<Block> iterator = this.getWorld().getWorkshops().iterator();
-//		Block workshop = iterator.next();
-//		double distance = workshop.getLocation().distance(this.getPosition());
-//		while (iterator.hasNext()){
-//			Block tempWorkshop = iterator.next();
-//			double tempDistance = tempWorkshop.getLocation().distance(this.getPosition());
-//			if(tempDistance < distance)
-//				workshop = tempWorkshop;
-//		}
-//		return workshop;
-//	}
 	
 	public void startFollow(Unit unit){
 		this.setFollowTarget(unit);
@@ -2684,8 +2619,12 @@ public class Unit {
 	}
 	
 	public void follow(){
-		if (this.endFollow())
+		if (this.endFollow()){
 			this.setFollowTarget(null);
+			this.finTarget = null;
+			this.Path.clear();
+			this.setState(State.IDLE);
+			}
 		else this.move2(this.getFollowTarget().getPosition());
 
 	}
@@ -2750,15 +2689,15 @@ public class Unit {
 		}
 		this.finTarget = null;
 		this.followTarget = null;
-		this.setTask(task);
+//		this.setTask(task);
 		task.setUnit(this);
 	}
 	
-	public void removeTask(){
+//	public void removeTask(){
 //		task.reset();
-		task.setUnit(null);
-		task = null;
-	}
+//		task.setUnit(null);
+//		task = null;
+//	}
 	
 	private Unit getFollowTarget() {
 		return followTarget;

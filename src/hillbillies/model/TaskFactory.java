@@ -9,7 +9,7 @@ import hillbillies.model.statement.*;
 import hillbillies.part3.programs.ITaskFactory;
 import hillbillies.part3.programs.SourceLocation;
 
-public class TaskFactory implements ITaskFactory<Expression<?>, Statement, Task> {
+public class TaskFactory implements ITaskFactory<SuperExpression, Statement, Task> {
 	
 	public TaskFactory() {
 		// TODO Auto-generated constructor stub
@@ -32,12 +32,12 @@ public class TaskFactory implements ITaskFactory<Expression<?>, Statement, Task>
 	}
 
 	@Override
-	public Statement createAssignment(String variableName, Expression<?> value, SourceLocation sourceLocation) {
+	public Statement createAssignment(String variableName, SuperExpression value, SourceLocation sourceLocation) {
 		return new Assignment(variableName, value);
 	}
 
 	@Override
-	public Statement createWhile(Expression<?> condition, Statement body, SourceLocation sourceLocation) {
+	public Statement createWhile(SuperExpression condition, Statement body, SourceLocation sourceLocation) {
 		try{
 			return new While((Expression<Boolean>)condition, body);
 		}
@@ -48,7 +48,7 @@ public class TaskFactory implements ITaskFactory<Expression<?>, Statement, Task>
 	}
 
 	@Override
-	public Statement createIf(Expression<?> condition, Statement ifBody, Statement elseBody,
+	public Statement createIf(SuperExpression condition, Statement ifBody, Statement elseBody,
 			SourceLocation sourceLocation) {
 		System.out.println("If gemaakt");
 		try{
@@ -66,7 +66,7 @@ public class TaskFactory implements ITaskFactory<Expression<?>, Statement, Task>
 	}
 
 	@Override
-	public Statement createPrint(Expression<?> value, SourceLocation sourceLocation) {
+	public Statement createPrint(SuperExpression value, SourceLocation sourceLocation) {
 		return new Print(value);
 	}
 
@@ -76,7 +76,7 @@ public class TaskFactory implements ITaskFactory<Expression<?>, Statement, Task>
 	}
 
 	@Override
-	public Statement createMoveTo(Expression<?> position, SourceLocation sourceLocation) {
+	public Statement createMoveTo(SuperExpression position, SourceLocation sourceLocation) {
 		System.out.println("MoveTo position: " + position);
 		try{		
 			return new MoveTo((Expression<Vector>)position);
@@ -84,11 +84,12 @@ public class TaskFactory implements ITaskFactory<Expression<?>, Statement, Task>
 		catch(ClassCastException exc){
 			System.out.println("Incorrect type error at line: " + sourceLocation.getLine());
 		}
+		System.out.println("This maybe?");
 		return null;
 	}
 
 	@Override
-	public Statement createWork(Expression<?> position, SourceLocation sourceLocation) {
+	public Statement createWork(SuperExpression position, SourceLocation sourceLocation) {
 		try{
 			return new Work((Expression<Vector>)position);
 		}
@@ -99,7 +100,7 @@ public class TaskFactory implements ITaskFactory<Expression<?>, Statement, Task>
 	}
 
 	@Override
-	public Statement createFollow(Expression<?> unit, SourceLocation sourceLocation) {
+	public Statement createFollow(SuperExpression unit, SourceLocation sourceLocation) {
 		try{
 			return new Follow((Expression<Unit>)unit);
 		}
@@ -110,7 +111,7 @@ public class TaskFactory implements ITaskFactory<Expression<?>, Statement, Task>
 	}
 
 	@Override
-	public Statement createAttack(Expression<?> unit, SourceLocation sourceLocation) {
+	public Statement createAttack(SuperExpression unit, SourceLocation sourceLocation) {
 		try{
 			return new Attack((Expression<Unit>)unit);
 		}
@@ -121,12 +122,12 @@ public class TaskFactory implements ITaskFactory<Expression<?>, Statement, Task>
 	}
 
 	@Override
-	public Expression<?> createReadVariable(String variableName, SourceLocation sourceLocation) {
+	public Expression<Object> createReadVariable(String variableName, SourceLocation sourceLocation) {
 		return new Read(variableName);
 	}
 
 	@Override
-	public Expression<Boolean> createIsSolid(Expression<?> position, SourceLocation sourceLocation) {
+	public Expression<Boolean> createIsSolid(SuperExpression position, SourceLocation sourceLocation) {
 		try{
 			return new Is_solid((Expression<Vector>) position);
 		}
@@ -137,7 +138,7 @@ public class TaskFactory implements ITaskFactory<Expression<?>, Statement, Task>
 	}
 
 	@Override
-	public Expression<Boolean> createIsPassable(Expression<?> position, SourceLocation sourceLocation) {
+	public Expression<Boolean> createIsPassable(SuperExpression position, SourceLocation sourceLocation) {
 		try{
 			return new Is_passable((Expression<Vector>) position);
 		}
@@ -148,7 +149,7 @@ public class TaskFactory implements ITaskFactory<Expression<?>, Statement, Task>
 	}
 
 	@Override
-	public Expression<Boolean> createIsFriend(Expression<?> unit, SourceLocation sourceLocation) {
+	public Expression<Boolean> createIsFriend(SuperExpression unit, SourceLocation sourceLocation) {
 		try{
 			return new Is_friend((Expression<Unit>) unit);
 		}
@@ -159,7 +160,7 @@ public class TaskFactory implements ITaskFactory<Expression<?>, Statement, Task>
 	}
 
 	@Override
-	public Expression<Boolean> createIsEnemy(Expression<?> unit, SourceLocation sourceLocation) {
+	public Expression<Boolean> createIsEnemy(SuperExpression unit, SourceLocation sourceLocation) {
 		try{
 			return new Is_enemy((Expression<Unit>) unit);
 		}
@@ -170,7 +171,7 @@ public class TaskFactory implements ITaskFactory<Expression<?>, Statement, Task>
 	}
 
 	@Override
-	public Expression<Boolean> createIsAlive(Expression<?> unit, SourceLocation sourceLocation) {
+	public Expression<Boolean> createIsAlive(SuperExpression unit, SourceLocation sourceLocation) {
 		try{
 			return new Is_alive((Expression<Unit>) unit);
 		}
@@ -181,7 +182,7 @@ public class TaskFactory implements ITaskFactory<Expression<?>, Statement, Task>
 	}
 
 	@Override
-	public Expression<Boolean> createCarriesItem(Expression<?> unit, SourceLocation sourceLocation) {
+	public Expression<Boolean> createCarriesItem(SuperExpression unit, SourceLocation sourceLocation) {
 		try{
 			return new Carries_item((Expression<Unit>) unit); 
 		}
@@ -192,7 +193,7 @@ public class TaskFactory implements ITaskFactory<Expression<?>, Statement, Task>
 	}
 
 	@Override
-	public Expression<Boolean> createAnd(Expression<?> left, Expression<?> right, SourceLocation sourceLocation) {
+	public Expression<Boolean> createAnd(SuperExpression left, SuperExpression right, SourceLocation sourceLocation) {
 		try{
 			return new And((Expression<Boolean>)left, (Expression<Boolean>)right);
 		}
@@ -203,7 +204,7 @@ public class TaskFactory implements ITaskFactory<Expression<?>, Statement, Task>
 	}
 
 	@Override
-	public Expression<Boolean> createOr(Expression<?> left, Expression<?> right, SourceLocation sourceLocation) {
+	public Expression<Boolean> createOr(SuperExpression left, SuperExpression right, SourceLocation sourceLocation) {
 		try{
 			return new Or((Expression<Boolean>)left, (Expression<Boolean>)right);
 		}
@@ -214,7 +215,7 @@ public class TaskFactory implements ITaskFactory<Expression<?>, Statement, Task>
 	}
 
 	@Override
-	public Expression<Boolean> createNot(Expression<?> expression, SourceLocation sourceLocation) {
+	public Expression<Boolean> createNot(SuperExpression expression, SourceLocation sourceLocation) {
 		try{
 			return new Not((Expression<Boolean>) expression);
 		}
@@ -250,7 +251,7 @@ public class TaskFactory implements ITaskFactory<Expression<?>, Statement, Task>
 	}
 
 	@Override
-	public Expression<Vector> createNextToPosition(Expression<?> position, SourceLocation sourceLocation) {
+	public Expression<Vector> createNextToPosition(SuperExpression position, SourceLocation sourceLocation) {
 		try{
 			return new Next_to((Expression<Vector>) position);
 		}
@@ -261,7 +262,7 @@ public class TaskFactory implements ITaskFactory<Expression<?>, Statement, Task>
 	}
 
 	@Override
-	public Expression<Vector> createPositionOf(Expression<?> unit, SourceLocation sourceLocation) {
+	public Expression<Vector> createPositionOf(SuperExpression unit, SourceLocation sourceLocation) {
 		try{
 			return new Position_of((Expression<Unit>) unit);
 		}

@@ -24,8 +24,14 @@ public abstract class Action extends BasicStatement{
 	
 	@Override
 	public void reset(){
-		this.setCompleted(false);
-		this.setInProgress(false);
+		setCompleted(false);
+		setInProgress(false);
+	}
+	
+	@Override
+	public void terminate(){
+		this.completed.remove(task);
+		this.InProgress.remove(task);
 	}
 	
 	@Override
@@ -65,6 +71,7 @@ public abstract class Action extends BasicStatement{
 		if (!this.getInProgress()){
 			this.executeSpecific();
 			this.setInProgress(true);
+			System.out.println(this.getActor().getFinTarget());
 		}
 		if (this.getInProgress() && this.getTask().getUnit().isTruelyIdle()){
 			this.setCompleted(true);

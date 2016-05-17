@@ -5,18 +5,19 @@ import java.util.*;
 import hillbillies.model.Task;
 import hillbillies.model.expression.Expression;
 import hillbillies.model.expression.Read;
+import hillbillies.model.expression.SuperExpression;
 
 public abstract class Statement {
 	
 	public void reset(){
-		this.setCompleted(false);
+		setCompleted(false);
 	}
 	
 	protected WrapStatement wrapStatement = null;
 	
 	public void setWrapStatement(WrapStatement stat){
 		this.wrapStatement = stat;
-		for (Expression<?> exp : this.Expressions){
+		for (SuperExpression exp : this.Expressions){
 			if (this.getWrapStatement()!=null)
 				exp.setWrapStatement(this.getWrapStatement());
 		}
@@ -24,7 +25,7 @@ public abstract class Statement {
 	
 	public boolean isWellFormed(){
 		boolean Check = true;
-		for (Expression<?> exp : this.Expressions){
+		for (SuperExpression exp : this.Expressions){
 			if (exp instanceof Read){
 				Check = (exp.getWrapStatement().readVariable(((Read) exp).getName())!=null) && Check;
 			}
@@ -46,10 +47,10 @@ public abstract class Statement {
 		return this.completed;
 	}
 	
-	protected ArrayList<Expression<?>> Expressions = new ArrayList<Expression<?>>();
+	protected ArrayList<SuperExpression> Expressions = new ArrayList<SuperExpression>();
 	
-	public void addExpression(Expression<?> e){
-		this.Expressions.add(e);
+	public void addExpression(SuperExpression value){
+		this.Expressions.add(value);
 	}
 	
 	public void setCompletedTotal(Map<Task, Boolean> map){
@@ -58,6 +59,10 @@ public abstract class Statement {
 	
 	public void setCompleted(Boolean value){
 		this.completed.put(this.getTask(), value);
+	}
+	
+	public void terminate(){
+		this.completed.remove(task);
 	}
 
 	protected Map<Task, Boolean> completed=new HashMap<Task, Boolean>();
@@ -68,7 +73,7 @@ public abstract class Statement {
 	}
 	
 	protected boolean hasNullExpressions(){
-		for(Expression<?> e : Expressions){
+		for(SuperExpression e : Expressions){
 //			if (!this.getTask().getCheckedExpression().contains(e)){
 			if(e.hasNullExpressions()){
 				return true;
@@ -85,7 +90,7 @@ public abstract class Statement {
 	
 	public void initialise(Task task) {
 		this.setTask(task);
-		for (Expression<?> exp : Expressions){
+		for (SuperExpression exp : Expressions){
 			exp.setTask(task);
 		}
 		if (!this.getCompletedTotal().containsKey(this.getTask()))

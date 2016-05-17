@@ -11,11 +11,7 @@ public class Assignment extends BasicStatement{
 	
 	@Override
 	public void executeSpecific() {
-//		if (super.getCompleted())
-//			return;
-//		super.task.countDown();
 		this.getWrapStatement().addVariable(this.getName(), this.getValue());
-//		super.setCompleted(true);
 	}
 	
 	public String getName() {

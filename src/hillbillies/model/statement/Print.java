@@ -10,11 +10,7 @@ public class Print extends BasicStatement{
 
 	@Override
 	public void executeSpecific() {
-//		if (super.getCompleted() || super.getTask().getCounter()<1)
-//			return;
-//		super.task.countDown();
 		System.out.println(this.getText().getValue());
-//		super.setCompleted(true);
 	}
 	
 	public Expression<?> getText() {

@@ -12,11 +12,6 @@ public class If extends WrapStatement{
 	@Override
 	public void execute(){
 		System.out.println(this.getClass());
-//		this.getCondition().setTask(this.getTask());
-//		this.getIfBody().setTask(this.getTask());
-//		if (this.getElseBody()!=null){
-//			this.getElseBody().setTask(this.getTask());
-//		}
 		if (super.getCompleted() || super.getTask().getCounter()<1)
 			return;
 		if(hasNullExpressions()){

@@ -183,7 +183,7 @@ public class Unit {
 				task.interrupt();
 				this.removeTask();
 			}
-			this.rest();
+		this.rest();
 		}
 		else {
 			if (this.getState()!=State.RESTING)
@@ -1380,7 +1380,7 @@ public class Unit {
 		if (this.getState() != State.WORKING){
 			this.setState(State.WORKING);
 			// TODO set worktime back to correct value
-			this.setWorkTime(50/this.getPrimStats().get("str"));
+			this.setWorkTime(500/this.getPrimStats().get("str"));
 			this.setTheta(Math.atan2(direction.getY(), direction.getX()));
 		}
 		

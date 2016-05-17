@@ -23,6 +23,12 @@ public abstract class Action extends BasicStatement{
 	}
 	
 	@Override
+	public void reset(){
+		this.setCompleted(false);
+		this.setInProgress(false);
+	}
+	
+	@Override
 	public void initialise(Task task){
 		this.setTask(task);
 		for (Expression<?> exp : Expressions){

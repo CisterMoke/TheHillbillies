@@ -1,6 +1,6 @@
 package hillbillies.model.statement;
 
-import java.util.*;
+import java.util.HashSet;
 import java.util.Set;
 
 import hillbillies.model.Task;
@@ -13,21 +13,14 @@ public abstract class WrapStatement extends Statement{
 	
 	@Override
 	public void setTask(Task newtask){
-		this.task=newtask;
-//		for (Statement sub : Substatements){
-//			sub.setTask(newtask);
-//		}
-//		for (Expression<?> exp : Expressions){
-//			exp.setTask(newtask);
-//		}
-		
+		this.task=newtask;	
 	}
 	
 	@Override 
 	public void reset(){
 		this.setCompleted(false);
 		for (Statement sub : Substatements){
-			sub.setCompleted(false);
+			sub.reset();
 		} 
 	}
 	

@@ -55,6 +55,7 @@ public class sandbox {
 				+ u5.getPosition().distance(testUnit.getPosition()));
 		System.out.println(testUnit.getClosestEnemy().getPosition().distance(testUnit.getPosition()));
 		System.out.println(testUnit.getClosestFriend().getPosition().distance(testUnit.getPosition()));
+		System.out.println(testUnit.getClosestUnit().getPosition().distance(testUnit.getPosition()));
 		
 	}
 

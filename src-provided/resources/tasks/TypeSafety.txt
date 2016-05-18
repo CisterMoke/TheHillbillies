@@ -1,0 +1,1 @@
+name : "test" priority : 1000 activities : moveTo enemy; 

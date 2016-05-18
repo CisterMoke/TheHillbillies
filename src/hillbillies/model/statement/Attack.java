@@ -1,11 +1,11 @@
 package hillbillies.model.statement;
 
 import hillbillies.model.Unit;
-import hillbillies.model.expression.Expression;
+import hillbillies.model.expression.UnitExpression;
 
 public class Attack extends Action{
 	
-	public Attack(Expression<Unit> unit){
+	public Attack(UnitExpression unit){
 		super.setTarget(unit);
 	}
 

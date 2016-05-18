@@ -1,12 +1,11 @@
 package hillbillies.model.statement;
 
 import hillbillies.model.expression.Expression;
-import hillbillies.model.expression.SuperExpression;
 
 public class Assignment extends BasicStatement{
 	
-	public Assignment(String n, SuperExpression value){
-		addExpression(value);
+	public Assignment(String n, Expression<?> v){
+		addExpression(v);
 		this.setName(n);
 	}
 	

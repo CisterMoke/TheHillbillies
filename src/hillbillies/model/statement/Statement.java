@@ -5,7 +5,6 @@ import java.util.*;
 import hillbillies.model.Task;
 import hillbillies.model.expression.Expression;
 import hillbillies.model.expression.Read;
-import hillbillies.model.expression.SuperExpression;
 
 public abstract class Statement {
 	
@@ -17,7 +16,7 @@ public abstract class Statement {
 	
 	public void setWrapStatement(WrapStatement stat){
 		this.wrapStatement = stat;
-		for (SuperExpression exp : this.Expressions){
+		for (Expression<?> exp : this.Expressions){
 			if (this.getWrapStatement()!=null)
 				exp.setWrapStatement(this.getWrapStatement());
 		}
@@ -25,7 +24,7 @@ public abstract class Statement {
 	
 	public boolean isWellFormed(){
 		boolean Check = true;
-		for (SuperExpression exp : this.Expressions){
+		for (Expression<?> exp : this.Expressions){
 			if (exp instanceof Read){
 				Check = (exp.getWrapStatement().readVariable(((Read) exp).getName())!=null) && Check;
 			}
@@ -47,10 +46,10 @@ public abstract class Statement {
 		return this.completed;
 	}
 	
-	protected ArrayList<SuperExpression> Expressions = new ArrayList<SuperExpression>();
+	protected ArrayList<Expression<?>> Expressions = new ArrayList<Expression<?>>();
 	
-	public void addExpression(SuperExpression value){
-		this.Expressions.add(value);
+	public void addExpression(Expression<?> e){
+		this.Expressions.add(e);
 	}
 	
 	public void setCompletedTotal(Map<Task, Boolean> map){
@@ -73,7 +72,7 @@ public abstract class Statement {
 	}
 	
 	protected boolean hasNullExpressions(){
-		for(SuperExpression e : Expressions){
+		for(Expression<?> e : Expressions){
 //			if (!this.getTask().getCheckedExpression().contains(e)){
 			if(e.hasNullExpressions()){
 				return true;
@@ -90,7 +89,7 @@ public abstract class Statement {
 	
 	public void initialise(Task task) {
 		this.setTask(task);
-		for (SuperExpression exp : Expressions){
+		for (Expression<?> exp : Expressions){
 			exp.setTask(task);
 		}
 		if (!this.getCompletedTotal().containsKey(this.getTask()))

@@ -1,11 +1,11 @@
 package hillbillies.model.statement;
 
 import hillbillies.model.Vector;
-import hillbillies.model.expression.Expression;
+import hillbillies.model.expression.PositionExpression;
 
 public class MoveTo extends Action{
 
-	public MoveTo(Expression<Vector> position){
+	public MoveTo(PositionExpression position){
 		super.setTarget(position);
 	}
 

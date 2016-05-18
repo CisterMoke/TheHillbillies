@@ -1,8 +1,9 @@
 package hillbillies.model.expression;
 
 import hillbillies.model.*;
+import hillbillies.model.statement.WrapStatement;
 
-public class Selected extends PositionExpression{
+public class Selected extends PositionExpression implements IBasicExpression{
 	
 	public Selected() {
 	}
@@ -17,6 +18,23 @@ public class Selected extends PositionExpression{
 			return this.getTask().getSelected();
 		}
 		return null;
+	}
+	
+	@Override
+	public void setTask(Task task) {
+		this.assignedTask = task;
+		
+	}
+
+	@Override
+	public void setWrapStatement(WrapStatement newstat) {
+		this.statement = newstat;
+		
+	}
+
+	@Override
+	public boolean hasNullExpressions() {
+		return getValue() == null;
 	}
 
 }

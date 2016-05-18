@@ -4,7 +4,7 @@ import hillbillies.model.expression.*;
 
 public class If extends WrapStatement{
 
-	public If(Expression<Boolean> condition2, Statement IB, Statement EB){
+	public If(BooleanExpression condition2, Statement IB, Statement EB){
 		this.setCondition(condition2);
 		this.setIfBody(IB);
 		this.setElseBody(EB);

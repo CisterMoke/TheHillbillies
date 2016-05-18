@@ -1,7 +1,9 @@
 package hillbillies.model.expression;
 
+import hillbillies.model.Task;
+import hillbillies.model.statement.WrapStatement;
 
-public class Read extends BasicExpression<Object>{
+public class Read extends Expression<Object> implements IBasicExpression{
 
 	public Read(String key){
 		this.setName(key);
@@ -9,12 +11,8 @@ public class Read extends BasicExpression<Object>{
 
 	@Override
 	public Object getValue() {
-		if (this.statement!=null)
-			if (this.statement.readVariable(this.getName()) !=null)
-				return statement.readVariable(this.getName());
-			else {
-				return null;
-			}
+		if (this.statement!=null && this.statement.readVariable(this.getName()) !=null)
+			return statement.readVariable(this.getName());
 		else {
 			return null;
 		}
@@ -29,4 +27,21 @@ public class Read extends BasicExpression<Object>{
 	}
 
 	private String name;
+
+	@Override
+	public void setTask(Task task) {
+		this.assignedTask = task;
+		
+	}
+
+	@Override
+	public void setWrapStatement(WrapStatement newstat) {
+		this.statement = newstat;
+		
+	}
+
+	@Override
+	public boolean hasNullExpressions() {
+		return getValue() == null;
+	}
 }

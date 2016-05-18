@@ -1,13 +1,50 @@
 package hillbillies.model.expression;
 
-public class Not extends ComposedExpression<Boolean,Boolean>{
-	public Not(Expression<Boolean> e) {
+import java.util.ArrayList;
+
+import hillbillies.model.Task;
+import hillbillies.model.statement.WrapStatement;
+
+public class Not extends BooleanExpression implements IComposedExpression<BooleanExpression>{
+	public Not(BooleanExpression e) {
 		this.subExpressions.add(e);
 	}
 
 	@Override
 	public Boolean getValue() {
 		return !this.subExpressions.get(0).getValue();
+	}
+	
+	@Override
+	public ArrayList<BooleanExpression> getSubExpressions() {
+		return new ArrayList<BooleanExpression>(subExpressions);
+	}
+	
+	private ArrayList<BooleanExpression> subExpressions = new ArrayList<BooleanExpression>();
+
+	@Override
+	public void setTask(Task task) {
+		this.assignedTask = task;
+		for(BooleanExpression e : subExpressions)
+			e.setTask(task);
+	}
+
+	@Override
+	public void setWrapStatement(WrapStatement newstat) {
+		this.statement=newstat;
+		for (BooleanExpression expr : subExpressions){
+			expr.setWrapStatement(newstat);
+		}
+	}
+
+	@Override
+	public boolean hasNullExpressions(){
+		for (BooleanExpression e : subExpressions){
+			if(e.hasNullExpressions()){
+				return true;
+			}
+		}
+		return this.getValue()==null;
 	}
 
 }

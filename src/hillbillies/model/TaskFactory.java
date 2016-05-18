@@ -9,7 +9,7 @@ import hillbillies.model.statement.*;
 import hillbillies.part3.programs.ITaskFactory;
 import hillbillies.part3.programs.SourceLocation;
 
-public class TaskFactory implements ITaskFactory<SuperExpression, Statement, Task> {
+public class TaskFactory implements ITaskFactory<Expression<?>, Statement, Task> {
 	
 	public TaskFactory() {
 		// TODO Auto-generated constructor stub
@@ -32,278 +32,260 @@ public class TaskFactory implements ITaskFactory<SuperExpression, Statement, Tas
 	}
 
 	@Override
-	public Statement createAssignment(String variableName, SuperExpression value, SourceLocation sourceLocation) {
+	public Assignment createAssignment(String variableName, Expression<?> value, SourceLocation sourceLocation) {
 		return new Assignment(variableName, value);
 	}
 
 	@Override
-	public Statement createWhile(SuperExpression condition, Statement body, SourceLocation sourceLocation) {
+	public While createWhile(Expression<?> condition, Statement body, SourceLocation sourceLocation) {
 		try{
-			return new While((Expression<Boolean>)condition, body);
+			return new While((BooleanExpression)condition, body);
 		}
 		catch(ClassCastException exc){
-			System.out.println("Incorrect type error at line: " + sourceLocation.getLine());
+			throw new ClassCastException("Incorrect type error at line: " + sourceLocation.getLine());
 		}
-		return null;
 	}
 
 	@Override
-	public Statement createIf(SuperExpression condition, Statement ifBody, Statement elseBody,
+	public If createIf(Expression<?> condition, Statement ifBody, Statement elseBody,
 			SourceLocation sourceLocation) {
 		System.out.println("If gemaakt");
 		try{
-			return new If((Expression<Boolean>)condition, ifBody, elseBody);		
+			return new If((BooleanExpression)condition, ifBody, elseBody);		
 		}
 		catch(ClassCastException exc){
-			System.out.println("Incorrect type error at line: " + sourceLocation.getLine());
+			throw new ClassCastException("Incorrect type error at line: " + sourceLocation.getLine());
 		}
-		return null;
 	}
 
 	@Override
-	public Statement createBreak(SourceLocation sourceLocation) {
+	public Break createBreak(SourceLocation sourceLocation) {
 		return new Break();
 	}
 
 	@Override
-	public Statement createPrint(SuperExpression value, SourceLocation sourceLocation) {
+	public Print createPrint(Expression<?> value, SourceLocation sourceLocation) {
 		return new Print(value);
 	}
 
 	@Override
-	public Statement createSequence(List<Statement> statements, SourceLocation sourceLocation) {
+	public Sequence createSequence(List<Statement> statements, SourceLocation sourceLocation) {
 		return new Sequence(statements);
 	}
 
 	@Override
-	public Statement createMoveTo(SuperExpression position, SourceLocation sourceLocation) {
+	public MoveTo createMoveTo(Expression<?> position, SourceLocation sourceLocation) {
 		System.out.println("MoveTo position: " + position);
 		try{		
-			return new MoveTo((Expression<Vector>)position);
+			return new MoveTo((PositionExpression)position);
 		}
 		catch(ClassCastException exc){
-			System.out.println("Incorrect type error at line: " + sourceLocation.getLine());
+			throw new ClassCastException("Incorrect type error at line: " + sourceLocation.getLine());
 		}
-		System.out.println("This maybe?");
-		return null;
 	}
 
 	@Override
-	public Statement createWork(SuperExpression position, SourceLocation sourceLocation) {
+	public Work createWork(Expression<?> position, SourceLocation sourceLocation) {
 		try{
-			return new Work((Expression<Vector>)position);
+			return new Work((PositionExpression)position);
 		}
 		catch(ClassCastException exc){
-			System.out.println("Incorrect type error at line: " + sourceLocation.getLine());
+			throw new ClassCastException("Incorrect type error at line: " + sourceLocation.getLine());
 		}
-		return null;
 	}
 
 	@Override
-	public Statement createFollow(SuperExpression unit, SourceLocation sourceLocation) {
+	public Follow createFollow(Expression<?> unit, SourceLocation sourceLocation) {
 		try{
-			return new Follow((Expression<Unit>)unit);
+			return new Follow((UnitExpression)unit);
 		}
 		catch(ClassCastException exc){
-			System.out.println("Incorrect type error at line: " + sourceLocation.getLine());
+			throw new ClassCastException("Incorrect type error at line: " + sourceLocation.getLine());
 		}
-		return null;
 	}
 
 	@Override
-	public Statement createAttack(SuperExpression unit, SourceLocation sourceLocation) {
+	public Attack createAttack(Expression<?> unit, SourceLocation sourceLocation) {
 		try{
-			return new Attack((Expression<Unit>)unit);
+			return new Attack((UnitExpression)unit);
 		}
 		catch(ClassCastException exc){
-			System.out.println("Incorrect type error at line: " + sourceLocation.getLine());
+			throw new ClassCastException("Incorrect type error at line: " + sourceLocation.getLine());
 		}
-		return null;
 	}
 
 	@Override
-	public Expression<Object> createReadVariable(String variableName, SourceLocation sourceLocation) {
+	public Read createReadVariable(String variableName, SourceLocation sourceLocation) {
 		return new Read(variableName);
 	}
 
 	@Override
-	public Expression<Boolean> createIsSolid(SuperExpression position, SourceLocation sourceLocation) {
+	public Is_solid createIsSolid(Expression<?> position, SourceLocation sourceLocation) {
 		try{
-			return new Is_solid((Expression<Vector>) position);
+			return new Is_solid((PositionExpression) position);
 		}
 		catch(ClassCastException exc){
-			System.out.println("Incorrect type error at line: " + sourceLocation.getLine());
+			throw new ClassCastException("Incorrect type error at line: " + sourceLocation.getLine());
 		}
-		return null;
 	}
 
 	@Override
-	public Expression<Boolean> createIsPassable(SuperExpression position, SourceLocation sourceLocation) {
+	public Is_passable createIsPassable(Expression<?> position, SourceLocation sourceLocation) {
 		try{
-			return new Is_passable((Expression<Vector>) position);
+			return new Is_passable((PositionExpression) position);
 		}
 		catch(ClassCastException exc){
-			System.out.println("Incorrect type error at line: " + sourceLocation.getLine());
+			throw new ClassCastException("Incorrect type error at line: " + sourceLocation.getLine());
 		}
-		return null;
 	}
 
 	@Override
-	public Expression<Boolean> createIsFriend(SuperExpression unit, SourceLocation sourceLocation) {
+	public Is_friend createIsFriend(Expression<?> unit, SourceLocation sourceLocation) {
 		try{
-			return new Is_friend((Expression<Unit>) unit);
+			return new Is_friend((UnitExpression) unit);
 		}
 		catch(ClassCastException exc){
-			System.out.println("Incorrect type error at line: " + sourceLocation.getLine());
+			throw new ClassCastException("Incorrect type error at line: " + sourceLocation.getLine());
 		}
-		return null;
 	}
 
 	@Override
-	public Expression<Boolean> createIsEnemy(SuperExpression unit, SourceLocation sourceLocation) {
+	public Is_enemy createIsEnemy(Expression<?> unit, SourceLocation sourceLocation) {
 		try{
-			return new Is_enemy((Expression<Unit>) unit);
+			return new Is_enemy((UnitExpression) unit);
 		}
 		catch(ClassCastException exc){
-			System.out.println("Incorrect type error at line: " + sourceLocation.getLine());
+			throw new ClassCastException("Incorrect type error at line: " + sourceLocation.getLine());
 		}
-		return null;
 	}
 
 	@Override
-	public Expression<Boolean> createIsAlive(SuperExpression unit, SourceLocation sourceLocation) {
+	public Is_alive createIsAlive(Expression<?> unit, SourceLocation sourceLocation) {
 		try{
-			return new Is_alive((Expression<Unit>) unit);
+			return new Is_alive((UnitExpression) unit);
 		}
 		catch(ClassCastException exc){
-			System.out.println("Incorrect type error at line: " + sourceLocation.getLine());
+			throw new ClassCastException("Incorrect type error at line: " + sourceLocation.getLine());
 		}
-		return null;
 	}
 
 	@Override
-	public Expression<Boolean> createCarriesItem(SuperExpression unit, SourceLocation sourceLocation) {
+	public Carries_item createCarriesItem(Expression<?> unit, SourceLocation sourceLocation) {
 		try{
-			return new Carries_item((Expression<Unit>) unit); 
+			return new Carries_item((UnitExpression) unit); 
 		}
 		catch(ClassCastException exc){
-			System.out.println("Incorrect type error at line: " + sourceLocation.getLine());
+			throw new ClassCastException("Incorrect type error at line: " + sourceLocation.getLine());
 		}
-		return null;
 	}
 
 	@Override
-	public Expression<Boolean> createAnd(SuperExpression left, SuperExpression right, SourceLocation sourceLocation) {
+	public And createAnd(Expression<?> left, Expression<?> right, SourceLocation sourceLocation) {
 		try{
-			return new And((Expression<Boolean>)left, (Expression<Boolean>)right);
+			return new And((BooleanExpression)left, (BooleanExpression)right);
 		}
 		catch(ClassCastException exc){
-			System.out.println("Incorrect type error at line: " + sourceLocation.getLine());
+			throw new ClassCastException("Incorrect type error at line: " + sourceLocation.getLine());
 		}
-		return null;
 	}
 
 	@Override
-	public Expression<Boolean> createOr(SuperExpression left, SuperExpression right, SourceLocation sourceLocation) {
+	public Or createOr(Expression<?> left, Expression<?> right, SourceLocation sourceLocation) {
 		try{
-			return new Or((Expression<Boolean>)left, (Expression<Boolean>)right);
+			return new Or((BooleanExpression)left, (BooleanExpression)right);
 		}
 		catch(ClassCastException exc){
-			System.out.println("Incorrect type error at line: " + sourceLocation.getLine());
+			throw new ClassCastException("Incorrect type error at line: " + sourceLocation.getLine());
 		}
-		return null;
 	}
 
 	@Override
-	public Expression<Boolean> createNot(SuperExpression expression, SourceLocation sourceLocation) {
+	public Not createNot(Expression<?> expression, SourceLocation sourceLocation) {
 		try{
-			return new Not((Expression<Boolean>) expression);
+			return new Not((BooleanExpression) expression);
 		}
 		catch(ClassCastException exc){
-			System.out.println("Incorrect type error at line: " + sourceLocation.getLine());
+			throw new ClassCastException("Incorrect type error at line: " + sourceLocation.getLine());
 		}
-		return null;
 	}
 	
 	@Override
-	public Expression<Vector> createHerePosition(SourceLocation sourceLocation) {
+	public Here createHerePosition(SourceLocation sourceLocation) {
 		return new Here();
 	}
 
 	@Override
-	public Expression<Vector> createLogPosition(SourceLocation sourceLocation) {
+	public LogLiteral createLogPosition(SourceLocation sourceLocation) {
 		return new LogLiteral();
 	}
 
 	@Override
-	public Expression<Vector> createBoulderPosition(SourceLocation sourceLocation) {
+	public BoulderLiteral createBoulderPosition(SourceLocation sourceLocation) {
 		return new BoulderLiteral();
 	}
 
 	@Override
-	public Expression<Vector> createWorkshopPosition(SourceLocation sourceLocation) {
+	public WorkshopLiteral createWorkshopPosition(SourceLocation sourceLocation) {
 		return new WorkshopLiteral();
 	}
 
 	@Override
-	public Expression<Vector> createSelectedPosition(SourceLocation sourceLocation) {
+	public Selected createSelectedPosition(SourceLocation sourceLocation) {
 		return new Selected();
 	}
 
 	@Override
-	public Expression<Vector> createNextToPosition(SuperExpression position, SourceLocation sourceLocation) {
+	public Next_to createNextToPosition(Expression<?> position, SourceLocation sourceLocation) {
 		try{
-			return new Next_to((Expression<Vector>) position);
+			return new Next_to((PositionExpression) position);
 		}
 		catch(ClassCastException exc){
-			System.out.println("Incorrect type error at line: " + sourceLocation.getLine());
+			throw new ClassCastException("Incorrect type error at line: " + sourceLocation.getLine());
 		}
-		return null;
 	}
 
 	@Override
-	public Expression<Vector> createPositionOf(SuperExpression unit, SourceLocation sourceLocation) {
+	public Position_of createPositionOf(Expression<?> unit, SourceLocation sourceLocation) {
 		try{
-			return new Position_of((Expression<Unit>) unit);
+			return new Position_of((UnitExpression) unit);
 		}
 		catch(ClassCastException exc){
-			System.out.println("Incorrect type error at line: " + sourceLocation.getLine());
+			throw new ClassCastException("Incorrect type error at line: " + sourceLocation.getLine());
 		}
-		return null;
 	}
 
 	@Override
-	public Expression<Vector> createLiteralPosition(int x, int y, int z, SourceLocation sourceLocation) {
+	public PositionLiteral createLiteralPosition(int x, int y, int z, SourceLocation sourceLocation) {
 		return new PositionLiteral(new Vector(x, y, z));
 	}
 
 	@Override
-	public Expression<Unit> createThis(SourceLocation sourceLocation) {
+	public This createThis(SourceLocation sourceLocation) {
 		return new This();
 	}
 
 	@Override
-	public Expression<Unit> createFriend(SourceLocation sourceLocation) {
+	public Friend createFriend(SourceLocation sourceLocation) {
 		return new Friend();
 	}
 
 	@Override
-	public Expression<Unit> createEnemy(SourceLocation sourceLocation) {
+	public Enemy createEnemy(SourceLocation sourceLocation) {
 		return new Enemy();
 	}
 
 	@Override
-	public Expression<Unit> createAny(SourceLocation sourceLocation) {
+	public Any createAny(SourceLocation sourceLocation) {
 		return new Any();
 	}
 
 	@Override
-	public Expression<Boolean> createTrue(SourceLocation sourceLocation) {
+	public BooleanLiteral createTrue(SourceLocation sourceLocation) {
 		return new BooleanLiteral(true);
 	}
 
 	@Override
-	public Expression<Boolean> createFalse(SourceLocation sourceLocation) {
+	public BooleanLiteral createFalse(SourceLocation sourceLocation) {
 		return new BooleanLiteral(false);
 	}
 

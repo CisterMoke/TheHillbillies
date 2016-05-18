@@ -1,6 +1,9 @@
 package hillbillies.model.expression;
 
-public class BooleanLiteral extends BasicExpression<Boolean>{
+import hillbillies.model.Task;
+import hillbillies.model.statement.WrapStatement;
+
+public class BooleanLiteral extends BooleanExpression implements IBasicExpression{
 	
 	public BooleanLiteral(boolean value){
 		this.value = value;
@@ -11,6 +14,23 @@ public class BooleanLiteral extends BasicExpression<Boolean>{
 	@Override
 	public Boolean getValue() {
 		return this.value;
+	}
+
+	@Override
+	public void setTask(Task task) {
+		this.assignedTask = task;
+		
+	}
+
+	@Override
+	public void setWrapStatement(WrapStatement newstat) {
+		this.statement = newstat;
+		
+	}
+
+	@Override
+	public boolean hasNullExpressions() {
+		return getValue() == null;
 	}
 
 }

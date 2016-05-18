@@ -5,41 +5,45 @@ import java.util.ArrayList;
 import hillbillies.model.Task;
 import hillbillies.model.statement.WrapStatement;
 
-public class Not extends BooleanExpression implements IComposedExpression<BooleanExpression>{
-	public Not(BooleanExpression e) {
-		this.subExpressions.add(e);
+public class Not extends BooleanExpression implements IComposedExpression<Expression<?>>{
+	public Not(Expression<?> e) {
+		if(!(e instanceof Read)){
+			BooleanExpression exp = (BooleanExpression) e;
+			this.subExpressions.add(exp);
+		}
+		else subExpressions.add(e);
 	}
 
 	@Override
 	public Boolean getValue() {
-		return !this.subExpressions.get(0).getValue();
+		return ! (boolean) this.subExpressions.get(0).getValue();
 	}
 	
 	@Override
-	public ArrayList<BooleanExpression> getSubExpressions() {
-		return new ArrayList<BooleanExpression>(subExpressions);
+	public ArrayList<Expression<?>> getSubExpressions() {
+		return new ArrayList<Expression<?>>(subExpressions);
 	}
 	
-	private ArrayList<BooleanExpression> subExpressions = new ArrayList<BooleanExpression>();
+	private ArrayList<Expression<?>> subExpressions = new ArrayList<Expression<?>>();
 
 	@Override
 	public void setTask(Task task) {
 		this.assignedTask = task;
-		for(BooleanExpression e : subExpressions)
+		for(Expression<?> e : subExpressions)
 			e.setTask(task);
 	}
 
 	@Override
 	public void setWrapStatement(WrapStatement newstat) {
 		this.statement=newstat;
-		for (BooleanExpression expr : subExpressions){
+		for (Expression<?> expr : subExpressions){
 			expr.setWrapStatement(newstat);
 		}
 	}
 
 	@Override
 	public boolean hasNullExpressions(){
-		for (BooleanExpression e : subExpressions){
+		for (Expression<?> e : subExpressions){
 			if(e.hasNullExpressions()){
 				return true;
 			}

@@ -4,8 +4,12 @@ import hillbillies.model.expression.*;
 
 public class If extends WrapStatement{
 
-	public If(BooleanExpression condition2, Statement IB, Statement EB){
-		this.setCondition(condition2);
+	public If(Expression<?> condition2, Statement IB, Statement EB){
+		if(!(condition2 instanceof Read)){
+			BooleanExpression e = (BooleanExpression) condition2;
+			setCondition(e);
+		}		
+		else setCondition(condition2);
 		this.setIfBody(IB);
 		this.setElseBody(EB);
 	}
@@ -33,11 +37,11 @@ public class If extends WrapStatement{
 		
 	}
 
-	public Expression<Boolean> getCondition() {
+	public Expression<?> getCondition() {
 		return condition;
 	}
 	
-	public void setCondition(Expression<Boolean> condition2) {
+	public void setCondition(Expression<?> condition2) {
 		super.addExpression(condition2);
 		this.condition = condition2;
 	}
@@ -61,7 +65,7 @@ public class If extends WrapStatement{
 			this.Substatements.add(elseBody);
 	}
 
-	private Expression<Boolean> condition;
+	private Expression<?> condition;
 	private Statement IfBody;
 	private Statement ElseBody;
 }

@@ -1,1 +1,1 @@
-name : "test" priority : 1000 activities : moveTo enemy; 
+name : "test" priority : 1000 activities : v := break; moveTo enemy; 

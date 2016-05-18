@@ -39,7 +39,7 @@ public class TaskFactory implements ITaskFactory<Expression<?>, Statement, Task>
 	@Override
 	public While createWhile(Expression<?> condition, Statement body, SourceLocation sourceLocation) {
 		try{
-			return new While((BooleanExpression)condition, body);
+			return new While((Expression<?>)condition, body);
 		}
 		catch(ClassCastException exc){
 			throw new ClassCastException("Incorrect type error at line: " + sourceLocation.getLine());
@@ -51,7 +51,7 @@ public class TaskFactory implements ITaskFactory<Expression<?>, Statement, Task>
 			SourceLocation sourceLocation) {
 		System.out.println("If gemaakt");
 		try{
-			return new If((BooleanExpression)condition, ifBody, elseBody);		
+			return new If((Expression<?>)condition, ifBody, elseBody);		
 		}
 		catch(ClassCastException exc){
 			throw new ClassCastException("Incorrect type error at line: " + sourceLocation.getLine());
@@ -77,7 +77,7 @@ public class TaskFactory implements ITaskFactory<Expression<?>, Statement, Task>
 	public MoveTo createMoveTo(Expression<?> position, SourceLocation sourceLocation) {
 		System.out.println("MoveTo position: " + position);
 		try{		
-			return new MoveTo((PositionExpression)position);
+			return new MoveTo((Expression<?>)position);
 		}
 		catch(ClassCastException exc){
 			throw new ClassCastException("Incorrect type error at line: " + sourceLocation.getLine());
@@ -87,7 +87,7 @@ public class TaskFactory implements ITaskFactory<Expression<?>, Statement, Task>
 	@Override
 	public Work createWork(Expression<?> position, SourceLocation sourceLocation) {
 		try{
-			return new Work((PositionExpression)position);
+			return new Work((Expression<?>)position);
 		}
 		catch(ClassCastException exc){
 			throw new ClassCastException("Incorrect type error at line: " + sourceLocation.getLine());
@@ -97,7 +97,7 @@ public class TaskFactory implements ITaskFactory<Expression<?>, Statement, Task>
 	@Override
 	public Follow createFollow(Expression<?> unit, SourceLocation sourceLocation) {
 		try{
-			return new Follow((UnitExpression)unit);
+			return new Follow((Expression<?>)unit);
 		}
 		catch(ClassCastException exc){
 			throw new ClassCastException("Incorrect type error at line: " + sourceLocation.getLine());
@@ -107,7 +107,7 @@ public class TaskFactory implements ITaskFactory<Expression<?>, Statement, Task>
 	@Override
 	public Attack createAttack(Expression<?> unit, SourceLocation sourceLocation) {
 		try{
-			return new Attack((UnitExpression)unit);
+			return new Attack((Expression<?>)unit);
 		}
 		catch(ClassCastException exc){
 			throw new ClassCastException("Incorrect type error at line: " + sourceLocation.getLine());
@@ -122,7 +122,7 @@ public class TaskFactory implements ITaskFactory<Expression<?>, Statement, Task>
 	@Override
 	public Is_solid createIsSolid(Expression<?> position, SourceLocation sourceLocation) {
 		try{
-			return new Is_solid((PositionExpression) position);
+			return new Is_solid((Expression<?>) position);
 		}
 		catch(ClassCastException exc){
 			throw new ClassCastException("Incorrect type error at line: " + sourceLocation.getLine());
@@ -132,7 +132,7 @@ public class TaskFactory implements ITaskFactory<Expression<?>, Statement, Task>
 	@Override
 	public Is_passable createIsPassable(Expression<?> position, SourceLocation sourceLocation) {
 		try{
-			return new Is_passable((PositionExpression) position);
+			return new Is_passable((Expression<?>) position);
 		}
 		catch(ClassCastException exc){
 			throw new ClassCastException("Incorrect type error at line: " + sourceLocation.getLine());
@@ -142,7 +142,7 @@ public class TaskFactory implements ITaskFactory<Expression<?>, Statement, Task>
 	@Override
 	public Is_friend createIsFriend(Expression<?> unit, SourceLocation sourceLocation) {
 		try{
-			return new Is_friend((UnitExpression) unit);
+			return new Is_friend((Expression<?>) unit);
 		}
 		catch(ClassCastException exc){
 			throw new ClassCastException("Incorrect type error at line: " + sourceLocation.getLine());
@@ -152,7 +152,7 @@ public class TaskFactory implements ITaskFactory<Expression<?>, Statement, Task>
 	@Override
 	public Is_enemy createIsEnemy(Expression<?> unit, SourceLocation sourceLocation) {
 		try{
-			return new Is_enemy((UnitExpression) unit);
+			return new Is_enemy((Expression<?>) unit);
 		}
 		catch(ClassCastException exc){
 			throw new ClassCastException("Incorrect type error at line: " + sourceLocation.getLine());
@@ -162,7 +162,7 @@ public class TaskFactory implements ITaskFactory<Expression<?>, Statement, Task>
 	@Override
 	public Is_alive createIsAlive(Expression<?> unit, SourceLocation sourceLocation) {
 		try{
-			return new Is_alive((UnitExpression) unit);
+			return new Is_alive((Expression<?>) unit);
 		}
 		catch(ClassCastException exc){
 			throw new ClassCastException("Incorrect type error at line: " + sourceLocation.getLine());
@@ -172,7 +172,7 @@ public class TaskFactory implements ITaskFactory<Expression<?>, Statement, Task>
 	@Override
 	public Carries_item createCarriesItem(Expression<?> unit, SourceLocation sourceLocation) {
 		try{
-			return new Carries_item((UnitExpression) unit); 
+			return new Carries_item((Expression<?>) unit); 
 		}
 		catch(ClassCastException exc){
 			throw new ClassCastException("Incorrect type error at line: " + sourceLocation.getLine());
@@ -182,7 +182,7 @@ public class TaskFactory implements ITaskFactory<Expression<?>, Statement, Task>
 	@Override
 	public And createAnd(Expression<?> left, Expression<?> right, SourceLocation sourceLocation) {
 		try{
-			return new And((BooleanExpression)left, (BooleanExpression)right);
+			return new And((Expression<?>)left, (Expression<?>)right);
 		}
 		catch(ClassCastException exc){
 			throw new ClassCastException("Incorrect type error at line: " + sourceLocation.getLine());
@@ -192,7 +192,7 @@ public class TaskFactory implements ITaskFactory<Expression<?>, Statement, Task>
 	@Override
 	public Or createOr(Expression<?> left, Expression<?> right, SourceLocation sourceLocation) {
 		try{
-			return new Or((BooleanExpression)left, (BooleanExpression)right);
+			return new Or((Expression<?>)left, (Expression<?>)right);
 		}
 		catch(ClassCastException exc){
 			throw new ClassCastException("Incorrect type error at line: " + sourceLocation.getLine());
@@ -202,7 +202,7 @@ public class TaskFactory implements ITaskFactory<Expression<?>, Statement, Task>
 	@Override
 	public Not createNot(Expression<?> expression, SourceLocation sourceLocation) {
 		try{
-			return new Not((BooleanExpression) expression);
+			return new Not((Expression<?>) expression);
 		}
 		catch(ClassCastException exc){
 			throw new ClassCastException("Incorrect type error at line: " + sourceLocation.getLine());
@@ -237,7 +237,7 @@ public class TaskFactory implements ITaskFactory<Expression<?>, Statement, Task>
 	@Override
 	public Next_to createNextToPosition(Expression<?> position, SourceLocation sourceLocation) {
 		try{
-			return new Next_to((PositionExpression) position);
+			return new Next_to((Expression<?>) position);
 		}
 		catch(ClassCastException exc){
 			throw new ClassCastException("Incorrect type error at line: " + sourceLocation.getLine());
@@ -247,7 +247,7 @@ public class TaskFactory implements ITaskFactory<Expression<?>, Statement, Task>
 	@Override
 	public Position_of createPositionOf(Expression<?> unit, SourceLocation sourceLocation) {
 		try{
-			return new Position_of((UnitExpression) unit);
+			return new Position_of((Expression<?>) unit);
 		}
 		catch(ClassCastException exc){
 			throw new ClassCastException("Incorrect type error at line: " + sourceLocation.getLine());

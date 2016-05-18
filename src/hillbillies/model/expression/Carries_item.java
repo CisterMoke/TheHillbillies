@@ -3,38 +3,44 @@ package hillbillies.model.expression;
 import java.util.ArrayList;
 
 import hillbillies.model.Task;
+import hillbillies.model.Unit;
 import hillbillies.model.statement.WrapStatement;
 
-public class Carries_item extends BooleanExpression implements IComposedExpression<UnitExpression>{
-	public Carries_item(UnitExpression e) {
-		this.subExpressions.add(e);
+public class Carries_item extends BooleanExpression implements IComposedExpression<Expression<?>>{
+	public Carries_item(Expression<?> e) {
+		if(!(e instanceof Read)){
+			UnitExpression exp = (UnitExpression) e;
+			this.subExpressions.add(exp);
+		}
+		else subExpressions.add(e);
 	}
 
 	@Override
 	public Boolean getValue() {
-		return this.subExpressions.get(0).getValue().isCarrying();
+		Unit unit = (Unit) subExpressions.get(0).getValue();
+		return unit.isCarrying();
 	}
 
-	private ArrayList<UnitExpression> subExpressions = new ArrayList<UnitExpression>();
+	private ArrayList<Expression<?>> subExpressions = new ArrayList<Expression<?>>();
 
 	@Override
 	public void setTask(Task task) {
 		this.assignedTask = task;
-		for(UnitExpression e : subExpressions)
+		for(Expression<?> e : subExpressions)
 			e.setTask(task);
 	}
 
 	@Override
 	public void setWrapStatement(WrapStatement newstat) {
 		this.statement=newstat;
-		for (UnitExpression expr : subExpressions){
+		for (Expression<?> expr : subExpressions){
 			expr.setWrapStatement(newstat);
 		}
 	}
 
 	@Override
 	public boolean hasNullExpressions(){
-		for (UnitExpression e : subExpressions){
+		for (Expression<?> e : subExpressions){
 			if(e.hasNullExpressions()){
 				return true;
 			}
@@ -43,8 +49,8 @@ public class Carries_item extends BooleanExpression implements IComposedExpressi
 	}
 
 	@Override
-	public ArrayList<UnitExpression> getSubExpressions() {
-		return new ArrayList<UnitExpression>(subExpressions);
+	public ArrayList<Expression<?>> getSubExpressions() {
+		return new ArrayList<Expression<?>>(subExpressions);
 	}
 
 }

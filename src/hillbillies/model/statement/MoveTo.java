@@ -1,12 +1,16 @@
 package hillbillies.model.statement;
 
 import hillbillies.model.Vector;
-import hillbillies.model.expression.PositionExpression;
+import hillbillies.model.expression.*;
 
 public class MoveTo extends Action{
 
-	public MoveTo(PositionExpression position){
-		super.setTarget(position);
+	public MoveTo(Expression<?> position){
+		if(!(position instanceof Read)){
+			PositionExpression e = (PositionExpression) position;
+			setTarget(e);
+		}
+		else super.setTarget(position);
 	}
 
 	@Override

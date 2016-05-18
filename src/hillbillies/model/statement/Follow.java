@@ -1,12 +1,16 @@
 package hillbillies.model.statement;
 
 import hillbillies.model.Unit;
-import hillbillies.model.expression.UnitExpression;
+import hillbillies.model.expression.*;
 
 public class Follow extends Action{
 
-	public Follow(UnitExpression unit){
-		super.setTarget(unit);
+	public Follow(Expression<?> unit){
+		if(!(unit instanceof Read)){
+			UnitExpression e = (UnitExpression) unit;
+			setTarget(e);
+		}
+		else super.setTarget(unit);
 	}
 
 	@Override

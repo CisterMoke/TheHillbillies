@@ -4,9 +4,13 @@ import hillbillies.model.expression.*;
 
 public class While extends WrapStatement{
 
-	public While(Expression<Boolean> condition2, Statement b){
+	public While(Expression<?> condition2, Statement b){
+		if(!(condition2 instanceof Read)){
+			BooleanExpression e = (BooleanExpression) condition2;
+			setCondition(e);
+		}		
+		else setCondition(condition2);
 		this.setBody(b);
-		this.setCondition(condition2);
 	}
 	
 	@Override
@@ -28,7 +32,7 @@ public class While extends WrapStatement{
 			prevCompleted=this.getBody().getCompleted();
 			
 		}
-		super.setCompleted(!(this.getCondition().getValue()));
+		super.setCompleted(!(boolean)this.getCondition().getValue());
 	}
 	
 	@Override
@@ -37,10 +41,10 @@ public class While extends WrapStatement{
 		return true;
 	}
 	
-	public Expression<Boolean> getCondition() {
+	public Expression<?> getCondition() {
 		return condition;
 	}
-	public void setCondition(Expression<Boolean> condition) {
+	public void setCondition(Expression<?> condition) {
 		super.addExpression(condition);
 		this.condition = condition;
 	}
@@ -62,7 +66,7 @@ public class While extends WrapStatement{
 	}
 
 	private boolean inLoop = true;
-	private Expression<Boolean> condition;
+	private Expression<?> condition;
 	private Statement body;
 	
 

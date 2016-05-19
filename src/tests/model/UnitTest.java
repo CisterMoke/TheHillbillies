@@ -805,6 +805,69 @@ public class UnitTest {
 		assertEquals(State.IDLE, testUnit.getState());
 		assertEquals(BaseLine-30, testUnit.getHp(), 0.0000001);
 	}
+	
+	@Test
+	public void testClosestEnemy(){
+		Unit testUnit2 = new Unit("Dummie", 1.5, 0.5, 0.5, 50, 50, 50, 50);
+		testWorld.addUnit(testUnit2);
+		assertEquals(testUnit2, testUnit.getClosestEnemy());
+	}
+	
+	@Test
+	public void testClosestFriend(){
+		Unit testUnit2 = new Unit("Dummie", 0.5, 0.5, 0.5, 50, 50, 50, 50);
+		testWorld.addUnit(testUnit2);
+		Unit testUnit3 = new Unit("Dummie", 0.5, 0.5, 0.5, 50, 50, 50, 50);
+		testWorld.addUnit(testUnit3);
+		Unit testUnit4 = new Unit("Dummie", 0.5, 0.5, 0.5, 50, 50, 50, 50);
+		testWorld.addUnit(testUnit4);
+		Unit testUnit5 = new Unit("Dummie", 0.5, 0.5, 0.5, 50, 50, 50, 50);
+		testWorld.addUnit(testUnit5);
+		Unit testUnit6 = new Unit("Dummie", 0.5, 0.5, 0.5, 50, 50, 50, 50);
+		testWorld.addUnit(testUnit6);
+		assertEquals(testUnit6, testUnit.getClosestFriend());
+	}
+	
+	@Test
+	public void testClosestAny(){
+		Unit testUnit2 = new Unit("Dummie", 1.5, 0.5, 0.5, 50, 50, 50, 50);
+		testWorld.addUnit(testUnit2);
+		assertEquals(testUnit2, testUnit.getClosestUnit());
+	}
+	
+	@Test
+	public void testClosestBoulder(){
+		Boulder boulder = new Boulder(1.5, 0.5, 0.5, 20);
+		testWorld.addBoulder(boulder);
+		assertEquals(boulder, testUnit.getClosestBoulder());
+	}
+	
+	@Test
+	public void testClosestLog(){
+		Log log = new Log(1.5, 0.5, 0.5, 20);
+		testWorld.addLog(log);
+		assertEquals(log, testUnit.getClosestLog());
+	}
+	
+	@Test
+	public void testClosestWorkshop(){
+		ArrayList<Integer> list = new ArrayList<Integer>(Arrays.asList(3, 3, 0));
+		testWorld.getBlockAtPos(list).setBlockType(BlockType.WORKSHOP);
+		assertEquals(testWorld.getBlockAtPos(list), testUnit.getClosestWorkshop());
+	}
+	
+	@Test
+	public void testFollow(){
+		Unit testUnit2 = new Unit("Dummie", 4.5, 0.5, 0.5, 50, 50, 50, 50);
+		testWorld.addUnit(testUnit2);
+		testUnit.startFollow(testUnit2);
+		assertTrue(testUnit2.getPosition().equals(testUnit.getFinTarget()));
+		ArrayList<Integer> list = new ArrayList<Integer>(Arrays.asList(3, 3, 0));
+		Vector vector = new Vector(3.5, 3.5, 3.5);
+		testUnit2.setPosition(vector);
+		testUnit.advanceTime(0.2);
+		assertTrue(testUnit2.getPosition().equals(testUnit.getFinTarget()));
+	}
 }
 	
 

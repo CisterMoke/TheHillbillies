@@ -11,7 +11,9 @@ import org.junit.Before;
 import org.junit.Test;
 
 import hillbillies.model.Block;
+import hillbillies.model.Boulder;
 import hillbillies.model.Faction;
+import hillbillies.model.Log;
 import hillbillies.model.Unit;
 import hillbillies.model.Vector;
 import hillbillies.model.World;
@@ -124,7 +126,7 @@ public class WorldTest {
 		testWorld.getBlockAtPos(locationArray3).setBlockType(BlockType.ROCK);
 		testWorld.setToPassable(testWorld.getBlockAtPos(locationArray2));
 		assertTrue(testWorld.isStable(testWorld.getBlockAtPos(locationArray)));
-		assertFalse(testWorld.isStable(testWorld.getBlockAtPos(locationArray2)));
+		assertFalse(testWorld.isStable(testWorld.getBlockAtPos(locationArray3)));
 	}
 	@Test
 	public void testSpawnUnit(){
@@ -138,9 +140,64 @@ public class WorldTest {
 		assertEquals(2, testWorld.getUnits().size());
 	}
 	@Test
-	public void testActiveFacytions(){
+	public void testGetUnits(){
+		assertTrue(testWorld.getUnits().size()==1);
+		assertTrue(testWorld.getUnits().contains(testUnit));
+	}
+	@Test
+	public void testActiveFactions(){
 		testWorld.spawnUnit();
 		assertEquals(2, testWorld.getFactions().size());
 	}
+	@Test
+	public void testDirectlyAdjacet(){
+		ArrayList<Integer> locationArray = new ArrayList<Integer>(Arrays.asList(25, 25, 25));
+		assertTrue(testWorld.getDirectlyAdjacent(testWorld.getBlockAtPos(locationArray)).size()==6);
+		ArrayList<Integer> locationArray2 = new ArrayList<Integer>(Arrays.asList(25, 25, 0));
+		assertTrue(testWorld.getDirectlyAdjacent(testWorld.getBlockAtPos(locationArray2)).size()==5);
+		ArrayList<Integer> locationArray3 = new ArrayList<Integer>(Arrays.asList(0, 0, 0));
+		assertTrue(testWorld.getDirectlyAdjacent(testWorld.getBlockAtPos(locationArray3)).size()==3);
+	}
+	@Test
+	public void testIsWalkable(){
+		ArrayList<Integer> locationArray = new ArrayList<Integer>(Arrays.asList(25, 25, 1));
+		assertFalse(testWorld.isWalkable(testWorld.getBlockAtPos(locationArray)));
+		ArrayList<Integer> locationArray2 = new ArrayList<Integer>(Arrays.asList(25, 25, 0));
+		assertTrue(testWorld.isWalkable(testWorld.getBlockAtPos(locationArray2)));
+		testWorld.getBlockAtPos(locationArray2).setBlockType(BlockType.ROCK);
+		assertFalse(testWorld.isWalkable(testWorld.getBlockAtPos(locationArray2)));
+		assertTrue(testWorld.isWalkable(testWorld.getBlockAtPos(locationArray)));
+	}
+	@Test
+	public void testIsValidPosition(){
+		ArrayList<Integer> locationArray = new ArrayList<Integer>(Arrays.asList(25, 25, 1));
+		assertTrue(testWorld.isValidPosition(locationArray));
+		ArrayList<Integer> locationArray2 = new ArrayList<Integer>(Arrays.asList(25, 25, -1));
+		assertFalse(testWorld.isValidPosition(locationArray2));
+	}
+	@Test
+	public void testGetWorkshop(){
+		assertTrue(testWorld.getWorkshops().isEmpty());
+		ArrayList<Integer> locationArray = new ArrayList<Integer>(Arrays.asList(25, 25, 1));
+	}
+	@Test
+	public void testBoulders(){
+		assertTrue(testWorld.getBoulders().size()==0);
+		Boulder boulder = new Boulder(1.5, 0.5, 0.5, 20);
+		testWorld.addBoulder(boulder);
+		assertTrue(testWorld.getBoulders().size()==1);
+		testWorld.removeBoulder(boulder);
+		assertTrue(testWorld.getBoulders().size()==0);
+	}
+	@Test
+	public void testLog(){
+		assertTrue(testWorld.getLogs().size()==0);
+		Log log = new Log(1.5, 0.5, 0.5, 20);
+		testWorld.addLog(log);
+		assertTrue(testWorld.getLogs().size()==1);
+		testWorld.removeLog(log);
+		assertTrue(testWorld.getLogs().size()==0);
+	}
+	
 }
 

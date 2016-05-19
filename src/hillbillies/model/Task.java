@@ -33,7 +33,7 @@ public class Task {
 	}
 	
 	public void executeTask(double dt){
-		System.out.println("exe: " + this);
+		System.out.println("exe: " + this + " " + this.getUnit());
 		this.setCounter(dt);
 		this.getActivity().initialise(this);
 		this.getActivity().execute();
@@ -66,7 +66,7 @@ public class Task {
 //	private Set<Expression<?>> checkedExpression = new HashSet<Expression<?>>();
 	
 	public void setCounter(double dt){
-		this.counter = (int) Math.floor(dt/0.001);
+		this.counter = (int) Math.ceil(dt/0.001);
 	}
 	
 	public void countDown(){
@@ -127,11 +127,13 @@ public class Task {
 	}
 	
 	public void reset(){
-		this.setUnit(null);
+		this.getActivity().initialise(this);
 		this.getActivity().reset();
+		this.setUnit(null);
 	}
 	
 	public void interrupt(){
+		System.out.println("interupted");
 		this.reset();
 		this.setPriority(getPriority() - 10);
 	}

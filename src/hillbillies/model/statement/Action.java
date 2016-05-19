@@ -24,8 +24,9 @@ public abstract class Action extends BasicStatement{
 	
 	@Override
 	public void reset(){
-		setCompleted(false);
-		setInProgress(false);
+		this.setCompleted(false);
+		this.setInProgress(false);
+		
 	}
 	
 	@Override
@@ -43,7 +44,7 @@ public abstract class Action extends BasicStatement{
 		if (!this.getCompletedTotal().containsKey(this.getTask()))
 			this.setCompleted(false);
 		if (!this.InProgress.containsKey(this.getTask()))
-			this.InProgress.put(getTask(), false);
+			this.InProgress.put(this.getTask(), false);
 	}
 	
 	protected Map<Task, Boolean> InProgress = new HashMap<Task, Boolean>();
@@ -56,7 +57,7 @@ public abstract class Action extends BasicStatement{
 		return this.InProgress.get(this.getTask());
 	}
 	
-	public abstract boolean complete();
+	public abstract boolean actionDone();
 	
 	@Override
 	public void execute(){
@@ -64,14 +65,14 @@ public abstract class Action extends BasicStatement{
 			getTask().getActivity().setCompleted(true);
 			return;
 		}
-		System.out.println(this.getClass());
-		if (super.getCompleted() || super.getTask().getCounter()<1)
+//		System.out.println(this.getClass());
+		if (super.getCompleted() || super.getTask().getCounter()<1){
 			return;
+		}
 		super.task.countDown();
 		if (!this.getInProgress()){
 			this.executeSpecific();
 			this.setInProgress(true);
-			System.out.println(this.getActor().getFinTarget());
 		}
 		if (this.getInProgress() && this.getTask().getUnit().isTruelyIdle()){
 			this.setCompleted(true);

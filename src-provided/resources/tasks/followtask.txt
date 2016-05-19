@@ -1,1 +1,1 @@
-name : "test" priority : 1000 activities : moveTo v; break; 
+name : "test" priority : 1000 activities : while true do print any; done 

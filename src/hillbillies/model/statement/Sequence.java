@@ -15,7 +15,7 @@ public class Sequence extends WrapStatement{
 
 	@Override
 	public void execute() {
-		System.out.println(this.getClass());
+//		System.out.println(this.getClass());
 		if (super.getCompleted() || super.getTask().getCounter()<1)
 			return;
 		if(hasNullExpressions()){

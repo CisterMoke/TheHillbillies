@@ -20,10 +20,8 @@ public class Follow extends Action{
 	}
 
 	@Override
-	public boolean complete() {
-		if (this.getTask().getUnit().endFollow())
-			return true;
-		return false;
+	public boolean actionDone() {
+		return true;
 	}
 
 

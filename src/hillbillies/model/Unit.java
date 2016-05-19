@@ -1385,7 +1385,7 @@ public class Unit {
 		if (this.getState() != State.WORKING){
 			this.setState(State.WORKING);
 			// TODO set worktime back to correct value
-			this.setWorkTime(500/this.getPrimStats().get("str"));
+			this.setWorkTime(5/this.getPrimStats().get("str"));
 			this.setTheta(Math.atan2(direction.getY(), direction.getX()));
 		}
 		
@@ -1982,7 +1982,7 @@ public class Unit {
 	  */
 	private void fall(){
 		if(task != null){
-			task.interrupt();
+			this.getTask().interrupt();
 		}
 		if(this.getState() == State.COMBAT){
 			if(this.opponent != null){
@@ -2206,8 +2206,7 @@ public class Unit {
 		if (this.getTask()==null){
 			Task task = faction.getScheduler().getHighestPriority();
 			if(task == null)
-//				pickActivity();
-				return;
+				pickActivity();
 			else
 				pickTask(task);
 			return;

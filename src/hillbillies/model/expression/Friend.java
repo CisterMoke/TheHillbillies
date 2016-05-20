@@ -6,7 +6,6 @@ import hillbillies.model.statement.WrapStatement;
 
 public class Friend extends UnitExpression implements IBasicExpression{
 	public Friend() {
-		// TODO Auto-generated constructor stub
 	}
 
 	@Override

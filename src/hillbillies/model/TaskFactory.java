@@ -12,7 +12,6 @@ import hillbillies.part3.programs.SourceLocation;
 public class TaskFactory implements ITaskFactory<Expression<?>, Statement, Task> {
 	
 	public TaskFactory() {
-		// TODO Auto-generated constructor stub
 	}
 
 	@Override
@@ -24,7 +23,6 @@ public class TaskFactory implements ITaskFactory<Expression<?>, Statement, Task>
 			for (int[] selected : selectedCubes){
 				Vector selectedVector = new Vector(selected[0], selected[1], selected[2]);
 				Task task = new Task(name, priority, activity, selectedVector);
-				System.out.println(task);
 				list.add(task);
 			}
 		}
@@ -49,7 +47,6 @@ public class TaskFactory implements ITaskFactory<Expression<?>, Statement, Task>
 	@Override
 	public If createIf(Expression<?> condition, Statement ifBody, Statement elseBody,
 			SourceLocation sourceLocation) {
-		System.out.println("If gemaakt");
 		try{
 			return new If((Expression<?>)condition, ifBody, elseBody);		
 		}
@@ -75,7 +72,6 @@ public class TaskFactory implements ITaskFactory<Expression<?>, Statement, Task>
 
 	@Override
 	public MoveTo createMoveTo(Expression<?> position, SourceLocation sourceLocation) {
-		System.out.println("MoveTo position: " + position);
 		try{		
 			return new MoveTo((Expression<?>)position);
 		}

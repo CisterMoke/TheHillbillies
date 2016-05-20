@@ -20,9 +20,4 @@ public class Work extends Action{
 		super.getActor().workAt((Vector) super.getTarget().getValue());
 	}
 
-	@Override
-	public boolean actionDone() {
-		return true;
-	}
-
 }

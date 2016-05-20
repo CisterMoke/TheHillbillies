@@ -7,7 +7,6 @@ import hillbillies.model.statement.WrapStatement;
 public class WorkshopLiteral extends PositionExpression implements IBasicExpression{
 	
 	public WorkshopLiteral() {
-		// TODO Auto-generated constructor stub
 	}
 
 	@Override

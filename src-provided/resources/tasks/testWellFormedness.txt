@@ -1,1 +1,0 @@
-name : "test" priority : 1000 activities : moveTo v; break; 

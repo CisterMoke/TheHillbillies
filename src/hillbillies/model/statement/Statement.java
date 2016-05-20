@@ -2,6 +2,7 @@ package hillbillies.model.statement;
 
 import java.util.*;
 
+import be.kuleuven.cs.som.annotate.Basic;
 import hillbillies.model.Task;
 import hillbillies.model.expression.Expression;
 import hillbillies.model.expression.Read;
@@ -36,6 +37,7 @@ public abstract class Statement {
 		return Check;
 	}
 	
+	@Basic
 	public WrapStatement getWrapStatement(){
 		return this.wrapStatement;
 	}
@@ -43,9 +45,10 @@ public abstract class Statement {
 	public abstract void execute();
 	
 	public Boolean getCompleted(){
-		return this.completed.get(this.getTask());
+		return this.completed.get(task);
 	}
 	
+	@Basic
 	public Map<Task, Boolean> getCompletedTotal(){
 		return this.completed;
 	}
@@ -77,16 +80,14 @@ public abstract class Statement {
 	
 	protected boolean hasNullExpressions(){
 		for(Expression<?> e : Expressions){
-//			if (!this.getTask().getCheckedExpression().contains(e)){
 			if(e.hasNullExpressions()){
 				return true;
-//				}
-//			this.getTask().addCheckedExpression(e);
 			}
 		}
 		return false;
 	}
 	
+	@Basic
 	public Task getTask(){
 		return task;
 	}

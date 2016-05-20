@@ -2,6 +2,7 @@ package hillbillies.model;
 
 import java.util.*;
 
+import be.kuleuven.cs.som.annotate.Basic;
 import hillbillies.model.statement.*;
 
 /**
@@ -50,13 +51,15 @@ public class Task {
 	 * 			not null.
 	 * 			| result == (getUnit() != null)
 	 */
+	@Basic
 	public boolean isAssigned(){
-		return this.getUnit() != null;
+		return this.unit != null;
 	}
 	
 	/**
 	 * Return the Unit associated with this Task.
 	 */
+	@Basic
 	public Unit getUnit(){
 		return this.unit;
 	}
@@ -85,6 +88,7 @@ public class Task {
 	/**
 	 * Return the selected position of this Task.
 	 */
+	@Basic
 	public Vector getSelected(){
 		return this.selectedPosition;
 	}
@@ -108,7 +112,6 @@ public class Task {
 	 * 
 	 */
 	public void executeTask(double dt){
-		System.out.println("exe: " + this + " " + this.getUnit());
 		this.setCounter(dt);
 		this.getActivity().initialise(this);
 		this.getActivity().execute();
@@ -158,6 +161,7 @@ public class Task {
 	/**
 	 * Return the counter of this Task.
 	 */
+	@Basic
 	public int getCounter(){
 		return this.counter;
 	}
@@ -165,6 +169,7 @@ public class Task {
 	/**
 	 * Return the activity Statement of this Task.
 	 */
+	@Basic
 	public Statement getActivity() {
 		return activity;
 	}
@@ -186,6 +191,7 @@ public class Task {
 	 * Return a copy of the set of Schedulers in which this
 	 * 	Task is scheduled.
 	 */
+	@Basic
 	public Set<Scheduler> getSchedulers(){
 		return new HashSet<Scheduler>(this.schedulers);
 	}
@@ -293,7 +299,6 @@ public class Task {
 	 * 			| new.getPriority() == old.getPriority() - 10
 	 */
 	public void interrupt(){
-		System.out.println("interupted");
 		this.reset();
 		this.setPriority(getPriority() - 10);
 	}
@@ -327,6 +332,7 @@ public class Task {
 	/**
 	 * Return the name of this Task.
 	 */
+	@Basic
 	public String getName(){
 		return this.name;
 	}
@@ -345,6 +351,7 @@ public class Task {
 	/**
 	 * Return the priority of this Task.
 	 */
+	@Basic
 	public Integer getPriority(){
 		return this.priority;
 	}

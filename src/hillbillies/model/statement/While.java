@@ -1,5 +1,6 @@
 package hillbillies.model.statement;
 
+import be.kuleuven.cs.som.annotate.Basic;
 import hillbillies.model.expression.*;
 
 public class While extends WrapStatement{
@@ -15,7 +16,6 @@ public class While extends WrapStatement{
 	
 	@Override
 	public void execute() {
-//		System.out.println(this.getClass());
 		if (super.getCompleted() || super.getTask().getCounter()<1)
 			return;
 		if(hasNullExpressions()){
@@ -41,6 +41,7 @@ public class While extends WrapStatement{
 		return true;
 	}
 	
+	@Basic
 	public Expression<?> getCondition() {
 		return condition;
 	}
@@ -49,6 +50,7 @@ public class While extends WrapStatement{
 		this.condition = condition;
 	}
 
+	@Basic
 	public Statement getBody() {
 		return body;
 	}
@@ -57,6 +59,7 @@ public class While extends WrapStatement{
 		this.body = body;
 	}
 	
+	@Basic
 	public boolean isInLoop() {
 		return inLoop;
 	}

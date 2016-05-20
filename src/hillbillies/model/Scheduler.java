@@ -2,6 +2,8 @@ package hillbillies.model;
 
 import java.util.*;
 
+import be.kuleuven.cs.som.annotate.Basic;
+
 /**
  * Class representing a Scheduler
  * @author Joost Croonen & Ruben Dedoncker
@@ -49,6 +51,7 @@ public class Scheduler {
 	/**
 	 * Return a copy of the set of Tasks scheduled in this Scheduler.
 	 */
+	@Basic
 	public Set<Task> getTasks(){
 		return new HashSet<Task> (this.tasks);
 	}
@@ -78,20 +81,6 @@ public class Scheduler {
 		return tasks.containsAll(c);
 	}
 	
-//	public void assignTask(Task task, Unit unit){
-//		if(!this.canBeAssigned(unit) || !task.getSchedulers().contains(this))
-//			return;
-//		task.setUnit(unit);
-//		unit.setTask(task);		
-//	}
-	
-//	public boolean canBeAssigned(Unit unit){
-//		return (this.getFaction() == unit.getFaction()) && (!unit.isTerminated()) && ((unit.getTask() == null));
-//	}
-	
-//	public Faction getFaction(){
-//		return this.faction;
-//	}
 	/**
 	 * Return an Iterator of Tasks.
 	 * @return The returned Iterator contains all the Tasks of this Scheduler
@@ -151,29 +140,6 @@ public class Scheduler {
 			
 		};
 	}
-
-	
-//	public Task getHighestUnassignedTask(){
-//		Iterator<Task> iter = iterator();
-//		Task task = null;
-//		while(iter.hasNext() && task == null){
-//			Task temp = iter.next();
-//			if(!temp.isAssigned()){
-//				task = temp;
-//			}
-//		}
-//		return task;
-//	}
-	
-//	public void setTaskPriority(Task task, int priority){
-//		if(!task.getSchedulers().contains(this))
-//			return;
-//		taskMap.remove(task.getPriority());
-//		task.setPriority(priority);
-//		taskMap.put(task.getPriority(), task);
-//	}
-	
-//	private Faction faction;
 
 	/**
 	 * The set of Tasks scheduled in this Scheduler.

@@ -7,7 +7,6 @@ import hillbillies.model.statement.WrapStatement;
 public class LogLiteral extends PositionExpression implements IBasicExpression{
 	
 	public LogLiteral() {
-		// TODO Auto-generated constructor stub
 	}
 
 	@Override

@@ -6,7 +6,6 @@ import hillbillies.model.statement.WrapStatement;
 
 public class Enemy extends UnitExpression implements IBasicExpression{
 	public Enemy() {
-		// TODO Auto-generated constructor stub
 	}
 
 	@Override

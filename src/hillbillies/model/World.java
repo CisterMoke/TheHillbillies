@@ -268,7 +268,6 @@ public class World {
 	 * @param 	pos
 	 * 			The given position.
 	 */
-	@Basic
 	public Block getBlockAtPos(ArrayList<Integer> pos){
 		return this.gameWorld.get(pos);
 	}
@@ -356,7 +355,6 @@ public class World {
 	 * 			The given set to set as the new stableSet.
 	 * @post 	The new stableSet equals the given set.
 	 */
-	@Basic
 	protected void setStableSet(Set<Block> newstable){
 		this.stableSet = newstable;
 	}
@@ -367,7 +365,6 @@ public class World {
 	  * 		The Block to be added.
 	  * @post 	The new stableSet contains the given Block.
 	  */
-	@Basic
 	protected void addToStableSet(Block block){
 			this.stableSet.add(block);
 	}
@@ -387,7 +384,6 @@ public class World {
 	 * 			The given set to be set as the new collapseSet.
 	 * @post 	The new collapseSet equals the given set.
 	 */
-	@Basic
 	protected void setCollapseSet(Set<Block> newcollapse){
 		collapseSet = newcollapse;
 	}
@@ -398,7 +394,6 @@ public class World {
 	  * 		The given Block to be added.
 	  * @post 	The new collapseSet contains the given Block.
 	  */
-	@Basic
 	protected void addCollapseSet(Block block){
 		this.collapseSet.add(block);
 	}
@@ -844,7 +839,6 @@ public class World {
 	 * @post	The new set of solid Blocks doesn't contain
 	 * 			the given Block.
 	 */
-	@Basic
 	protected void removeSolidBlock(Block block){
 		this.solidBlocks.remove(block);
 	}
@@ -904,6 +898,7 @@ public class World {
 	/**
 	 * Return a copy of the set of all the Workshop Blocks in this World.
 	 */
+	@Basic
 	public Set<Block> getWorkshops(){
 		return new HashSet<Block>(this.workshops);
 	}

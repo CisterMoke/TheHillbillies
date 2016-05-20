@@ -143,7 +143,6 @@ public class Faction {
 	 * @return	True if and only if the Unit's Faction does not equal
 	 * 			this Faction.
 	 */
-	@Basic
 	protected boolean canBeRemoved(Unit unit){
 		return unit.getFaction() != this;
 	}
@@ -160,7 +159,6 @@ public class Faction {
 	 * 			The given World to be set as this Faction's World.
 	 * @post	The given World equals the World of this Faction.
 	 */
-	@Basic
 	protected void setWorld(World world){
 		if(!canHaveAsWorld(world) || world == null)
 			return;
@@ -170,7 +168,6 @@ public class Faction {
 	 * Remove this Faction's World.
 	 * @post	The World of this Faction is null.
 	 */
-	@Basic
 	protected void removeWorld(){
 		for(Unit unit : this.getUnits())
 			unit.removeWorld();
@@ -191,9 +188,8 @@ public class Faction {
 	 * Return a boolean stating whether or not this Faction is terminated.
 	 * 	A Faction can be terminated if it contains no Units.
 	 */
-	@Basic
 	protected boolean canBeTerminated(){
-		return getUnits().isEmpty();
+		return unitSet.isEmpty();
 	}
 	/**
 	 * Terminate this Faction.
@@ -208,6 +204,7 @@ public class Faction {
 	/**
 	 * Returns the Scheduler of this Faction.
 	 */
+	@Basic
 	public Scheduler getScheduler(){
 		return scheduler;
 	}

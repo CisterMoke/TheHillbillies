@@ -18,11 +18,4 @@ public class Follow extends Action{
 
 		super.getActor().startFollow((Unit) super.getTarget().getValue());
 	}
-
-	@Override
-	public boolean actionDone() {
-		return true;
-	}
-
-
 }

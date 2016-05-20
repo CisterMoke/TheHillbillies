@@ -2,19 +2,17 @@ package tests.model;
 
 import static org.junit.Assert.*;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import org.junit.Before;
 import org.junit.Test;
 
-import hillbillies.model.Faction;
-import hillbillies.model.Task;
-import hillbillies.model.TaskFactory;
-import hillbillies.model.Unit;
+import hillbillies.model.*;
+import hillbillies.model.Block.BlockType;
+import hillbillies.model.Vector;
 import hillbillies.model.expression.Expression;
 import hillbillies.model.statement.Statement;
+import hillbillies.part2.listener.TerrainChangeListener;
 import hillbillies.part3.programs.TaskParser;
 
 public class TaskFactoryTest {
@@ -310,5 +308,33 @@ public class TaskFactoryTest {
 		testUnit.advanceTime(0.1);
 		assertNull(testUnit.getTask());
 	}
-
+	
+	@Test
+	public void testReadVariable(){
+		Map<ArrayList<Integer>, Block> testmap = new HashMap<ArrayList<Integer>, Block>();
+		for (int i=0; i<50;i++){
+			for (int j=0; j<50;j++){
+				for (int k=0; k<50;k++){
+					ArrayList<Integer> locationArray = new ArrayList<Integer>(Arrays.asList(i, j, k));
+					Vector v = new Vector (i, j, k);
+					Block B = new Block(v, BlockType.AIR);
+					testmap.put(locationArray, B);
+				}
+			}
+		}
+		TerrainChangeListener modelLinstener = null;
+		World testWorld = new World(50, 50, 50, testmap, modelLinstener);
+		testWorld.addUnit(testUnit);
+		Boulder boulder = new Boulder(1.5, 0.5, 0.5, 20);
+		testWorld.addBoulder(boulder);
+		text = "name : \"test\" priority : 500 activities : v:= is_alive this; while v do w:=boulder; if v then moveTo w; fi done";
+		Optional<List<Task>> parseResult = parser.parseString(text, selected);
+		task = (Task) parseResult.get().get(0);
+		testUnit.getFaction().getScheduler().scheduleTask(task);
+		testUnit.startDefault();
+		testUnit.advanceTime(0.2);
+		assertNotNull(testUnit.getTask());
+		assertTrue(testUnit.isMoving());
+		assertTrue(testUnit.getFinTarget().equals(boulder.getPosition()));
+	}
 }

@@ -1,5 +1,6 @@
 package hillbillies.model.expression;
 
+import be.kuleuven.cs.som.annotate.Basic;
 import hillbillies.model.Task;
 import hillbillies.model.Unit;
 import hillbillies.model.statement.WrapStatement;
@@ -7,7 +8,7 @@ public abstract class Expression<O> implements IExpression<O>{
 	
 	protected Task assignedTask;
 	
-	@Override
+	@Override @Basic
 	public Task getTask(){
 		return this.assignedTask;
 	}
@@ -21,7 +22,7 @@ public abstract class Expression<O> implements IExpression<O>{
 	
 	public abstract void setWrapStatement(WrapStatement newstat);
 	
-	@Override
+	@Override @Basic
 	public WrapStatement getWrapStatement(){
 		return this.statement;
 	}

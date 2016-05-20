@@ -56,7 +56,6 @@ public abstract class WrapStatement extends Statement{
 	
 	@Override
 	public void initialise(Task newTask){
-//		System.out.println("init " + this);
 		this.setTask(newTask);
 		for (Statement sub : Substatements){
 			sub.setWrapStatement(this);

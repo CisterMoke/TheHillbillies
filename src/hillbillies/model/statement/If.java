@@ -1,5 +1,6 @@
 package hillbillies.model.statement;
 
+import be.kuleuven.cs.som.annotate.Basic;
 import hillbillies.model.expression.*;
 
 public class If extends WrapStatement{
@@ -15,7 +16,6 @@ public class If extends WrapStatement{
 	}
 	@Override
 	public void execute(){
-//		System.out.println(this.getClass());
 		if (super.getCompleted() || super.getTask().getCounter()<1)
 			return;
 		if(hasNullExpressions()){
@@ -37,6 +37,7 @@ public class If extends WrapStatement{
 		
 	}
 
+	@Basic
 	public Expression<?> getCondition() {
 		return condition;
 	}
@@ -46,6 +47,7 @@ public class If extends WrapStatement{
 		this.condition = condition2;
 	}
 
+	@Basic
 	public Statement getIfBody() {
 		return IfBody;
 	}
@@ -55,6 +57,7 @@ public class If extends WrapStatement{
 		this.Substatements.add(ifBody);
 	}
 
+	@Basic
 	public Statement getElseBody() {
 		return ElseBody;
 	}

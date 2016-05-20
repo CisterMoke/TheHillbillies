@@ -261,7 +261,6 @@ public class Boulder {
 	 * Remove the current World of this Boulder.
 	 * @post	The World of this Boulder is null.
 	 */
-	@Basic
 	protected void removeWorld(){
 		this.world = null;
 	}

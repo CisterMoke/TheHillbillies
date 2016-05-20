@@ -7,7 +7,6 @@ import hillbillies.model.statement.WrapStatement;
 public class This extends UnitExpression implements IBasicExpression{
 	
 	public This() {
-		// TODO Auto-generated constructor stub
 	}
 
 	@Override

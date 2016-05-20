@@ -261,7 +261,6 @@ public class Log {
 	 * Remove the current World of this Log.
 	 * @post	The World of this Log is null.
 	 */
-	@Basic
 	protected void removeWorld(){
 		this.world = null;
 	}

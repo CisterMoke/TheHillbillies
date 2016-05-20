@@ -1,5 +1,6 @@
 package hillbillies.model.expression;
 
+import be.kuleuven.cs.som.annotate.Basic;
 import hillbillies.model.Task;
 import hillbillies.model.Vector;
 import hillbillies.model.World;
@@ -12,6 +13,11 @@ public class PositionLiteral extends PositionExpression implements IBasicExpress
 	}
 	
 	private Vector pos;
+	
+	@Basic
+	public Vector getPos(){
+		return pos;
+	}
 
 	@Override
 	public Vector getValue() {

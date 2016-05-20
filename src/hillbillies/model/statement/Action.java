@@ -57,15 +57,12 @@ public abstract class Action extends BasicStatement{
 		return this.InProgress.get(this.getTask());
 	}
 	
-	public abstract boolean actionDone();
-	
 	@Override
 	public void execute(){
 		if(hasNullExpressions()){
 			getTask().getActivity().setCompleted(true);
 			return;
 		}
-//		System.out.println(this.getClass());
 		if (super.getCompleted() || super.getTask().getCounter()<1){
 			return;
 		}

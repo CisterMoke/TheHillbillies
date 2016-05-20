@@ -1,5 +1,6 @@
 package hillbillies.model.expression;
 
+import be.kuleuven.cs.som.annotate.Basic;
 import hillbillies.model.Task;
 import hillbillies.model.statement.WrapStatement;
 
@@ -11,7 +12,7 @@ public class BooleanLiteral extends BooleanExpression implements IBasicExpressio
 	
 	private final boolean value;
 
-	@Override
+	@Override @Basic
 	public Boolean getValue() {
 		return this.value;
 	}

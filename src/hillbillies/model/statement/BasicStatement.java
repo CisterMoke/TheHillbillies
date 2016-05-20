@@ -10,7 +10,6 @@ public abstract class BasicStatement extends Statement{
 			getTask().getActivity().setCompleted(true);
 			return;
 		}
-//		System.out.println(this.getClass());
 		if (super.getCompleted() || super.getTask().getCounter()<1)
 			return;
 		super.task.countDown();

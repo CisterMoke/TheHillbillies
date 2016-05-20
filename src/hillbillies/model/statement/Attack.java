@@ -19,10 +19,4 @@ public class Attack extends Action{
 		super.getActor().attack((Unit) super.getTarget().getValue());
 		
 	}
-
-	@Override
-	public boolean actionDone() {
-		return true;
-	}
-
 }

@@ -107,9 +107,12 @@ public class Unit {
 	 * @post	If the Unit's state is FALLING,  its position will be set
 	 * 			based on the given time interval. If the Unit shouldn't be
 	 * 			falling anymore, it will land on its current position.
+	 * @effect	If this Unit is truly idle, it will pick the unassigned Task with the
+	 * 			highest priority if there exists one and if this Unit has no Task
+	 * 			assigned to it.
+	 * @effect	If the Unit is truly idle and has a task assigned to it, it will execute
+	 * 			that Task with the given time interval.
 	 * @post	This Unit will exhibit default behaviours if it is switched on.
-	 * @effect	If this Unit has an assigned Task and it is truly idle, it will
-	 * 			execute its assigned Task with the given time interval.
 	 * @post	If the unit's state is COMBAT, it will attack its opponent if it has
 	 * 			one. If it hasn't got an opponent and its set of attackers is empty,
 	 * 			this unit's state will be set to IDLE.
@@ -170,12 +173,15 @@ public class Unit {
 				this.land();
 			return;
 		}
+		if(isTrulyIdle()){
+			if(task == null && faction.getScheduler().getHighestPriority() != null)
+				pickTask(faction.getScheduler().getHighestPriority());
+			if(task != null)
+				task.executeTask(dt);
+		}
 		
 		if(this.DefaultOn())
 			this.defaultBehaviour();
-		
-		if (this.getTask()!=null && isTrulyIdle())
-			this.getTask().executeTask(dt);	
 		
 		if(this.getState() == State.COMBAT){
 			if(this.opponent == null){
@@ -488,7 +494,6 @@ public class Unit {
 	 * @post The orientation of the unit is set to the given angle.
 	 * 			|new.getTheta() == angle
 	 */
-	@Basic
 	public void setTheta (Double angle){
 		this.theta = angle;
 	}
@@ -1036,7 +1041,6 @@ public class Unit {
 	 * @post The amount of hitpoints of this unit is set to the given hp.
 	 * 			|new.getHp() == hp
 	 */
-	@Basic
 	public void setHp(double hp){
 		assert isValidHp(hp);
 		this.hp = hp;
@@ -1072,9 +1076,8 @@ public class Unit {
 	 * 			the maximum amount of hitpoints inclusively.
 	 * 			|result == (hp>=0) && (hp<=getMaxHp())
 	 */
-	@Basic
 	private boolean isValidHp(double hp){
-		return (hp>=0 && hp<=this.getMaxHp());
+		return (hp>=0 && hp<=getMaxHp());
 	}
 	/**
 	 * Return a boolean stating whether or not the given amount of stamina points is a valid amount.
@@ -1084,7 +1087,6 @@ public class Unit {
 	 * 			the maximum amount of stamina points inclusively.
 	 * 			|result == (stam>=0) && (stam<=getMaxStam())
 	 */
-	@Basic
 	private boolean isValidStam(double stam){
 		return (stam>=0 && stam<=this.getMaxStam());
 	}
@@ -1092,7 +1094,6 @@ public class Unit {
 	 * Return the maximum allowed amount of hitpoints of this unit.
 	 * 		It is always equal to (strength*weight)/50.
 	 */
-	@Basic
 	public int getMaxHp(){
 		return (int)(Math.ceil((double)(this.getPrimStats().get("str") * this.getPrimStats().get("wgt"))/50));
 	}
@@ -1100,7 +1101,6 @@ public class Unit {
 	 * Return the maximum allowed amount of stamina points of this unit.
 	 * 		It is always equal to (strength*weight)/50.
 	 */
-	@Basic
 	public int getMaxStam(){
 		return (int)(Math.ceil((double)(this.getPrimStats().get("str") * this.getPrimStats().get("wgt"))/50));
 	}
@@ -1164,7 +1164,6 @@ public class Unit {
 	 * Return the base speed of this unit. It is always equal to
 	 *	1.5*(strength + agility) / (2*totalWeight).
 	 */
-	@Basic
 	public double getBaseSpeed(){
 		return 1.5*((double)(this.getPrimStats().get("str")+this.getPrimStats().get("agl")))/(2*this.getTotalWeight());
 	}
@@ -1732,7 +1731,7 @@ public class Unit {
 	 * 			| return (getFaction() == null && faction != null &&
 	 * 			|	(getWorld() == null || getWorld() == faction.getWorld()))
 	 */
-	@Basic @Raw 
+	@Raw 
 	protected boolean canHaveAsFaction(Faction faction) {
 		return (this.faction == null && faction != null &&
 				(this.world == null || this.world == faction.getWorld()));
@@ -1892,7 +1891,6 @@ public class Unit {
 	  * 		to the given weight.
 	  * 		| new.getCarryWeight() == weight.
 	  */
-	@Basic
 	public void setCarryWeight(int weight){
 		this.carryWeight = weight;
 	}
@@ -2128,7 +2126,6 @@ public class Unit {
 	 * 			block.
 	 * 			| new.getWorkBlock() == block
 	 */
-	@Basic
 	private void setWorkBlock(Block block){
 		this.workBlock = block;
 	}
@@ -2146,7 +2143,6 @@ public class Unit {
 	 * Remove the path from this unit towards its
 	 * 	final target.
 	 */
-	@Basic
 	protected void clearPath(){
 		this.Path.clear();
 	}
@@ -2172,14 +2168,10 @@ public class Unit {
 	 * @post	If the unit's state isn't truly idle, nothing happens.
 	 * 			| if(!isTrulyIdle())
 	 * 			|	then return
-	 * @effect	If the Unit hasn't got a Task assigned to it, it will pick an
-	 * 			unassigned Task with the highest priority. If there are no
-	 * 			unassigned Tasks, the Unit will pick an activity
+	 * @effect	If the Unit hasn't got a Task assigned to it, it will pick
+	 * 			an activity.
 	 * 			| if(getTask() != null)
-	 * 			|	then if(getFaction().getScheduler().getHighestPriority() != null)
-	 * 			|		then pickTask(getFaction.getScheduler().getHighestPriority())
-	 * 			|		else pickActivity()
-	 * 
+	 * 			|	then pickActivity()
 	 */
 	protected void defaultBehaviour(){
 		if(this.getState() == State.WALKING){
@@ -2192,14 +2184,8 @@ public class Unit {
 		}
 		if(!isTrulyIdle())
 			return;
-		if (this.getTask()==null){
-			Task task = faction.getScheduler().getHighestPriority();
-			if(task == null)
-				pickActivity();
-			else
-				pickTask(task);
-			return;
-		}
+		if (this.getTask()==null)
+			pickActivity();
 	}
 	/**
 	 * Return an enemy in range of this unit.
@@ -2830,6 +2816,7 @@ public class Unit {
 	/**
 	 * Return the Task assigned to this Unit.
 	 */
+	@Basic
 	public Task getTask(){
 		return this.task;
 	}
@@ -2871,6 +2858,7 @@ public class Unit {
 	/**
 	 * Return the follow target of this Unit.
 	 */
+	@Basic
 	private Unit getFollowTarget() {
 		return followTarget;
 	}
@@ -2894,6 +2882,7 @@ public class Unit {
 	 * 			| result == getFinalTarget() == null && getFollowTarget() == null
 	 * 			| 	&& getState == State.IDLE && getTarget().equals(getPosition())
 	 */
+	@Basic
 	public boolean isTrulyIdle(){
 		return finTarget == null && followTarget == null && state == State.IDLE && target.equals(pos);
 	}

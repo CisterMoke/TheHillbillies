@@ -36,7 +36,6 @@ public class Block{
 	 * @post 	The location of this Block is equals the given
 	 * 			location.
 	 */
-	@Basic
 	protected void setLocation(Vector newlocation){
 		this.location = newlocation;
 	}
@@ -55,6 +54,7 @@ public class Block{
 	public boolean isSolid(){
 		return(this.getBlockType() == BlockType.WOOD || this.getBlockType() == BlockType.ROCK);
 	}
+	
 	/**
 	 * Return a copy of the set containing the Units
 	 * 	positioned in this Block.
@@ -63,18 +63,49 @@ public class Block{
 	public Set<Unit> getUnitsInCube(){
 		return new HashSet<Unit>(this.unitsInBlock);
 	}
+	
+	/**
+	 * Return a boolean stating whether or not this Block contains
+	 * 	any Unit.
+	 * @return	True if and only if the set of Units in the Block is not empty.
+	 */
 	public boolean containsUnit(){
 		return !unitsInBlock.isEmpty();
 	}
 	
+	/**
+	 * Return a boolean stating whether or not this Block contains
+	 * 	the given Unit.
+	 * @param 	unit
+	 * 			The given Unit to be checked.
+	 * @return	True if and only if this Block's set of Units contains
+	 * 			the given Unit.
+	 */
 	public boolean containsUnit(Unit unit){
 		return unitsInBlock.contains(unit);
 	}
 	
+	/**
+	 * Return a boolean stating whether or not this Block contains
+	 * 	the given Collection of Units.
+	 * @param	c
+	 * 			The given Collection of Units to be checked.
+	 * @return	True if and only if this Block's set of Units contains
+	 * 			the given Collection of Units.
+	 */
 	public boolean containsUnit(Collection<Unit> c){
 		return unitsInBlock.containsAll(c);
 	}
 	
+	/**
+	 * Return a boolean stating whether or not this Block contains
+	 * 	any friendly Units with respect to the given Unit.	
+	 * @param 	unit
+	 * 			The given Unit to be checked.
+	 * @return	True if and only if this Block' set of Units contains
+	 * 			a Unit, different from the given Unit, with the same
+	 * 			faction as the given Unit.
+	 */
 	public boolean containsFriends(Unit unit){
 		Iterator<Unit> iter = unitsInBlock.iterator();
 		while(iter.hasNext()){
@@ -85,6 +116,14 @@ public class Block{
 		return false;
 	}
 	
+	/**
+	 * Return a boolean stating whether or not this Block contains
+	 * 	any enemy Units with respect to the given Unit.	
+	 * @param 	unit
+	 * 			The given Unit to be checked.
+	 * @return	True if and only if this Block' set of Units contains
+	 * 			a Unit with a different faction as the given Unit.
+	 */
 	public boolean containsEnemies(Unit unit){
 		Iterator<Unit> iter = unitsInBlock.iterator();
 		while(iter.hasNext()){
@@ -102,7 +141,6 @@ public class Block{
 	 * @post	The set of Units positioned in the Block is
 	 * 			set to the given set.
 	 */
-	@Basic
 	protected void setUnitsInCube(Set<Unit> unitSet){
 		this.unitsInBlock = unitSet;
 	}
@@ -115,7 +153,6 @@ public class Block{
 	 * @post	The new set of Units contains the given
 	 * 			Unit.
 	 */
-	@Basic
 	protected void addUnit(Unit unit){
 		this.unitsInBlock.add(unit);
 	}
@@ -127,7 +164,6 @@ public class Block{
 	 * @post	The given Unit is removed from the
 	 * 			set of Units positioned in this Block.
 	 */
-	@Basic
 	protected void removeUnit(Unit unit){
 		this.unitsInBlock.remove(unit);
 	}
@@ -157,7 +193,6 @@ public class Block{
 	 * 			BlockType isn't WORKSHOP then this Block
 	 * 			is removed from its World's set of Workshop Blocks.
 	 */
-	@Basic
 	public void setBlockType(BlockType newType){
 		this.blocktype = newType;
 		if (this.getWorld()!=null){
@@ -274,7 +309,6 @@ public class Block{
 	 * @post	The set of Boulders positioned in this Block
 	 * 			contains the given Boulder.
 	 */
-	@Basic
 	protected void addBoulder(Boulder boulder){
 		this.bouldersInBlock.add(boulder);
 	}
@@ -287,7 +321,6 @@ public class Block{
 	 * @post	The set of Logs positioned in this Block
 	 * 			contains the given Log.
 	 */
-	@Basic
 	protected void addLog(Log log){
 		this.logsInBlock.add(log);
 	}
@@ -300,7 +333,6 @@ public class Block{
 	  * @post	The given Boulder is removed from the
 	  * 		set of Boulders positioned in this Block.
 	  */
-	@Basic
 	protected void removeBoulder(Boulder boulder){
 		this.bouldersInBlock.remove(boulder);
 	}
@@ -314,7 +346,6 @@ public class Block{
 	  * @post	The given Log is removed from the
 	  * 		set of Logs positioned in this Block.
 	  */	
-	@Basic
 	protected void removeLog(Log log){
 		this.logsInBlock.remove(log);
 	}
@@ -327,7 +358,6 @@ public class Block{
 	 * @post	The set of Boulders positioned in the Block
 	 * 			equals the given set.
 	 */
-	@Basic
 	protected void setBouldersInCube(Set<Boulder> newSet){
 		this.bouldersInBlock = newSet;
 	}
@@ -340,7 +370,6 @@ public class Block{
 	 * @post	The set of Logs positioned in the Block
 	 * 			equals the given set.
 	 */
-	@Basic
 	protected void setLogsInCube(Set<Log> newSet){
 		this.logsInBlock = newSet;
 	}
@@ -362,7 +391,6 @@ public class Block{
 	 * 			An exception is thrown if this Block already belongs
 	 * 			to another world.
 	 */
-	@Basic
 	protected void setWorld(World newWorld)
 			throws IllegalArgumentException{
 		if(this.getWorld() != null)

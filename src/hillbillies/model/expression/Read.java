@@ -1,5 +1,6 @@
 package hillbillies.model.expression;
 
+import be.kuleuven.cs.som.annotate.Basic;
 import hillbillies.model.Task;
 import hillbillies.model.statement.WrapStatement;
 
@@ -18,6 +19,7 @@ public class Read extends Expression<Object> implements IBasicExpression{
 		}
 	}
 
+	@Basic
 	public String getName() {
 		return name;
 	}

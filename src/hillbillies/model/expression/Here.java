@@ -6,7 +6,6 @@ import hillbillies.model.statement.WrapStatement;
 
 public class Here extends PositionExpression implements IBasicExpression{
 	public Here() {
-		// TODO Auto-generated constructor stub
 	}
 
 	@Override

@@ -148,6 +148,8 @@ public class WorldTest {
 	public void testActiveFactions(){
 		testWorld.spawnUnit();
 		assertEquals(2, testWorld.getFactions().size());
+		testWorld.removeFaction(testWorld.getFactions().get(0));
+		assertEquals(1, testWorld.getFactions().size());
 	}
 	@Test
 	public void testDirectlyAdjacet(){

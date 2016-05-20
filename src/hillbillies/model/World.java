@@ -51,6 +51,8 @@ public class World {
 	 * 			is created.
 	 * @post	This World's modelListener is set to the given
 	 * 			TerrainChangeListener.
+	 * @post	All the Workshop Blocks are added to the set of
+	 * 			Workshop Blocks of this World.
 	 */
 	public World(int sizeX, int sizeY, int sizeZ, Map<ArrayList<Integer>, Block> terrain, TerrainChangeListener modelListener){
 		this.WORLD_BORDER = new ArrayList<Integer>(Arrays.asList(sizeX, sizeY, sizeZ));
@@ -545,7 +547,7 @@ public class World {
 		for(Unit unit : faction.getUnits())
 			this.removeUnit(unit);
 		faction.removeWorld();
-		this.removeFaction(faction);
+		this.factions.remove(faction);
 	}
 	
 	/**
@@ -899,8 +901,34 @@ public class World {
 		return this.stableSet.contains(block);
 	}
 	
+	/**
+	 * Return a copy of the set of all the Workshop Blocks in this World.
+	 */
 	public Set<Block> getWorkshops(){
 		return new HashSet<Block>(this.workshops);
+	}
+	
+	/**
+	 * Add a given Block to the set of Workshops.
+	 * @param	block
+	 * 			The given Block to be added.
+	 * @post	The given Block is added to the set of Workshops if
+	 * 			this World equals the Block's World and if the given
+	 * 			Block is a Workshop Block.
+	 */
+	protected void addWorkshop(Block block){
+		if(block.getWorld() == this && block.getBlockType() == BlockType.WORKSHOP)
+			workshops.add(block);
+	}
+	
+	/**
+	 * Remove a given Block from the set of Workshop Blocks.
+	 * @param	block
+	 * 			The given Block to be removed.
+	 * @post	The set of Workshop Blocks doesn't contain the given Block.
+	 */
+	protected void removeWorkshop(Block block){
+		workshops.remove(block);
 	}
 	
 	/**
@@ -916,15 +944,15 @@ public class World {
 	 */
 	private Map<ArrayList<Integer>, Block> gameWorld = new HashMap<ArrayList<Integer>, Block>();
 	/**
-	 * Set of blocks that are known to be stable
+	 * Set of blocks that are known to be stable.
 	 */
 	private Set<Block> stableSet = new HashSet<Block>();
 	/**
-	 * List of factions in the world
+	 * List of factions in the world.
 	 */
 	private ArrayList<Faction> factions = new ArrayList<Faction>();
 	/**
-	 * Set of all the units in the world
+	 * Set of all the units in the world.
 	 */
 	private Set<Unit> units = new HashSet<Unit>();
 	/**
@@ -942,22 +970,24 @@ public class World {
 	 */
 	private ArrayList<ArrayList<Integer>> positionList;
 	/**
-	 * List with the X-, Y- and Z-worldsize
+	 * List with the X-, Y- and Z-worldsize.
 	 */
 	private final ArrayList<Integer> WORLD_BORDER;
 	/**
-	 * Set of all the boulders in the world
+	 * Set of all the boulders in the world.
 	 */
 	private Set<Boulder> boulders = new HashSet<Boulder>();
 	/**
-	 * Set of all the logs in the world
+	 * Set of all the logs in the world.
 	 */
 	private Set<Log> logs = new HashSet<Log>();
 	/**
-	 * Set of all the solid blocks in the world
+	 * Set of all the solid blocks in the world.
 	 */
 	private Set<Block> solidBlocks = new HashSet<Block>();
-	
+	/**
+	 * Set containing all the Workshop Blocks in this World.
+	 */
 	private Set<Block> workshops = new HashSet<Block>();
 	
 

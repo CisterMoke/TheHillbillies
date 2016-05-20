@@ -146,7 +146,16 @@ public class Block{
 	 * 			The given BlockType.
 	 * @post	The BlockType of this Block is set to
 	 * 			the given BlockType.
-	 * @post	
+	 * @post	If this Block as a World and the given BlockType is
+	 * 			ROCK or WOOD, then this Block will be added to the
+	 * 			set of solid Block of its World. If the given
+	 * 			BlockType isn't ROCK or WOOD then this Block
+	 * 			is removed from its World's set of solid Blocks.
+	 * @post	If this Block as a World and the given BlockType is
+	 * 			WORKSHOP, then this Block will be added to the
+	 * 			set of Workshop Block of its World. If the given
+	 * 			BlockType isn't WORKSHOP then this Block
+	 * 			is removed from its World's set of Workshop Blocks.
 	 */
 	@Basic
 	public void setBlockType(BlockType newType){
@@ -155,6 +164,9 @@ public class Block{
 			if (newType==BlockType.ROCK || newType==BlockType.WOOD)
 					this.getWorld().addSolidBlock(this);
 			else this.getWorld().removeSolidBlock(this);
+			if(newType == BlockType.WORKSHOP)
+				this.getWorld().addWorkshop(this);
+			else world.removeWorkshop(this);
 		}
 	}
 	/**
@@ -178,35 +190,78 @@ public class Block{
 	public Set<Boulder> getBouldersInBlock(){
 		return new HashSet<Boulder>(this.bouldersInBlock);
 	}
-	
+	/**
+	 * Return a boolean stating whether or not this Block contains
+	 * 	any boulders.
+	 * @return	False if and only if the set of Boulders in this Block is
+	 * 			empty.
+	 */
 	public boolean containsBoulder(){
 		return !bouldersInBlock.isEmpty();
 	}
 	
+	/**
+	 * Return a boolean stating whether or not this Block contains
+	 * 	the given Boulder.
+	 * @param	boulder
+	 * 			The given Boulder to be checked.
+	 * @return	True if and only if this Block's set of Boulders
+	 * 			contains the given Boulder.
+	 */
 	public boolean containsBoulder(Boulder boulder){
 		return bouldersInBlock.contains(boulder);
 	}
 	
+	/**
+	 * Return a boolean stating whether or not this Block contains
+	 * 	the given Collection of Boulders.
+	 * @param	c
+	 * 			The given Collection of Boulders to be checked.
+	 * @return	True if and only if this Block's set of Boulders
+	 * 			contains the given Collection of Boulders.
+	 */
 	public boolean containsBoulder(Collection<Boulder> c){
 		return bouldersInBlock.containsAll(c);
 	}
 	
 	/**
-	 * Return a set of Boulders positioned in this Log.
+	 * Return a set of Logs positioned in this Block.
 	 */
 	@Basic
 	public Set<Log> getLogsInBlock(){
 		return new HashSet<Log>(this.logsInBlock);
 	}
 	
+	/**
+	 * Return a boolean stating whether or not this Block contains
+	 * 	any logs.
+	 * @return	False if and only if the set of Logs in this Block is
+	 * 			empty.
+	 */
 	public boolean containsLog(){
 		return !logsInBlock.isEmpty();
 	}
 	
+	/**
+	 * Return a boolean stating whether or not this Block contains
+	 * 	the given Log.
+	 * @param	log
+	 * 			The given Log to be checked.
+	 * @return	True if and only if this Block's set of Logs
+	 * 			contains the given Log.
+	 */
 	public boolean containsLog(Log log){
 		return logsInBlock.contains(log);
 	}
 	
+	/**
+	 * Return a boolean stating whether or not this Block contains
+	 * 	the given Collection of Logs.
+	 * @param	c
+	 * 			The given Collection of Logs to be checked.
+	 * @return	True if and only if this Block's set of Logs
+	 * 			contains the given Collection of Logs.
+	 */
 	public boolean containsLog(Collection<Log> c){
 		return logsInBlock.containsAll(c);
 	}

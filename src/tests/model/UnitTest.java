@@ -862,7 +862,6 @@ public class UnitTest {
 		testWorld.addUnit(testUnit2);
 		testUnit.startFollow(testUnit2);
 		assertTrue(testUnit2.getPosition().equals(testUnit.getFinTarget()));
-		ArrayList<Integer> list = new ArrayList<Integer>(Arrays.asList(3, 3, 0));
 		Vector vector = new Vector(3.5, 3.5, 3.5);
 		testUnit2.setPosition(vector);
 		testUnit.advanceTime(0.2);

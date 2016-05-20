@@ -180,7 +180,6 @@ public class WorldTest {
 	@Test
 	public void testGetWorkshop(){
 		assertTrue(testWorld.getWorkshops().isEmpty());
-		ArrayList<Integer> locationArray = new ArrayList<Integer>(Arrays.asList(25, 25, 1));
 	}
 	@Test
 	public void testBoulders(){

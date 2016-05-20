@@ -26,7 +26,11 @@ public abstract class Statement {
 		boolean Check = true;
 		for (Expression<?> exp : this.Expressions){
 			if (exp instanceof Read){
-				Check = (exp.getWrapStatement().readVariable(((Read) exp).getName())!=null) && Check;
+				if (this.getWrapStatement() != null)
+					Check = (exp.getWrapStatement().readVariable(((Read) exp).getName())!=null) && Check;
+				else
+					System.out.println("Unassigned variable: " + ((Read) exp).getName());
+					Check = false;
 			}
 		}
 		return Check;

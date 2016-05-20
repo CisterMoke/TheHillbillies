@@ -125,7 +125,6 @@ public class TaskFactory implements ITaskFactory<Expression<?>, Statement, Task>
 			return new Is_solid((Expression<?>) position);
 		}
 		catch(ClassCastException exc){
-			System.out.println("k");
 			throw new ClassCastException("Incorrect type error at line: " + sourceLocation.getLine());
 		}
 	}

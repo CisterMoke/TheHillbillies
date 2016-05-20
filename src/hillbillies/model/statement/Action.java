@@ -74,7 +74,7 @@ public abstract class Action extends BasicStatement{
 			this.executeSpecific();
 			this.setInProgress(true);
 		}
-		if (this.getInProgress() && this.getTask().getUnit().isTruelyIdle()){
+		if (this.getInProgress() && this.getTask().getUnit().isTrulyIdle()){
 			this.setCompleted(true);
 			this.setInProgress(false);
 		}

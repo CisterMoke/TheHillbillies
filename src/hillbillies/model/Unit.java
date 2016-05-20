@@ -102,15 +102,21 @@ public class Unit {
 	 * 			the given time interval is subtracted from it.
 	 * @post	If the attack cooldown is bigger than zero,
 	 * 			the given time interval is subtracted from it.
-	 * @effect	If this Unit should be falling and it isn't currenlty falling,
+	 * @effect	If this Unit should be falling and it isn't currently falling,
 	 * 			its state will initiate its fall.
 	 * @post	If the Unit's state is FALLING,  its position will be set
 	 * 			based on the given time interval. If the Unit shouldn't be
 	 * 			falling anymore, it will land on its current position.
 	 * @post	This Unit will exhibit default behaviours if it is switched on.
+	 * @effect	If this Unit has an assigned Task and it is truly idle, it will
+	 * 			execute its assigned Task with the given time interval.
 	 * @post	If the unit's state is COMBAT, it will attack its opponent if it has
 	 * 			one. If it hasn't got an opponent and its set of attackers is empty,
 	 * 			this unit's state will be set to IDLE.
+	 * @effect	If this Unit's resttime is bigger than or equal to 180, the Unit will rest
+	 * 			and if it has a Task assigned to it, that Task will be interrupted.
+	 * 			Otherwise, the given time interval will be added to the current resttime
+	 * 			of this Unit.
 	 * @post	If the unit's state is RESTING and hasn't fully recovered its hitpoints,
 	 * 			an amount of (toughness/200 * dt/0.2) is added. If the new
 	 * 			amount of hitpoints is invalid, it will be set to the maximum
@@ -124,6 +130,7 @@ public class Unit {
 	 * 			the given time interval will be subtracted from the work time.
 	 * 			On the other hand, if the unit's state is WORKING and its work time
 	 * 			is smaller than or equal to zero, its work task will be completed.
+	 * @effect	If the Unit has a follow target, it will follow that target.
 	 * @effect	If the unit's state is IDLE and it hasn't reached its final target,
 	 * 			it will move to its final target.
 	 * @post	If the unit's state is SPRINTING and its stamina is bigger than zero,
@@ -167,7 +174,7 @@ public class Unit {
 		if(this.DefaultOn())
 			this.defaultBehaviour();
 		
-		if (this.getTask()!=null && isTruelyIdle())
+		if (this.getTask()!=null && isTrulyIdle())
 			this.getTask().executeTask(dt);	
 		
 		if(this.getState() == State.COMBAT){
@@ -182,7 +189,7 @@ public class Unit {
 			if(task != null){
 				task.interrupt();
 			}
-		this.rest();
+			this.rest();
 		}
 		else {
 			if (this.getState()!=State.RESTING)
@@ -697,6 +704,10 @@ public class Unit {
 	 *			| 	then return
 	 *			| else defender.addAttacker(this) &&
 	 *			|	setOpponent(defender)
+	 * @effect	If the given defender has an assigned Task, that Task will be
+	 * 			interrupted.
+	 * 			| if(defender.getTask() != null)
+	 * 			| 	then defender.getTask().interrupt()
 	 * @effect	The orientation of this unit and the defender are set so that they
 	 * 			face each other.
 	 * 			| new.getTheta() ==
@@ -1004,8 +1015,8 @@ public class Unit {
 	 */
 	public void stopDefault(){
 		this.Default = false;
-		if(task != null)
-			task.reset();
+//		if(task != null)
+//			task.reset();
 	}
 	
 	/**
@@ -1384,8 +1395,7 @@ public class Unit {
 		Vector direction = targetBlock.getLocation().add(this.getBlock().getLocation().getOpposite());
 		if (this.getState() != State.WORKING){
 			this.setState(State.WORKING);
-			// TODO set worktime back to correct value
-			this.setWorkTime(5/this.getPrimStats().get("str"));
+			this.setWorkTime(500/this.getPrimStats().get("str"));
 			this.setTheta(Math.atan2(direction.getY(), direction.getX()));
 		}
 		
@@ -1962,6 +1972,10 @@ public class Unit {
 	}
 	 /**
 	  * The unit starts to fall.
+	  * @effect	If this Unit has a Task assigned to it, it will
+	  * 		interrupt that Task.
+	  * 		| if(getTask() != null)
+	  * 		|	then getTask().interrupt()
 	  * @effect	If this unit is in combat, the opponents of its
 	  * 		attackers are set to null.
 	  * 		| if(getState() == State.COMBAT)
@@ -2054,32 +2068,18 @@ public class Unit {
 	}
 	
 	/**
-	 * Return a list of blocks representing the shortest path
+	 * Set this Unit's path to a list of blocks representing the shortest path
 	 *  from this unit's position to its final target.
 	 * @post	Nothing happens if this unit has no final target.
 	 * 			| if(getFinTarget == null)
 	 * 			|	return
-	 * @post	If there doesn't exist a path between the unit and
-	 * 			its final target , then the current path and the final
-	 * 			path are removed. Otherwise a path is created.
-	 * 			| flag == true
-	 * 			| toBeChecked.contains(getBlock())
-	 * 			| startBlock == getBlock()
-	 * 			| checked.isEmpty()
-	 * 			| while(flag && !toBeChecked.isEmpty()) (
-	 * 			|	toBeChecked.remove(startBlock)
-	 * 			|	checked.aad(startBlock)
-	 * 			|	for each block in getWorld.getAdjacent(startBlock) : (
-	 * 			|		if(getWorld().isWalkable(startBlock)
-	 * 			|			then toBeChecked.add(startBlock))
-	 * 			|	startBlock == toBeChecked.next()
-	 * 			| if(for each block in checked : block != getWorld().getBlockAtPos(getTarget()))
-	 * 			|	then new.getPath().isEmpty() &&
-	 * 			| 	new.getFinTarget() == null
-	 * 			| else !new.getPath().isEmpty()
-	 * 
+	 * @effect	The path of this Unit is set to the closest path from its position
+	 * 			to its final target. If the path is empty, then the final target will
+	 * 			be removed.
+	 * 			| getPath() == getClosestPath(getWorld().getBlockAtPos(getFinTarget()))
+	 * 			| if(getPath().isEmpty())
+	 * 			|	then getFinTarget() == null 
 	 */
-	
 	protected void pathFinding(){
 		if(finTarget == null)
 			return;
@@ -2169,28 +2169,17 @@ public class Unit {
 	 * 			| if(getState() == State.WALKING && Math.random() < 0.001)
 	 * 			|	then setState(State.Sprinting) &&
 	 * 			|	return
-	 * @post	If the unit's state isn't IDLE or the unit has a final
-	 * 			target, nothing happens.
-	 * 			| if(getState() != State.IDLE || getFinTarget() != null)
+	 * @post	If the unit's state isn't truly idle, nothing happens.
+	 * 			| if(!isTrulyIdle())
 	 * 			|	then return
-	 * @post	The unit will randomly choose to walk to a new final target,
-	 * 			work at a block, attack a unit in range or rest until it is
-	 * 			fully recovered.
-	 * 			| stateList == ArrayList<State>(Arrays.asList(
-	 * 			|	State.COMBAT, State.RESTING, State.WALKING, State.WORKING))
-	 * 			| Collection.shuffle(stateList)
-	 * 			| state == staseList.get(0)
-	 * 			| if (state == State.WALKING)
-	 * 			|	then for one position in getWorld().keySet() : (
-	 * 			|		move2(getWorld().getBlockAtPos(position).getLocation()))
-	 * 			| else if(state == State.COMBAT)
-	 * 			|	then attack(getEnemyInRange())
-	 * 			| else if(state == State.RESTING)
-	 * 			|	then rest()
-	 * 			| else if (state == State.WORKING)
-	 * 			|	then for one block in getWorld().getAdjacent(getBlock()) : (
-	 * 			|	workAt(block)) ||
-	 * 			|	workAt(getBlock())
+	 * @effect	If the Unit hasn't got a Task assigned to it, it will pick an
+	 * 			unassigned Task with the highest priority. If there are no
+	 * 			unassigned Tasks, the Unit will pick an activity
+	 * 			| if(getTask() != null)
+	 * 			|	then if(getFaction().getScheduler().getHighestPriority() != null)
+	 * 			|		then pickTask(getFaction.getScheduler().getHighestPriority())
+	 * 			|		else pickActivity()
+	 * 
 	 */
 	protected void defaultBehaviour(){
 		if(this.getState() == State.WALKING){
@@ -2201,7 +2190,7 @@ public class Unit {
 			}
 			return;
 		}
-		if(this.getFinTarget() != null || this.getState() != State.IDLE)
+		if(!isTrulyIdle())
 			return;
 		if (this.getTask()==null){
 			Task task = faction.getScheduler().getHighestPriority();
@@ -2329,6 +2318,10 @@ public class Unit {
 	
 	/**
 	 * Terminate this unit
+	 * @effect	If this Unit has a Task assigned to it, it will
+	 * 			terminate that Task.
+	 * 			| if(getTask() != null)
+	 * 			|	task.interrupt()
 	 * @effect	If this unit is attacking another unit,
 	 * 			this unit is removed from the opponent's
 	 * 			set of attackers and this unit's opponent
@@ -2352,6 +2345,8 @@ public class Unit {
 	 */
 
 	public void terminate(){
+		if(task != null)
+			task.interrupt();
 		if(this.opponent != null){
 			opponent.removeAttacker(this);
 			this.opponent = null;
@@ -2365,12 +2360,53 @@ public class Unit {
 		this.terminated = true;
 	}
 	
+	/**
+	 * Return a list of Blocks representing the closest path from
+	 * 	this Unit's position to the given Block.
+	 * @param 	block
+	 * 			The given Block.
+	 * @return 	Return an ArrayList of Blocks representing the closest path.
+	 * 			The path is empty if there doesn't exist a path.
+	 * 			| for each path in paths: (
+	 * 			|	for each cube in path : (
+	 * 			|		for some neighbour in getWorld().getAdjacent(block) : (
+	 * 			|			path.contains(neighbour))
+	 * 			|		&& getWorld().isWalkable(cube))
+	 * 			|	&& for one cube in getBlock() : (path.contains(cube))
+	 * 			|	&& path.contains(block))
+	 * 			| 
+	 * 			| if(!paths.isEmpty())
+	 * 			| 	then paths.contains(result) && for each path in paths : (
+	 * 			|	path.size() >= result.size()
+	 * 			| else (result.isEmpty())
+	 */
 	public ArrayList<Block> getClosestPath(Block block){
 		Set<Block> c = new HashSet<Block>();
 		c.add(block);
 		return getClosestPath(c);
 	}
 	
+	/**
+	 * Return a list of Block representing the closest path from
+	 * 	this Unit's position to one of the Blocks of the given Collection.
+	 * @param	c
+	 * 			The given Collection of Blocks.
+	 * @return	Return an ArrayList of Blocks representing the closest path.
+	 * 			The path is empty if there doesn't exist a path to any of the
+	 * 			Blocks of the Collection.
+	 * 			| for each path in paths: (
+	 * 			|	for each cube in path : (
+	 * 			|		for some neighbour in getWorld().getAdjacent(block) : (
+	 * 			|			path.contains(neighbour))
+	 * 			|		&& getWorld().isWalkable(cube))
+	 * 			|	&& for one cube in getBlock() : (path.contains(cube))
+	 * 			|	&& for one block in c : (path.contains(block)))
+	 * 			| 
+	 * 			| if(!paths.isEmpty())
+	 * 			| 	then paths.contains(result) && for each path in paths : (
+	 * 			|	path.size() >= result.size()
+	 * 			| else (result.isEmpty())
+	 */
 	public ArrayList<Block> getClosestPath(Collection<Block> c){
 		if (c == null || c.isEmpty())
 			return new ArrayList<Block>();
@@ -2411,6 +2447,16 @@ public class Unit {
 		return finalPath;
 	}
 	
+	/**
+	 * Return a Unit closest to this Unit.
+	 * @return	Return a Unit closest to this Unit in terms of path length, or null if
+	 * 			no other Units exist.
+	 * 			| if(getWorld().getUnits().size == 1)
+	 * 			|	then result == null
+	 * 			| else
+	 * 			| 	for each unit in getWorld().getUnits() : (
+	 * 			|		getClosestPath(unit.getBlock()).size() >= getClosestPath(result.getBlock()).size())
+	 */
 	public Unit getClosestUnit(){
 		if(this.getWorld() == null)
 			return null;
@@ -2445,6 +2491,18 @@ public class Unit {
 		return null;
 	}
 	
+	/**
+	 * Return an enemy Unit closest to this Unit.
+	 * @return	Return a Unit not belonging to this Unit's Faction
+	 * 			and closest to this Unit in terms of path length.
+	 * 			Return null otherwise.
+	 * 			| if(for each unit in getWorld().getUnits() : (unit.getFaction() == this.getFaction()))
+	 * 			|	then result == null
+	 * 			| else
+	 * 			| 	for each unit in getWorld().getUnits() : (
+	 * 			|		getClosestPath(unit.getBlock()).size() >= getClosestPath(result.getBlock()).size())
+	 * 			|		&& result.getFaction() != this.getFaction()
+	 */
 	public Unit getClosestEnemy(){
 		if(this.getWorld() == null)
 			return null;
@@ -2479,6 +2537,19 @@ public class Unit {
 		return null;
 	}
 	
+	/**
+	 * Return a friendly Unit closest to this Unit.
+	 * @return	Return a Unit, other than this Unit, belonging to this Unit's Faction
+	 * 			and closest to this Unit in terms of path length.
+	 * 			Return null otherwise.
+	 * 			| if(for each unit in getWorld().getUnits() : (
+	 * 			|	unit.getFaction() != this.getFaction() || unit == this))
+	 * 			|	then result == null
+	 * 			| else
+	 * 			| 	for each unit in getWorld().getUnits() : (
+	 * 			|		getClosestPath(unit.getBlock()).size() >= getClosestPath(result.getBlock()).size())
+	 * 			|		&& result.getFaction() == this.getFaction() && result != this
+	 */
 	public Unit getClosestFriend(){
 		if(this.getWorld() == null)
 			return null;
@@ -2513,6 +2584,17 @@ public class Unit {
 		return null;
 	}
 	
+	/**
+	 * Return a Boulder closest to this Unit.
+	 * @return	Return a Boulder closest to this Unit in terms of path length.
+	 * 			Return null if no Boulders exist.
+	 * 			| if(getWorld().getBouders().isEmpty())
+	 * 			|	then result == null
+	 * 			| else
+	 * 			| 	for each boulder in getWorld().getBoulders() : (
+	 * 			|		getClosestPath(getWorld.getBlockAtPos(boulder.getPosition()).size())
+	 * 			|			>= getClosestPath(getWorld.getBlockAtPos(result.getPosition()).size()))
+	 */
 	public Boulder getClosestBoulder(){
 		if(this.getWorld() == null)
 			return null;
@@ -2544,6 +2626,17 @@ public class Unit {
 		return null;
 	}
 	
+	/**
+	 * Return a Log closest to this Unit.
+	 * @return	Return a Log closest to this Unit in terms of path length.
+	 * 			Return null if no Logs exist.
+	 * 			| if(getWorld().getBouders().isEmpty())
+	 * 			|	then result == null
+	 * 			| else
+	 * 			| 	for each log in getWorld().getLogs() : (
+	 * 			|		getClosestPath(getWorld.getBlockAtPos(log.getPosition()).size())
+	 * 			|			>= getClosestPath(getWorld.getBlockAtPos(result.getPosition()).size()))
+	 */
 	public Log getClosestLog(){
 		if(this.getWorld() == null)
 			return null;
@@ -2575,6 +2668,17 @@ public class Unit {
 		return null;
 	}
 	
+	/**
+	 * Return a Workshop Block closest to this Unit.
+	 * @return	Return a Workshop Block closest to this Unit in terms of path length.
+	 * 			Return null if no Workshop Block exist.
+	 * 			| if(getWorld().getWorkshops().isEmpty())
+	 * 			|	then result == null
+	 * 			| else
+	 * 			| 	for each workshop in getWorld().getWorkshops() : (
+	 * 			|		getClosestPath(workshop).size())
+	 * 			|			>= getClosestPath(result).size()))
+	 */
 	public Block getClosestWorkshop(){
 		if(this.getWorld() == null)
 			return null;
@@ -2607,16 +2711,45 @@ public class Unit {
 		return current;
 	}
 	
+	/**
+	 * Start to follow a given Unit.
+	 * @param 	unit
+	 * 			The given Unit to be followed.
+	 * @effect	A follow target is set using the given Unit.
+	 * 			| setFollowTarget(unit)
+	 * @effect	This Unit will follow its follow target.
+	 * 			| follow()
+	 */
 	public void startFollow(Unit unit){
 		this.setFollowTarget(unit);
 		this.follow();
 	}
 	
+	/**
+	 * Return a boolean stating whether or not this Unit should keep
+	 * 	following its follow target.
+	 * @return 	True if the follow target is terminated or if the
+	 * 			follow target is in range.
+	 * 			| result == getFollowTarget().isTerminated()
+	 * 			| || inRange(getFollowTarget())
+	 */
 	public boolean endFollow(){
 		return this.getFollowTarget().isTerminated()
 				|| inRange(followTarget);
 	}
 	
+	/**
+	 * Let this Unit follow its follow target.
+	 * @effect	If this Unit should stop following its follow target then
+	 * 			its follow target and its final target are both set to null
+	 * 			and its path is cleared and its state is set to IDLE. Otherwise
+	 * 			this Unit will move to the position of its follow target.
+	 * 			| if(endFollow)
+	 * 			|	then getFollowTarget() == null
+	 * 			|	&& getFinTarget() == null
+	 * 			|	&& getPath().isEmpty() && getState() == State.IDLE
+	 * 			| else move2(getFollowTarget().getPosition())
+	 */
 	public void follow(){
 		if (this.endFollow()){
 			this.setFollowTarget(null);
@@ -2628,6 +2761,27 @@ public class Unit {
 
 	}
 	
+	/**
+	 * This Unit will randomly chose an activity to perform.
+	 * @post	The unit will randomly choose to walk to a new final target,
+	 * 			work at a block, attack a unit in range or rest until it is
+	 * 			fully recovered.
+	 * 			| stateList == ArrayList<State>(Arrays.asList(
+	 * 			|	State.COMBAT, State.RESTING, State.WALKING, State.WORKING))
+	 * 			| Collection.shuffle(stateList)
+	 * 			| state == staseList.get(0)
+	 * 			| if (state == State.WALKING)
+	 * 			|	then for one position in getWorld().keySet() : (
+	 * 			|		move2(getWorld().getBlockAtPos(position).getLocation()))
+	 * 			| else if(state == State.COMBAT)
+	 * 			|	then attack(getEnemyInRange())
+	 * 			| else if(state == State.RESTING)
+	 * 			|	then rest()
+	 * 			| else if (state == State.WORKING)
+	 * 			|	then for one block in getWorld().getAdjacent(getBlock()) : (
+	 * 			|	workAt(block)) ||
+	 * 			|	workAt(getBlock())
+	 */
 	public void pickActivity() {
 		ArrayList<State> stateList = new ArrayList<State>(Unit.stateList);
 		if(this.getEnemyInRange()== null)
@@ -2673,56 +2827,91 @@ public class Unit {
 			}
 	}
 
+	/**
+	 * Return the Task assigned to this Unit.
+	 */
 	public Task getTask(){
 		return this.task;
 	}
 	
+	/**
+	 * Set the Task assigned to this Unit to the given Task.
+	 * @param 	task
+	 * 			The given Task.
+	 * @post	The given Task is set as the Task assigned to
+	 * 			this Unit.
+	 * 			| getTask() == task
+	 */
 	protected void setTask(Task task){
 		this.task = task;
 	}
 	
+	/**
+	 * Let this Unit pick the given Task as the Task it should execute.
+	 * @param	task
+	 * 			The given Task.
+	 * @post	Nothing happens if the given task can't be assigned to
+	 * 			this Unit.
+	 * 			| if(!task.canBeAssignedTo(this))
+	 * 			|	then return
+	 * @post	The final target and the follow target are removed.
+	 * 			| getFinTarget() == null && getFollowTarget() == null
+	 * @effect	The Unit of the given Task is set to this Unit.
+	 * 			| task.setUnit(this)
+	 */
 	public void pickTask(Task task){
 		if(!task.canBeAssignedTo(this)){
-			//TODO exeption gooien ipv return?
 			return;
 		}
 		this.finTarget = null;
 		this.followTarget = null;
-//		this.setTask(task);
 		task.setUnit(this);
 	}
 	
-//	public void removeTask(){
-//		task.reset();
-//		task.setUnit(null);
-//		task = null;
-//	}
-	
+	/**
+	 * Return the follow target of this Unit.
+	 */
 	private Unit getFollowTarget() {
 		return followTarget;
 	}
+	
+	/**
+	 * Set the follow target of this Unit to the given target.
+	 * @param 	followTarget
+	 * 			The given follow target.
+	 * @post	The follow target of this Unit is set to the given
+	 * 			target.
+	 * 			| getFollowTarget() == followTarget
+	 */
 	private void setFollowTarget(Unit followTarget) {
 		this.followTarget = followTarget;
 	}
 	
-	public boolean isTruelyIdle(){
-		return finTarget == null && followTarget == null && state == State.IDLE && target == pos;
+	/**
+	 * Return a boolean stating whether or not this Unit is truly idle.
+	 * @return	True if and olny if the final target and the follow target are removed,
+	 * 			the target equals this Unit's position and the state is IDLE.
+	 * 			| result == getFinalTarget() == null && getFollowTarget() == null
+	 * 			| 	&& getState == State.IDLE && getTarget().equals(getPosition())
+	 */
+	public boolean isTrulyIdle(){
+		return finTarget == null && followTarget == null && state == State.IDLE && target.equals(pos);
 	}
 
 	/**
-	 * Orientation of the unit in radians
+	 * Orientation of the unit in radians.
 	 */
 	private double theta;
 	/**
-	 * List containing the blocks of the shortest path to the final target
+	 * List containing the blocks of the shortest path to the final target.
 	 */
 	private ArrayList<Block> Path = new ArrayList<Block>();
 	/**
-	 * Map containing the primary stats of this unit
+	 * Map containing the primary stats of this unit.
 	 */
 	private Map<String, Integer> primStats = new HashMap<String, Integer>();
 	/**
-	 * Position of this unit
+	 * Position of this unit.
 	 */
 	private Vector pos;
 	/**
@@ -2734,15 +2923,15 @@ public class Unit {
 	 */
 	private Vector finTarget = null;
 	/**
-	 * Name of this unit	
+	 * Name of this unit.
 	 */
 	private String name;
 	/**
-	 * Speed of this unit
+	 * Speed of this unit.
 	 */
 	private double v;
 	/**
-	 * Velocity of this unit
+	 * Velocity of this unit.
 	 */
 	private Vector v_vector = new Vector(0.0, 0.0, 0.0);
 	/**
@@ -2755,15 +2944,15 @@ public class Unit {
 	 */
 	private static final Set<String> VALIDCHARS = new HashSet<String>(Arrays.asList(" ", "\"", "\'"));
 	/**
-	 * Time until the next attack can be performed
+	 * Time until the next attack can be performed.
 	 */
 	private double attcooldown = 0;
 	/**
-	 * Hitpoints of this unit
+	 * Hitpoints of this unit.
 	 */
 	private double hp;
 	/**
-	 * Stamina of this unit
+	 * Stamina of this unit.
 	 */
 	private double stam;
 	/**
@@ -2772,15 +2961,15 @@ public class Unit {
 	 */
 	private State state;
 	/**
-	 * Time until the current worktask is completed
+	 * Time until the current worktask is completed.
 	 */
 	private double workTime = 0;
 	/**
-	 * Set containing the units currently attacking this unit
+	 * Set containing the units currently attacking this unit.
 	 */
 	private Set<Unit> attackers = new HashSet<Unit>();
 	/**
-	 * Time until this unit must rest
+	 * Time until this unit must rest.
 	 */
 	private double restTime = 0;
 	/**
@@ -2796,12 +2985,12 @@ public class Unit {
 	 */
 	private boolean attackInitiated = false;
 	/**
-	 * Set containing the keys of the Map primStat
+	 * Set containing the keys of the Map primStat.
 	 * This is a static variable and cannot be changed.
 	 */
 	private static final Set<String> primStatSet = new HashSet<String>(Arrays.asList("str", "wgt", "agl", "tgh"));
 	/**
-	 * Faction this unit belongs to
+	 * Faction this unit belongs to.
 	 */
 	private Faction faction;
 	/**
@@ -2810,35 +2999,35 @@ public class Unit {
 	 */
 	private static final ArrayList<State> stateList = new ArrayList<State>(Arrays.asList(State.COMBAT, State.WALKING, State.RESTING, State.WORKING));
 	/**
-	 * Boulder this unit is carrying
+	 * Boulder this unit is carrying.
 	 */
 	private Boulder boulder = null;
 	/**
-	 * Log this unit is carrying
+	 * Log this unit is carrying.
 	 */
 	private Log log = null;
 	/**
-	 * Weight of the log or boulder this unit is carrying
+	 * Weight of the log or boulder this unit is carrying.
 	 */
 	private int carryWeight = 0;
 	/**
-	 * World this unit belongs to
+	 * World this unit belongs to.
 	 */
 	private World world;
 	/**
-	 * Height this unit is falling from
+	 * Height this unit is falling from.
 	 */
 	private int fallHeight;
 	/**
-	 * Current experience this unit has
+	 * Current experience this unit has.
 	 */
 	private int experience = 0;
 	/**
-	 * Block this unit is currently working in
+	 * Block this unit is currently working in.
 	 */
 	private Block workBlock=null;
 	/**
-	 * Unit this unit is in combat with
+	 * Unit this unit is in combat with.
 	 */
 	private Unit opponent = null;
 	/**
@@ -2846,9 +3035,11 @@ public class Unit {
 	 */
 	private boolean terminated = false;
 	/**
-	 * Unit this unit is currently following
+	 * Unit this unit is currently following.
 	 */
 	private Unit followTarget = null;
-	
+	/**
+	 * The Task assigned to this Unit.
+	 */
 	private Task task;
 }

@@ -61,6 +61,7 @@ public class World {
 		for(ArrayList<Integer> key : terrain.keySet()){
 			Block block = terrain.get(key);
 			if(block.isSolid()){
+				this.addSolidBlock(block);
 				if(this.isAtBorder(block))
 					this.addToStableSet(block);
 			}

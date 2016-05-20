@@ -155,6 +155,8 @@ public class Facade implements IFacade {
 	public void moveToAdjacent(Unit unit, int dx, int dy, int dz) throws ModelException {
 		try{
 			unit.moveToAdjacent(dx, dy, dz);
+			if (unit.getTask()!=null)
+				unit.getTask().interrupt();
 		}
 		catch (IllegalArgumentException exc){
 			throw new ModelException();
@@ -197,11 +199,15 @@ public class Facade implements IFacade {
 	@Override
 	public void moveTo(Unit unit, int[] cube) throws ModelException {
 		unit.move2(new Vector(cube[0], cube[1], cube[2]));
+		if (unit.getTask()!=null)
+			unit.getTask().interrupt();
 	}
 
 	@Override
 	public void work(Unit unit) throws ModelException {
 		unit.workAt(unit.getPosition());
+		if (unit.getTask()!=null)
+			unit.getTask().interrupt();
 	}
 
 	@Override
@@ -212,7 +218,8 @@ public class Facade implements IFacade {
 	@Override
 	public void fight(Unit attacker, Unit defender) throws ModelException {
 		attacker.attack(defender);
-		
+		if (attacker.getTask()!=null)
+			attacker.getTask().interrupt();
 	}
 
 	@Override
@@ -223,6 +230,8 @@ public class Facade implements IFacade {
 	@Override
 	public void rest(Unit unit) throws ModelException {
 		unit.rest();
+		if (unit.getTask()!=null)
+			unit.getTask().interrupt();
 	}
 
 	@Override
@@ -355,7 +364,8 @@ public class Facade implements IFacade {
 	public void workAt(Unit unit, int x, int y, int z) throws ModelException {
 		Vector pos = new Vector(x, y, z);
 		unit.workAt(pos);
-
+		if (unit.getTask()!=null)
+			unit.getTask().interrupt();
 	}
 
 	@Override
